@@ -43,7 +43,8 @@ pelo número de colecionador da linha (`2 Beladona Tûk (HOB) 4`), com teste. A 
 recusou com "título de card desconhecido". O exportador já gerava o nome certo, mas a
 lista tinha sido escrita à mão. Correções: `mtg deck validate` passou a avisar quando a
 lista tem nomes assim; as quatro skills, o `CLAUDE.md` e o `decks/README.md` mandam
-entregar sempre a saída de `mtg deck export --to arena`.
+entregar sempre a saída de `mtg deck export --to arena`. O usuário confirmou no mesmo dia
+que a lista corrigida (só `Tithing Blade`) foi importada sem erro.
 
 Não verificado: importação no MTGO; cartas split (`Fire // Ice`) no Arena, que o
 exportador mantém com os dois nomes.
