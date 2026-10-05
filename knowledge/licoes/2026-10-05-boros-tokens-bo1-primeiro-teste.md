@@ -10,15 +10,15 @@
 
 - 4 partidas, 15 minutos no total: 1 vitória, 3 derrotas. Jogando primeiro: 1–2; jogando
   depois: 0–1.
-- Pelos ícones de cor do Untapped: duas derrotas para decks **mono-white**, uma derrota
-  para um deck de duas cores e uma vitória contra um deck de uma cor (ícones não
-  confirmados com o usuário).
+- Duas derrotas para **Mono-White Auras** (confirmado pelo usuário), uma derrota para um
+  deck de duas cores e uma vitória contra um deck de uma cor.
 - As derrotas duraram 2, 3 e 6 minutos: jogos curtos.
 - A lista jogada difere da proposta: 2 Belladonna Took em vez de 4, 3 Song of Totentanz
   em vez de 4, 20 terrenos em vez de 21 (1 Dalkovan Encampment a menos), e entraram
   2 Erode, o terceiro Get Lost e o segundo Seam Rip.
-- No mesmo dia, o recorte do meta BO1 do Untapped mostrou Mono-White Auras e Mono-White
-  Lifegain como as listas de maior win rate (58%).
+- No mesmo dia, a aba Meta do Untapped (Standard BO1, 2,9 milhões de partidas) mostrou
+  Mono-White Auras como o deck mais jogado, com 13,0% do campo e 57,3% de vitórias —
+  mais que o dobro do segundo (Mono-White Lifegain, 6,0%).
 
 ## O que aprendemos
 

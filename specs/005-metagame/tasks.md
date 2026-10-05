@@ -13,8 +13,9 @@
 - [x] Primeiro snapshot BO1 real (2026-10-05): **parcial**, lido de uma captura de tela do
       Untapped enviada pelo usuário — 7 das 14 listas com mais de mil partidas, com win
       rate e número de partidas, sem decklists nem fatia por arquétipo
-- [ ] Snapshot BO1 completo: as 14 listas, a aba "Meta" (fatia por arquétipo) e as
-      decklists em texto
+- [x] Snapshot BO1 com fatia por arquétipo (2026-10-05): aba Meta do Untapped, lida de
+      captura do usuário — 8 arquétipos mais jogados e 8 maiores win rates
+- [ ] Decklists de referência dos arquétipos BO1 (modo "Text" da página Decks)
 
 ## Verificação (2026-10-04)
 
