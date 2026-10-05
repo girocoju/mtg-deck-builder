@@ -11,7 +11,7 @@ Nenhuma funcionalidade é implementada sem uma spec aprovada.
 | 001 | [Base de cartas](001-base-de-cartas/spec.md)                | Base local completa (Scryfall) + CLI `mtg` de consulta         | ✅ Concluída    |
 | 002 | [Base de conhecimento](002-base-de-conhecimento/spec.md)    | Teoria de deck building (Chapin, Karsten) em `knowledge/`       | 🚧 Em andamento |
 | 003 | [Decklists e formatos](003-decklists-e-formatos/spec.md)    | Ler, validar e exportar listas (Arena, MTGO, papel)            | ✅ Concluída    |
-| 004 | [Análise de deck](004-analise-de-deck/spec.md)              | Curva, base de mana, papéis das cartas, diagnóstico            | 📝 Especificada |
+| 004 | [Análise de deck](004-analise-de-deck/spec.md)              | Curva, base de mana, papéis das cartas, diagnóstico            | ✅ Concluída    |
 | 005 | [Metagame](005-metagame/spec.md)                            | Snapshots do meta (MTGGoldfish / MTGTop8)                      | 📝 Especificada |
 | 006 | [Deck builder construído](006-deck-builder-construido/spec.md) | "Crie um deck anti meta no formato Standard"                | 📝 Especificada |
 | 007 | [Commander e Brawl](007-commander-e-brawl/spec.md)          | "Monte um deck de Brawl com o commander X" (EDHREC)            | 📝 Especificada |

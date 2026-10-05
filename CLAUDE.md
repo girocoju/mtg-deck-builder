@@ -14,7 +14,8 @@ pedidos como "crie um deck anti meta no Standard" ou "estratégia de draft para 
 - **Nunca cite carta de memória.** Texto, custo e legalidade vêm sempre de `mtg card` /
   `mtg search`. Se a carta não está na base, ela não entra na lista.
 - **Lista entregue é lista validada.** Antes de mostrar uma decklist, rode
-  `mtg deck validate` no formato pedido e corrija até passar. Decks ficam em
+  `mtg deck validate` no formato pedido e corrija até passar; rode `mtg deck analyze`
+  e resolva ou justifique cada alerta. Decks ficam em
   `decks/<formato>/<nome>.md` (convenção em `decks/README.md`).
 - **Idioma:** respostas, specs e docs em PT-BR; nomes de cartas, formatos e código em inglês.
 - `NextLevelMagic2015.pdf` é material protegido: não vai para o git e não deve ser
@@ -32,9 +33,11 @@ Ambiente: `.venv` com o pacote instalado em modo editável (`pip install -e ".[d
 .venv\Scripts\mtg search --set <código> --rarity common --booster --text "flying"
 .venv\Scripts\mtg sets "<nome ou código>"
 .venv\Scripts\mtg sql "SELECT ..."        # somente leitura; schema em src/mtg_builder/db.py
-.venv\Scripts\mtg deck validate <arquivo> --format brawl [--bo1] [--game arena]
+.venv\Scripts\mtg deck validate <arquivo> --format brawl [--game arena]
 .venv\Scripts\mtg deck export <arquivo> --to arena|mtgo|text
 .venv\Scripts\mtg deck cost <arquivo>
+.venv\Scripts\mtg deck analyze <arquivo>          # curva, terrenos, fontes por cor, papéis, alertas
+.venv\Scripts\mtg odds --copies 4 --turn 4 [--deck 60] [--min 1] [--draw]
 .venv\Scripts\python -m pytest -q
 ```
 

@@ -20,8 +20,8 @@ melhor-de-um, explicando cada troca. O caminho inverso (BO1 → BO3) também é 
 Em BO3 a lista principal pode ser especializada, porque os jogos 2 e 3 são corrigidos
 pelo sideboard. Em BO1 não há jogos pós-sideboard, o campo é outro (mais aggro e decks
 lineares, menos decks que dependem de sideboard) e, no Arena, a mão inicial passa por um
-algoritmo de suavização e o sideboard tem 7 cartas, usado só por efeitos que buscam
-cartas de fora do jogo.
+algoritmo de suavização. O sideboard em BO1 também tem até 15 cartas, mas só é usado
+por efeitos que buscam cartas de fora do jogo.
 
 ## Requisitos
 
@@ -37,7 +37,7 @@ cartas de fora do jogo.
      nesse campo;
    - preferir respostas flexíveis a respostas estreitas, já que não há como trocá-las;
    - reavaliar cartas cujo valor depende do sideboard (ex.: efeitos que buscam cartas de
-     fora do jogo) e montar o sideboard de até 7 cartas só se o deck as usa;
+     fora do jogo) e montar o sideboard (até 15 cartas) em função delas, se o deck as usa;
    - reconferir curva e base de mana após as trocas (spec 004).
 4. **BO1 → BO3:** usar o snapshot de meta **BO3**; decidir o que sai da lista principal
    para o sideboard; construir o sideboard de 15 e o guia de trocas por matchup.

@@ -24,8 +24,8 @@ no papel.
    - Singleton com comandante: Commander (100), Brawl (100 no Arena), Standard Brawl (60),
      Pauper Commander, Oathbreaker — cópia única, identidade de cor, comandante válido.
    - Limitado (draft/selado): mínimo de 40, sem limite de cópias.
-   - Exceções: terrenos básicos, cartas "qualquer número de cópias", restritas em Vintage,
-     melhor-de-um no Arena (sideboard de 7).
+   - Exceções: terrenos básicos, cartas "qualquer número de cópias",
+     restritas em Vintage. O sideboard é de até 15 também em melhor-de-um no Arena.
 3. **Validação** que aponta cada problema: carta inexistente (com sugestão de nome),
    carta ilegal/banida, excesso de cópias, tamanho errado, fora da identidade de cor,
    comandante inválido, carta indisponível na plataforma escolhida.

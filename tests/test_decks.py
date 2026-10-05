@@ -140,10 +140,10 @@ def test_copies_count_main_plus_sideboard_and_exceptions(conn):
 def test_restricted_and_sideboard_limits(conn):
     errors = check(conn, sixty("2 Broken Orb"), "vintage")
     assert "2 cópias de Broken Orb; o máximo é 1 (restrita)." in errors
-    side = "\n\nSideboard\n" + "\n".join(f"1 Filler {i}" for i in range(20, 28))
+    side = "\n\nSideboard\n" + "\n".join(f"1 Filler {i}" for i in range(20, 35))
     assert check(conn, sixty("4 Bear") + side, "standard") == []
-    assert check(conn, sixty("4 Bear") + side, "standard", bo1=True) == [
-        "Sideboard com 8 cartas; o máximo em melhor-de-um no Arena é 7."
+    assert check(conn, sixty("4 Bear") + side + "\n1 Filler 40", "standard") == [
+        "Sideboard com 16 cartas; o máximo é 15."
     ]
 
 

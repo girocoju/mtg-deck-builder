@@ -4,7 +4,7 @@
       branco), texto simples, Markdown (primeiro bloco de código)
 - [x] Resolução de nomes na base, com face da frente, split com `/` e sugestões
 - [x] Regras por formato como dados (`formats.RULES`)
-- [x] Validação: tamanho, sideboard (inclusive BO1), cópias e exceções, legalidade,
+- [x] Validação: tamanho, sideboard, cópias e exceções, legalidade,
       restritas, comandante, parceria, identidade de cor, plataforma
 - [x] Exportação para Arena, MTGO e texto
 - [x] Custo: USD, EUR, tix e wildcards por raridade
@@ -24,5 +24,9 @@
 - **Ida e volta:** a exportação para o Arena foi relida e validada sem diferença.
 - **Custo:** valores calculados para a lista de Brawl (USD, EUR, tix e wildcards).
 - Tempo de uma validação com a base real: cerca de 0,5 s.
+
+Correção de 2026-10-04: o usuário informou que o sideboard em BO1 no Arena passou a ser de
+até 15 cartas; a opção `--bo1` (que limitava a 7) foi removida. Ver a lição em
+`knowledge/licoes/`.
 
 Não verificado: importação dentro do cliente do Arena e do MTGO (ver limitações no plano).

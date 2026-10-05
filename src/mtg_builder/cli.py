@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 
-from . import db, decklist, formats, query, scryfall
+from . import analysis, db, decklist, formats, query, scryfall
 
 
 def _card_dict(row):
@@ -137,7 +137,7 @@ def _read_deck(path):
 def cmd_deck_validate(args):
     conn = db.connect(readonly=True)
     deck = _read_deck(args.file)
-    errors, warnings = formats.validate(conn, deck, args.format, bo1=args.bo1, game=args.game)
+    errors, warnings = formats.validate(conn, deck, args.format, game=args.game)
     data = {"valid": not errors, "format": args.format.lower(),
             "main": deck.count("main"), "sideboard": deck.count("sideboard"),
             "commander": [e.name for e in deck.commander], "errors": errors, "warnings": warnings}
@@ -178,6 +178,27 @@ def cmd_deck_cost(args):
         lines.append(f"Fora do Arena ({len(data['fora_do_arena'])}): "
                      + ", ".join(data["fora_do_arena"][:10]))
     _emit(args, data, lines)
+
+
+def cmd_deck_analyze(args):
+    conn = db.connect(readonly=True)
+    deck = _read_deck(args.file)
+    unknown = decklist.resolve(conn, deck)
+    data = analysis.analyze(deck)
+    data["nao_encontradas"] = [entry.name for entry, _ in unknown]
+    lines = [analysis.report(data)]
+    if unknown:
+        lines.append("Cartas não encontradas (fora da análise): " + ", ".join(data["nao_encontradas"]))
+    _emit(args, data, lines)
+
+
+def cmd_odds(args):
+    seen = analysis.cards_seen(args.turn, on_the_play=not args.draw)
+    chance = analysis.hypergeom_at_least(args.deck, args.copies, seen, args.min)
+    data = {"deck": args.deck, "copies": args.copies, "turn": args.turn, "cards_seen": seen,
+            "at_least": args.min, "probability": chance}
+    _emit(args, data, [f"{chance:.1%} de ter pelo menos {args.min} de {args.copies} cópias até o "
+                       f"turno {args.turn} ({seen} cartas vistas de {args.deck}, sem mulligan)"])
 
 
 def main(argv=None):
@@ -233,7 +254,6 @@ def main(argv=None):
     p = deck_sub.add_parser("validate", help="confere a lista contra as regras do formato")
     p.add_argument("file", help=file_help)
     p.add_argument("--format", required=True, help=f"um de: {', '.join(sorted(formats.RULES))}")
-    p.add_argument("--bo1", action="store_true", help="melhor-de-um no Arena (sideboard de até 7)")
     p.add_argument("--game", choices=["paper", "arena", "mtgo"],
                    help="exige que toda carta exista na plataforma")
     p.set_defaults(func=cmd_deck_validate)
@@ -246,6 +266,18 @@ def main(argv=None):
     p = deck_sub.add_parser("cost", help="preço em papel/MTGO e wildcards do Arena")
     p.add_argument("file", help=file_help)
     p.set_defaults(func=cmd_deck_cost)
+
+    p = deck_sub.add_parser("analyze", help="curva, base de mana, papéis e probabilidades")
+    p.add_argument("file", help=file_help)
+    p.set_defaults(func=cmd_deck_analyze)
+
+    p = sub.add_parser("odds", help="chance de comprar N cópias até um turno (hipergeométrica)")
+    p.add_argument("--deck", type=int, default=60, help="cartas no deck (padrão 60)")
+    p.add_argument("--copies", type=int, required=True, help="cópias da carta (ou terrenos) no deck")
+    p.add_argument("--turn", type=int, required=True)
+    p.add_argument("--min", type=int, default=1, help="quantas cópias pelo menos (padrão 1)")
+    p.add_argument("--draw", action="store_true", help="jogando depois (uma carta a mais)")
+    p.set_defaults(func=cmd_odds)
 
     args = parser.parse_args(argv)
     args.func(args)

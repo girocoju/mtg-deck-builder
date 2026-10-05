@@ -8,7 +8,7 @@ lições do formato ou tema envolvido. Processo em [COMO-ADICIONAR.md](../COMO-A
 
 | Data | Lição | Formato / tema | Situação |
 | --- | --- | --- | --- |
-| — | Nenhuma lição registrada ainda | — | — |
+| 2026-10-04 | [Sideboard em BO1 no Arena é de até 15 cartas](2026-10-04-sideboard-bo1-arena.md) | Arena, BO1, todos os formatos de 60 | ativa |
 
 ## Modelo
 

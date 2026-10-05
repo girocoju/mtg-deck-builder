@@ -81,7 +81,7 @@ def can_pair(a, b):
     return False
 
 
-def validate(conn, deck, fmt, bo1=False, game=None):
+def validate(conn, deck, fmt, game=None):
     """Confere a lista contra as regras do formato. Devolve (erros, avisos), listas de
     textos; a lista é válida se `erros` estiver vazia. Chama decklist.resolve()."""
     fmt = fmt.lower()
@@ -102,10 +102,10 @@ def validate(conn, deck, fmt, bo1=False, game=None):
                       f"(contando o comandante); tem {size}.")
     if "min_main" in rules and size < rules["min_main"]:
         errors.append(f"O deck principal precisa de pelo menos {rules['min_main']} cartas; tem {size}.")
-    max_side = 7 if bo1 and rules.get("max_side") == 15 else rules.get("max_side")
+    # O limite de sideboard é o mesmo em BO1 e BO3 (no Arena, BO1 também aceita até 15).
+    max_side = rules.get("max_side")
     if max_side is not None and deck.count("sideboard") > max_side:
-        where = " em melhor-de-um no Arena" if bo1 and max_side == 7 else ""
-        errors.append(f"Sideboard com {deck.count('sideboard')} cartas; o máximo{where} é {max_side}.")
+        errors.append(f"Sideboard com {deck.count('sideboard')} cartas; o máximo é {max_side}.")
 
     # Cópias (deck principal + sideboard + comandante)
     restricted = set()

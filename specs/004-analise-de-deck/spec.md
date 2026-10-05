@@ -1,6 +1,6 @@
 # 004 — Análise de deck
 
-**Status:** 📝 Especificada
+**Status:** ✅ Concluída
 
 ## Objetivo
 
@@ -30,15 +30,10 @@ para que ajustes e diagnósticos partam de medidas, não de impressão.
 
 ## Critérios de aceite
 
-- [ ] Para uma lista conhecida, os números batem com a contagem manual.
-- [ ] Um deck de duas cores com fontes insuficientes de uma delas gera alerta.
-- [ ] As probabilidades batem com valores de referência da distribuição hipergeométrica.
-- [ ] Cartas dupla-face, split e de custo X são contadas de forma documentada.
-
-## Questões em aberto
-
-- O Scryfall publica um bulk file `oracle_tags` (tags da comunidade como remoção, ramp,
-  compra de cartas). Avaliar no plano se ele substitui a heurística do requisito 4.
+- [x] Para uma lista conhecida, os números batem com a contagem manual.
+- [x] Um deck de duas cores com fontes insuficientes de uma delas gera alerta.
+- [x] As probabilidades batem com valores de referência da distribuição hipergeométrica.
+- [x] Cartas dupla-face, split e de custo X são contadas de forma documentada.
 
 ## Fora do escopo
 

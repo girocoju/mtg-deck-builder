@@ -36,7 +36,7 @@ decks/README.md   convenção dos arquivos de deck
 
 | Família | Formatos | Regras |
 | --- | --- | --- |
-| Construído de 60 | standard, pioneer, modern, legacy, vintage, pauper, historic, timeless, alchemy, explorer, future, premodern, oldschool, penny | ≥ 60, sideboard ≤ 15 (≤ 7 com `--bo1`), ≤ 4 cópias, restritas = 1 |
+| Construído de 60 | standard, pioneer, modern, legacy, vintage, pauper, historic, timeless, alchemy, explorer, future, premodern, oldschool, penny | ≥ 60, sideboard ≤ 15 (em BO1 e BO3), ≤ 4 cópias, restritas = 1 |
 | Singleton com comandante | commander, duel, predh, paupercommander, brawl, competitivebrawl, standardbrawl (60), oathbreaker (60) | tamanho exato, cópia única, comandante válido, parceria válida, identidade de cor |
 | Singleton sem comandante | gladiator | 100 exatas, cópia única |
 | Limitado | limited | ≥ 40, sem limite de cópias, sem checagem de legalidade |
