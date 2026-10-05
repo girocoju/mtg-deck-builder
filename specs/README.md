@@ -14,7 +14,7 @@ Nenhuma funcionalidade é implementada sem uma spec aprovada.
 | 004 | [Análise de deck](004-analise-de-deck/spec.md)              | Curva, base de mana, papéis das cartas, diagnóstico            | ✅ Concluída    |
 | 005 | [Metagame](005-metagame/spec.md)                            | Snapshots do meta (MTGGoldfish; BO1 por importação)            | ✅ Concluída    |
 | 006 | [Deck builder construído](006-deck-builder-construido/spec.md) | "Crie um deck anti meta no formato Standard"                | 🚧 Em andamento |
-| 007 | [Commander e Brawl](007-commander-e-brawl/spec.md)          | "Monte um deck de Brawl com o commander X" (EDHREC)            | 📝 Especificada |
+| 007 | [Commander e Brawl](007-commander-e-brawl/spec.md)          | "Monte um deck de Brawl com o commander X" (EDHREC)            | ✅ Concluída    |
 | 008 | [Draft](008-draft/spec.md)                                  | "Crie uma estratégia de draft para a coleção X" (17Lands)      | 📝 Especificada |
 | 009 | [Adaptação BO3 ↔ BO1](009-adaptacao-bo3-bo1/spec.md)        | "Adapte o deck em questão BO3 para BO1"                        | 📝 Especificada |
 

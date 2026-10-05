@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 
-from . import analysis, db, decklist, formats, meta, query, scryfall
+from . import analysis, db, decklist, edhrec, formats, meta, query, scryfall
 
 
 def _card_dict(row):
@@ -242,6 +242,68 @@ def cmd_meta_import(args):
     print(f"{len(snapshot['archetypes'])} arquétipos importados em {snapshot['file']}")
 
 
+def _commander_names(args):
+    return [args.commander] + ([args.partner] if args.partner else [])
+
+
+def cmd_commander(args):
+    conn = db.connect(readonly=True)
+    data = edhrec.commander_report(conn, _commander_names(args), args.format)
+    if data["ok"]:
+        lines = [f"{' + '.join(data['commanders'])}: comandante válido em {data['format']} "
+                 f"({data['deck_size']} cartas). Identidade de cor: {data['identity'] or 'incolor'}."]
+    else:
+        lines = ["Comandante inválido:"] + [f"  {p}" for p in data["problems"]]
+    _emit(args, data, lines)
+    if not data["ok"]:
+        sys.exit(1)
+
+
+def cmd_edhrec(args):
+    conn = db.connect(readonly=True)
+    names = _commander_names(args)
+    fmt = args.format.lower() if args.format else None
+    try:
+        if args.average:
+            data = edhrec.average_deck(conn, names, fmt, args.game, force=args.force)
+        else:
+            data = edhrec.recommendations(conn, names, fmt, args.game, force=args.force)
+    except RuntimeError as error:
+        sys.exit(f"EDHREC indisponível: {error} Use a busca na base (`mtg search`) e declare a falta dos dados.")
+
+    scope = f"filtrado para {fmt or 'qualquer formato'}" + (f", {args.game}" if args.game else "")
+    head = (f"{' + '.join(names)} | fonte: EDHREC (Commander de papel) | coletado em "
+            f"{data['fetched_at'][:10]} | {scope}")
+    if args.average:
+        lines = [head, f"Deck médio: {data['kept_count']} cartas utilizáveis, "
+                       f"{data['dropped_count']} descartadas pelo filtro.", "", "Commander"]
+        lines += [f"1 {name}" for name in data["commander"]] + ["", "Deck"]
+        lines += [f"{i['qty']} {i['name']}" for i in data["kept"]]
+        if data["dropped"]:
+            lines += ["", "# Descartadas: " + "; ".join(f"{i['name']} ({i['status']})" for i in data["dropped"])]
+    else:
+        usable = [c for c in data["cards"] if c["status"] == "ok"
+                  and (c["inclusion"] or 0) >= args.min_inclusion]
+        usable.sort(key=lambda c: -c["synergy"])
+        excluded = [c for c in data["cards"] if c["status"] != "ok"]
+        lines = [head, f"{data['decks']} decks no EDHREC | temas: "
+                 + ", ".join(f"{t} ({n})" for t, n in data["themes"]),
+                 "Média por tipo: " + ", ".join(f"{k} {v}" for k, v in data["average_types"].items() if v),
+                 "", "sinergia | inclusão | carta [papéis] (categoria)"]
+        lines += [f"  {c['synergy']:+.2f} | {c['inclusion']:>5}% | {c['name']}"
+                  + (f" [{', '.join(c['roles'])}]" if c["roles"] else "")
+                  + (" [GAME CHANGER]" if c["game_changer"] else "") + f" ({c['category']})"
+                  for c in usable]
+        reasons = {}
+        for c in excluded:
+            reasons[c["status"]] = reasons.get(c["status"], 0) + 1
+        lines += ["", f"{len(usable)} cartas utilizáveis; {len(excluded)} excluídas pelo filtro: "
+                  + ", ".join(f"{n} {r}" for r, n in reasons.items())]
+        if args.all:
+            lines += [f"  {c['name']} — {c['status']}" for c in excluded]
+    _emit(args, data, lines)
+
+
 def main(argv=None):
     sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(prog="mtg", description=__doc__)
@@ -336,6 +398,23 @@ def main(argv=None):
     p.add_argument("--url", help="endereço de onde os dados foram tirados")
     p.add_argument("--date", help="data dos dados (AAAA-MM-DD); padrão: hoje")
     p.set_defaults(func=cmd_meta_import)
+
+    p = sub.add_parser("commander", help="confere se uma carta pode ser comandante no formato")
+    p.add_argument("commander")
+    p.add_argument("--partner", help="segundo comandante")
+    p.add_argument("--format", required=True, help="commander, brawl, standardbrawl...")
+    p.set_defaults(func=cmd_commander)
+
+    p = sub.add_parser("edhrec", help="sinergias do EDHREC para um comandante, filtradas pela base")
+    p.add_argument("commander")
+    p.add_argument("--partner", help="segundo comandante")
+    p.add_argument("--format", help="só cartas legais no formato (ex.: brawl)")
+    p.add_argument("--game", choices=["paper", "arena", "mtgo"], help="só cartas da plataforma")
+    p.add_argument("--average", action="store_true", help="deck médio do EDHREC, como modelo de partida")
+    p.add_argument("--min-inclusion", type=float, default=0, help="inclusão mínima, em %%")
+    p.add_argument("--all", action="store_true", help="lista também as cartas excluídas")
+    p.add_argument("--force", action="store_true", help="ignora o cache de 7 dias")
+    p.set_defaults(func=cmd_edhrec)
 
     p = sub.add_parser("odds", help="chance de comprar N cópias até um turno (hipergeométrica)")
     p.add_argument("--deck", type=int, default=60, help="cartas no deck (padrão 60)")

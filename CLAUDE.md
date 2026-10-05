@@ -28,6 +28,8 @@ pedidos como "crie um deck anti meta no Standard" ou "estratégia de draft para 
 
 - `deck-construido` (`.claude/skills/deck-construido/SKILL.md`): pedidos de deck de 60
   cartas em formatos de construído, inclusive anti-meta. Siga as etapas dela.
+- `deck-comandante` (`.claude/skills/deck-comandante/SKILL.md`): Commander, Brawl e
+  Standard Brawl, a partir de um comandante.
 
 ## Ferramentas
 
@@ -46,6 +48,8 @@ Ambiente: `.venv` com o pacote instalado em modo editável (`pip install -e ".[d
 .venv\Scripts\mtg deck cost <arquivo>
 .venv\Scripts\mtg deck analyze <arquivo>          # curva, terrenos, fontes por cor, papéis, alertas
 .venv\Scripts\mtg odds --copies 4 --turn 4 [--deck 60] [--min 1] [--draw]
+.venv\Scripts\mtg commander "Nome" [--partner "Nome"] --format brawl   # pode ser comandante?
+.venv\Scripts\mtg edhrec "Nome" --format brawl --game arena [--average]  # sinergias filtradas pela base
 .venv\Scripts\mtg meta update standard          # coleta do MTGGoldfish (BO3), no máximo 1x por dia
 .venv\Scripts\mtg meta show standard [--mode bo1|bo3]   # arquétipos, resumo, cartas mais jogadas
 .venv\Scripts\mtg meta import meta.csv --format standard --mode bo1 --source untapped

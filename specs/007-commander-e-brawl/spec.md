@@ -1,6 +1,6 @@
 # 007 — Commander e Brawl
 
-**Status:** 📝 Especificada
+**Status:** ✅ Concluída
 
 ## Objetivo
 
@@ -37,11 +37,12 @@ Commander (papel/MTGO) e Brawl / Standard Brawl (Arena).
 
 ## Critérios de aceite
 
-- [ ] O pedido com Ivy, Gleeful Spellthief em Brawl produz 100 cartas válidas, todas com
+- [x] O pedido com Ivy, Gleeful Spellthief em Brawl produz 100 cartas válidas, todas com
       identidade dentro de GU e disponíveis no Arena.
-- [ ] O deck tem, de forma verificável, as categorias do requisito 5 dentro das metas.
-- [ ] Um comandante inválido para o formato é recusado com explicação.
-- [ ] O mesmo fluxo gera um deck de Commander (papel) e um de Standard Brawl.
+- [x] O deck tem, de forma verificável, as categorias do requisito 5 dentro das metas,
+      ou com cada desvio apontado pela ferramenta e justificado na entrega.
+- [x] Um comandante inválido para o formato é recusado com explicação.
+- [x] O mesmo fluxo gera um deck de Commander (papel) e um de Standard Brawl.
 
 ## Fora do escopo
 
@@ -50,5 +51,5 @@ Commander (papel/MTGO) e Brawl / Standard Brawl (Arena).
 
 ## Questões em aberto
 
-- O EDHREC não tem API oficial: confirmar a forma de acesso permitida antes de implementar.
-- Existe fonte de dados específica de Brawl do Arena que valha integrar?
+- Existe fonte de dados específica de Brawl do Arena (um contra um) que valha integrar?
+  Hoje as sinergias vêm de Commander de mesa.

@@ -42,6 +42,17 @@ ROLES = {
 }
 
 
+# Proporções de referência para 100 cartas com comandante (knowledge/commander-e-brawl.md,
+# seção 3): (rótulo, papel contado, mínimo, máximo). Escaladas pelo tamanho do deck.
+COMMANDER_TARGETS = (
+    ("Terrenos", "terreno", 36, 38),
+    ("Aceleração", "aceleração", 8, 12),
+    ("Compra de cartas", "compra de cartas", 8, 12),
+    ("Interação pontual (remoção + anulação)", "interação pontual", 8, 10),
+    ("Remoção em massa", "remoção em massa", 2, 4),
+)
+
+
 def hypergeom_at_least(population, successes, draws, k=1):
     """P(pelo menos k sucessos em `draws` cartas de um deck de `population` com `successes` cópias)."""
     draws = min(draws, population)
@@ -299,7 +310,20 @@ def analyze(deck):
     if tapped > tapped_limit:
         alerts.append(f"{tapped} terrenos entram virados; acima de ~{tapped_limit} a base fica lenta.")
 
+    # Proporções por categoria para decks com comandante (guia, não regra)
+    proportions = []
+    if commanders:
+        scale = total / 100
+        counted = {**role_counts, "terreno": round(land_count, 1),
+                   "interação pontual": role_counts.get("remoção pontual", 0) + role_counts.get("anulação", 0)}
+        for label, role, low, high in COMMANDER_TARGETS:
+            have = counted.get(role, 0)
+            lo, hi = round(low * scale), round(high * scale)
+            proportions.append({"categoria": label, "tem": have, "alvo": [lo, hi],
+                                "situacao": "abaixo" if have < lo else "acima" if have > hi else "dentro"})
+
     return {
+        "proporcoes": proportions,
         "cartas": total, "tamanho_de_referencia": size,
         "magicas": n_spells, "valor_de_mana_medio": round(avg_mv, 2),
         "terrenos": round(land_count, 2), "cartas_de_terreno": land_cards,
@@ -333,6 +357,10 @@ def report(data):
                      f"({info['fontes_desviradas']} desviradas, +{info['fontes_extras']:g} não-terreno) | {demand}")
     lines += ["", "Papéis (uma carta pode ter mais de um):"]
     lines += [f"  {role}: {count}" for role, count in sorted(data["papeis"].items(), key=lambda x: -x[1])]
+    if data.get("proporcoes"):
+        lines += ["", "Proporções de referência para decks com comandante (guia, não regra):"]
+        lines += [f"  {p['categoria']}: {p['tem']:g} (alvo {p['alvo'][0]}–{p['alvo'][1]}) — {p['situacao']}"
+                  for p in data["proporcoes"]]
     odds = data["probabilidades"]
     if odds["terrenos_no_turno"]:
         lines += ["", "Probabilidades (mão de 7, sem mulligan, jogando primeiro):",
