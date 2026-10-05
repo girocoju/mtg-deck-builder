@@ -24,6 +24,11 @@ pedidos como "crie um deck anti meta no Standard" ou "estratégia de draft para 
 - `NextLevelMagic2015.pdf` é material protegido: não vai para o git e não deve ser
   reproduzido; só conceitos destilados com palavras próprias (spec 002).
 
+## Skills
+
+- `deck-construido` (`.claude/skills/deck-construido/SKILL.md`): pedidos de deck de 60
+  cartas em formatos de construído, inclusive anti-meta. Siga as etapas dela.
+
 ## Ferramentas
 
 Ambiente: `.venv` com o pacote instalado em modo editável (`pip install -e ".[dev]"`).

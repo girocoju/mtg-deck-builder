@@ -1,6 +1,6 @@
 # 006 — Deck builder de construído
 
-**Status:** 📝 Especificada
+**Status:** 🚧 Em andamento — fluxo e skill prontos e exercitados em Standard BO3; faltam os critérios marcados abaixo
 
 ## Objetivo
 
@@ -40,12 +40,12 @@ uma lista de 60 cartas + sideboard, válida, exportável e com a estratégia exp
 
 ## Critérios de aceite
 
-- [ ] O pedido "Crie um deck anti meta no formato Standard" produz uma lista que passa no
+- [x] O pedido "Crie um deck anti meta no formato Standard" produz uma lista que passa no
       validador, com sideboard de 15 e todos os itens de entrega do requisito 4.
 - [ ] O mesmo pedido em BO1 e em BO3 usa o snapshot de meta do modo certo e a resposta
       declara para qual modo o deck foi construído.
-- [ ] A explicação cita os arquétipos do snapshot e a data dele.
-- [ ] Toda carta da lista existe na base e é legal no formato na data da sincronização.
+- [x] A explicação cita os arquétipos do snapshot e a data dele.
+- [x] Toda carta da lista existe na base e é legal no formato na data da sincronização.
 - [ ] O mesmo fluxo funciona para pelo menos Standard, Pioneer, Modern e Pauper.
 - [ ] Restrição de orçamento informada pelo usuário é respeitada e demonstrada.
 

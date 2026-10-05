@@ -30,7 +30,7 @@ ROLES = {
     "remoção pontual": r"(destroy|exile) (up to \w+ )?(other )?target (?!land)|deals? \w+ damage to "
                        r"(any target|target creature|up to)|target creature gets -|fights? |"
                        r"return target (nonland permanent|creature)[^.]* to its owner's hand",
-    "remoção em massa": r"(destroy|exile) (all|each) |all creatures get -|"
+    "remoção em massa": r"(destroy|exile) (all|each) (?!graveyards)|all creatures get -|"
                         r"deals? \w+ damage to each (creature|opponent's creature)|each creature gets -",
     "anulação": r"counter target",
     "compra de cartas": r"draws? (a|two|three|four|x|that many) cards?|draw cards equal",
