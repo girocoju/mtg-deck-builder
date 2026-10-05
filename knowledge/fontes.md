@@ -141,7 +141,7 @@ Observações da ingestão:
 | --- | --- | --- | --- |
 | Proporções para 100 cartas | Spellweave, "Commander Deck Building Guide" (abr. 2026) | commander-e-brawl (seção 3) | Números iguais aos da página |
 | Brackets e Game Changers | Kraken The Meta, "MTG Commander Brackets Guide" (2026-08-08) | commander-e-brawl (seção 4) | Limites conferidos. **Divergência:** o resumo lista Sol Ring como Game Changer; a página e a base dizem que não é |
-| Mão inicial em BO1 | MTG Arena Zone, "Finding the Ideal Land Count for BO1" (2020) | base-de-mana (Parte 2, seção 1.4) | O artigo não descreve o mecanismo nem o número de 80% do resumo: ficaram como não verificados |
+| Mão inicial em BO1 | MTG Arena Zone, "Finding the Ideal Land Count for BO1" (2020); texto do usuário sobre o algoritmo (sem fonte primária); MTG Arena Zone, "Opening Hand Algorithm and Smoothing" (2021), localizado por nós | base-de-mana (Parte 2, seção 1.4) | Mecanismo conferido nas declarações oficiais reproduzidas no artigo de 2021. Duas ou três mãos e mulligans: fontes divergem, não verificado. Efeito calculado por modelo próprio |
 | Métricas do 17Lands | 17Lands Blog, "Using Win Rate Data" (2021, atualizado em 2026) | limitado-e-draft (seção "Ler dados de win rate") | GIH, OH, GD e GP WR e os vieses conferidos; ALSA e "IHD" (IWD) não constam do artigo |
 
 ## Fontes desejadas

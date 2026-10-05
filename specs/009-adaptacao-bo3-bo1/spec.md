@@ -72,5 +72,6 @@ spec reaproveita as etapas).
 
 ## Questões em aberto
 
-- O algoritmo de mão inicial do Arena em BO1 não é público. Definir no plano se alguma
-  regra prática sobre número de terrenos em BO1 será adotada e com que fonte.
+- Nenhuma no momento. A regra de terrenos em BO1 está em `knowledge/base-de-mana.md`
+  (seção 1.4): aggro de curva baixa pode cortar 1 a 2 terrenos; os demais não cortam;
+  ao voltar para BO3, repor.

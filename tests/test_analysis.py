@@ -76,6 +76,20 @@ def test_hypergeometric_matches_reference_values():
     assert analysis.cards_seen(3, on_the_play=False) == 10
 
 
+def test_bo1_hand_smoothing_model():
+    raw = analysis.hand_land_distribution(60, 24)
+    assert sum(raw) == pytest.approx(1.0)
+    assert analysis.smoothed_land_distribution(60, 24, hands=1) == pytest.approx(raw)
+    two = analysis.smoothed_land_distribution(60, 24)
+    assert sum(two) == pytest.approx(1.0)
+    # média 2,8: por distância, 7 é a pior mão, depois 6, depois 0
+    assert two[7] == pytest.approx(raw[7] ** 2)
+    assert two[0] == pytest.approx((raw[0] + raw[6] + raw[7]) ** 2 - (raw[6] + raw[7]) ** 2)
+    assert sum(two[2:5]) > sum(raw[2:5]) and two[3] > raw[3]
+    three = analysis.smoothed_land_distribution(60, 24, hands=3)
+    assert sum(three[2:5]) > sum(two[2:5])
+
+
 def test_requirement_key_handles_x_hybrid_and_generic():
     assert analysis.requirement_key("{1}{U}{U}", "U") == ("1CC", 3)
     assert analysis.requirement_key("{X}{G}{G}", "G") == ("CC", 2)

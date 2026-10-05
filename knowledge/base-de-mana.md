@@ -372,23 +372,61 @@ cEDH [K7].
 **MTG Arena melhor-de-um [K4].** O algoritmo de suavização de mão inicial não é público;
 Karsten declara não saber como ajustar a base de mana para ele. Não há número.
 
-O que se sabe por outras fontes, sem confirmação oficial: em BO1 o Arena gera mais de uma
-mão inicial (o material de apoio do usuário fala em 2 ou 3) e entrega a que tem a
-proporção de terrenos mais próxima da proporção do deck. O efeito é reduzir mãos com
-terrenos de menos ou de mais. Consequências práticas:
+**Como a mão inicial funciona em BO1 (suavização de mão).** Declaração oficial da
+Wizards (fórum do Arena, outubro de 2018, citada em [A2]): o sistema compra uma mão
+inicial de cada uma de duas cópias embaralhadas do deck e **tende** a entregar a que tem
+a mistura de terrenos e mágicas mais próxima da média do deck, **sem olhar as cores**.
+Em 2019 um designer do jogo esclareceu que "tende" não é "sempre": o sistema nunca
+prefere uma mão de zero ou sete terrenos a uma de três ou quatro, mas nos casos
+próximos a escolha é probabilística, e o peso exato não foi divulgado [A2].
 
-- as probabilidades de mão inicial calculadas por `mtg deck analyze` e pelas tabelas
-  deste documento são de sorteio puro e **subestimam** a regularidade das mãos em BO1;
-- o algoritmo só atua na mão inicial: as compras seguintes são aleatórias, então a
-  contagem de terrenos continua valendo para bater os land drops dos turnos 3 a 5;
-- por isso, a regra do projeto é **não cortar terrenos por causa do BO1** sem evidência
-  de teste. Um corte de 1 terreno em deck de curva baixa é hipótese a registrar como
-  lição, não regra.
+Pontos em que as fontes divergem (**não verificados**):
 
-Números de terceiros, **não verificados**: o material do usuário cita mais de 80% de
-mãos com 2 a 4 terrenos para decks de 24 a 26 terrenos em BO1; o artigo que ele indica
-(MTG Arena Zone, 2020) traz tabelas medidas em amostras pequenas (mínimo de 100 mãos
-por contagem) e não descreve o mecanismo. Tratar como ordem de grandeza. [A1]
+- **Duas ou três mãos:** a declaração de 2018 fala em duas. O material do usuário
+  menciona até três em certos formatos ou períodos, e há relatos de que o número teria
+  subido para três em todas as filas BO1; não localizamos a nota oficial.
+- **Mulligans:** a Wizards disse em 2018 que a suavização não vale para mãos de mulligan
+  (é o que o material do usuário também afirma). A amostra medida em [A2] não mostrou
+  diferença entre a mão inicial e as de mulligan, e os mesmos relatos dizem que a
+  suavização passou a valer para mulligans. Tratar como incerto.
+- **BO3** usa sorteio puro, como no jogo de mesa.
+
+**Quanto isso muda as mãos (calculado).** Modelo do projeto, em
+`analysis.smoothed_land_distribution`: sorteia N mãos e fica **sempre** com a mais
+próxima da média. Como o Arena só tende a fazer isso, os números de BO1 abaixo são o
+**limite superior** do efeito; a realidade fica entre a coluna "puro" e a de BO1. Deck de
+60 cartas, mão de 7:
+
+| Terrenos | 0–1 terreno: puro | BO1, 2 mãos | BO1, 3 mãos | 2–4 terrenos: puro | BO1, 2 mãos | BO1, 3 mãos | 5+ terrenos: puro | BO1, 2 mãos |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 18 | 31,4% | 15,7% | 7,2% | 66,4% | 84,3% | 92,8% | 2,1% | 0,0% |
+| 20 | 24,7% | 12,8% | 5,9% | 71,7% | 87,1% | 94,1% | 3,6% | 0,1% |
+| 22 | 19,0% | 5,4% | 1,4% | 75,4% | 94,0% | 98,5% | 5,6% | 0,6% |
+| 24 | 14,3% | 4,1% | 1,0% | 77,5% | 94,9% | 98,9% | 8,3% | 1,0% |
+| 26 | 10,4% | 1,5% | 0,2% | 77,8% | 95,1% | 98,9% | 11,8% | 3,4% |
+
+Conferência com dados medidos: em [A2], duas amostras de 104 mãos em BO1 tiveram 3
+terrenos em 52% e 58% das mãos (contra 33% em papel) e só 1% de mãos com 0, 1 ou 5+
+terrenos. O modelo de duas mãos dá 52% de mãos com 3 terrenos para 24 em 60. A amostra é
+pequena e o artigo não informa o número de terrenos do deck, então é coerência, não prova.
+
+**Como usar na construção (BO1).**
+
+- **Aggro de curva baixa pode usar 1 a 2 terrenos a menos** que o indicado pela fórmula.
+  É padrão relatado pela comunidade (18 a 20 terrenos onde em BO3 seriam 20 a 22; em
+  [A2] o autor relata bons resultados com 18 em um mono-red) e é coerente com a tabela:
+  com 20 terrenos, mãos de 0–1 terreno caem de 25% para algo entre 13% e 25%. Sempre
+  declarar o corte na entrega e registrar o resultado dos testes como lição.
+- **Midrange, controle e ramp não cortam.** A suavização só atua na mão inicial; as
+  compras seguintes são aleatórias, e esses decks dependem de bater os land drops dos
+  turnos 4 a 6. Note também que o ganho de 22 para 26 terrenos quase some em BO1 na faixa
+  de 2 a 4 terrenos: o que os terrenos extras compram é o meio do jogo, não a mão.
+- **Cores não são suavizadas.** O algoritmo conta terrenos, não cores: a tabela de fontes
+  por cor (seção 2) vale integralmente em BO1. Decks de três cores não ganham nada na
+  consistência de cor.
+- **O relatório de `mtg deck analyze`** mostra a chance de 2 a 4 terrenos no sorteio puro
+  e o teto estimado em BO1.
+- **Ao adaptar de BO1 para BO3** (spec 009), repor os terrenos cortados.
 
 **Brawl.** Nenhum dos artigos lidos trata de Brawl especificamente. Para Brawl de 100
 cartas, usar os números de 99 cartas como aproximação (a regra 103.4c citada em [K2] dá
@@ -817,7 +855,14 @@ página.
 
 - **[A1]** DotGG, "Finding the Ideal Land Count for BO1". MTG Arena Zone, 2020-03-27.
   <https://mtgazone.com/finding-the-ideal-land-count-for-bo1/> — indicado pelo usuário;
-  só a nota sobre BO1 da seção 1.4. Acesso em 2026-10-04.
+  tabelas medidas em amostras pequenas, não transcritas. Acesso em 2026-10-04.
+- **[A2]** DotGG, "MTG Arena's Opening Hand Algorithm and Smoothing: Some Real Outcomes".
+  MTG Arena Zone, 2021-01-01.
+  <https://mtgazone.com/mtg-arenas-opening-hand-algorithm-and-smoothing/> — reproduz as
+  declarações oficiais de 2018 e 2019 e traz as amostras medidas. Acesso em 2026-10-04.
+- Texto "Como funciona a mão inicial em BO1", fornecido pelo usuário em 2026-10-04, sem
+  fonte primária indicada: usado como roteiro; cada ponto foi conferido em [A2] ou está
+  marcado como não verificado.
 
 Código e dados do autor citados nos artigos (não consultados): repositório
 `frankkarsten/MTG-Math` no GitHub e o conjunto de dados `frankkarsten/mtg-lands` no

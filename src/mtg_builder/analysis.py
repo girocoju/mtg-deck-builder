@@ -55,6 +55,32 @@ def cards_seen(turn, on_the_play=True):
     return 7 + turn - (1 if on_the_play else 0)
 
 
+def hand_land_distribution(deck, lands, hand=7):
+    """P(k terrenos) em uma mão de `hand` cartas, sorteio puro. Lista indexada por k."""
+    total = comb(deck, hand)
+    return [comb(lands, k) * comb(deck - lands, hand - k) / total for k in range(hand + 1)]
+
+
+def smoothed_land_distribution(deck, lands, hands=2, hand=7):
+    """Modelo da mão inicial em BO1 no Arena: sorteia `hands` mãos e fica com a de
+    quantidade de terrenos mais próxima da média do deck. O Arena só "tende" a escolher
+    a mais próxima (o peso exato não é público), então isto é o LIMITE SUPERIOR do efeito."""
+    raw = hand_land_distribution(deck, lands, hand)
+    target = hand * lands / deck
+    groups = {}
+    for k in range(hand + 1):
+        groups.setdefault(round(abs(k - target), 9), []).append(k)
+    result, worse_or_equal = [0.0] * (hand + 1), 1.0
+    for distance in sorted(groups):  # da mais próxima para a mais distante
+        group_p = sum(raw[k] for k in groups[distance])
+        worse = worse_or_equal - group_p
+        chosen = worse_or_equal ** hands - max(worse, 0.0) ** hands
+        for k in groups[distance]:
+            result[k] = chosen * raw[k] / group_p if group_p else 0.0
+        worse_or_equal = worse
+    return result
+
+
 def _front(card, key):
     return (card[key] or "").split(" // ")[0]
 
@@ -240,6 +266,10 @@ def analyze(deck):
             str(t): hypergeom_at_least(deck_cards, n_lands, cards_seen(t), t) for t in (2, 3, 4, 5)
         } if deck_cards >= 12 else {},
     }
+    if size == 60 and deck_cards >= 7:
+        # Só construído de 60 tem fila BO1 com suavização de mão no Arena.
+        smoothed = smoothed_land_distribution(deck_cards, n_lands)
+        odds["mao_inicial_bo1_2_a_4_terrenos_ate"] = sum(smoothed[2:5])
 
     # Alertas
     alerts = []
@@ -306,7 +336,9 @@ def report(data):
     odds = data["probabilidades"]
     if odds["terrenos_no_turno"]:
         lines += ["", "Probabilidades (mão de 7, sem mulligan, jogando primeiro):",
-                  f"  mão inicial com 2 a 4 terrenos: {odds['mao_inicial_2_a_4_terrenos']:.1%}",
+                  f"  mão inicial com 2 a 4 terrenos: {odds['mao_inicial_2_a_4_terrenos']:.1%}"
+                  + (f" (em BO1 no Arena: até {odds['mao_inicial_bo1_2_a_4_terrenos_ate']:.1%}, "
+                     "pela suavização de mão)" if "mao_inicial_bo1_2_a_4_terrenos_ate" in odds else ""),
                   "  " + " | ".join(f"{t} terrenos no turno {t}: {p:.1%}"
                                     for t, p in odds["terrenos_no_turno"].items())]
     lines += ["", "Alertas:"] + ([f"  ! {a}" for a in data["alertas"]] or ["  nenhum"])

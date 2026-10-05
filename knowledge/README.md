@@ -18,7 +18,7 @@ Regra de uso: ao justificar uma escolha, cite o conceito e o documento ("base de
 | **Commander / Brawl** | [commander-e-brawl](commander-e-brawl.md) → [quantidade-de-copias](quantidade-de-copias.md) (nota sobre singleton) → [base-de-mana](base-de-mana.md) (colunas de 99 cartas e seção de Commander) → [vantagem-de-cartas-e-tempo](vantagem-de-cartas-e-tempo.md) → [fases-do-jogo](fases-do-jogo.md) |
 | **Guia de draft, pick ou deck de 40 cartas** | [limitado-e-draft](limitado-e-draft.md) (inclui como ler os dados do 17Lands) → [base-de-mana](base-de-mana.md) (colunas de 40 cartas) |
 | **Ajustar ou diagnosticar uma lista existente** | [metodo-quatro-perspectivas](metodo-quatro-perspectivas.md) → [valor-das-cartas](valor-das-cartas.md) → [quantidade-de-copias](quantidade-de-copias.md) → [base-de-mana](base-de-mana.md) → [sideboard](sideboard.md) |
-| **"Por que N terrenos?" / "quantas fontes de tal cor?"** | [base-de-mana](base-de-mana.md) (comece pela "Resposta rápida") |
+| **"Por que N terrenos?" / "quantas fontes de tal cor?"** | [base-de-mana](base-de-mana.md) (comece pela "Resposta rápida"; para BO1 no Arena, a seção 1.4) |
 | **Sideboard e planos por matchup; BO1 vs. BO3** | [sideboard](sideboard.md) → [papel-no-jogo](papel-no-jogo.md) |
 | **Avaliar uma carta nova** | [valor-das-cartas](valor-das-cartas.md) → [vantagem-de-cartas-e-tempo](vantagem-de-cartas-e-tempo.md) |
 | **Como testar um deck, evoluir como jogador** | [preparacao-e-metagame](preparacao-e-metagame.md) → [jogo-mental-e-mentalidade](jogo-mental-e-mentalidade.md) |
@@ -62,7 +62,8 @@ Regra de uso: ao justificar uma escolha, cite o conceito e o documento ("base de
   [commander-e-brawl](commander-e-brawl.md), vindos de guias de terceiros. As proporções
   são de Commander de mesa; a adaptação para Brawl (um contra um) ainda não tem fonte.
 - **Terrenos utilitários:** nenhuma das fontes dá regra numérica.
-- **Arena melhor-de-um:** o algoritmo de mão inicial não é público; há só descrição e
-  números de terceiros, não verificados (base-de-mana, seção 1.4).
+- **Arena melhor-de-um:** a suavização de mão está descrita e modelada em base-de-mana
+  (seção 1.4), mas o peso exato do algoritmo não é público, e há dúvida sobre duas ou
+  três mãos e sobre mulligans. Falta a nota oficial mais recente.
 - **Midrange e tempo modernos:** o livro os trata dentro de "Good Stuff" e "Aggro-Control".
 - **Pendências numéricas** de base de mana: lista no fim de [base-de-mana](base-de-mana.md).
