@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 
-from . import analysis, db, decklist, edhrec, formats, meta, query, scryfall
+from . import analysis, db, decklist, draft, edhrec, formats, meta, query, scryfall
 
 
 def _card_dict(row):
@@ -304,6 +304,104 @@ def cmd_edhrec(args):
     _emit(args, data, lines)
 
 
+def _pct(value):
+    return f"{value:6.1%}" if value is not None else "     —"
+
+
+def _draft_snapshot(conn, args):
+    try:
+        snapshot = draft.update(conn, args.set, args.mode, force=getattr(args, "force", False))
+    except RuntimeError as error:
+        sys.exit(f"17Lands indisponível: {error} Trabalhe em modo teórico "
+                 "(`mtg draft set`) e declare a falta dos dados.")
+    return snapshot
+
+
+def _draft_head(snapshot):
+    if not snapshot["has_data"]:
+        return (f"{snapshot['set_name']} ({snapshot['event']}): o 17Lands não tem dados para esta "
+                "coleção neste modo. Use o modo teórico (`mtg draft set`) e declare isso.")
+    return (f"{snapshot['set_name']} | {snapshot['event']} | fonte: 17Lands | coletado em "
+            f"{snapshot['collected_at'][:10]} | {snapshot['games']} jogos, "
+            f"win rate médio dos usuários {_pct(snapshot['baseline']).strip()}")
+
+
+def _draft_table(rows):
+    lines = ["   GIH     OH     GD    IWD  ALSA   ATA   jogos  raridade  cor  carta"]
+    for c in rows:
+        lines.append(
+            f"{_pct(c['gih'])} {_pct(c['oh'])} {_pct(c['gd'])} "
+            + (f"{c['iwd'] * 100:+5.1f}pp" if c["iwd"] is not None else "     —")
+            + f" {c['alsa'] or 0:5.2f} {c['ata'] or 0:5.2f} {c['gih_games']:>7}  "
+            f"{(c['rarity'] or '?'):<8}  {c['color'] or '-':<3}  {c['name']}")
+    return lines
+
+
+def cmd_draft_update(args):
+    conn = db.connect(readonly=True)
+    modes = list(draft.MODES) if args.mode == "all" else [args.mode]
+    for mode in modes:
+        args.mode = mode
+        print(_draft_head(_draft_snapshot(conn, args)))
+
+
+def cmd_draft_set(args):
+    conn = db.connect(readonly=True)
+    snapshot = draft.cached(draft.find_set(conn, args.set)["code"], args.mode)
+    data = draft.set_overview(conn, args.set, snapshot)
+    lines = [f"{data['name']} ({data['set']}), lançada em {data['released_at']} | {data['cards']} cartas "
+             f"| conjunto draftável: {data['basis']}", "",
+             "cor       total  C   U   R   M | comuns+incomuns: criaturas (curva 1..6+) | remoção"]
+    for group, e in data["colors"].items():
+        curve = " ".join(str(e["curva_criaturas_cu"].get(str(i), 0)) for i in range(1, 7))
+        lines.append(f"{group:<9} {e['total']:>4} {e['common']:>3} {e['uncommon']:>3} {e['rare']:>3} "
+                     f"{e['mythic']:>3} | {e['criaturas_cu']:>2} ({curve}) | "
+                     f"{len(e['remocao_cu'])}: {', '.join(e['remocao_cu'])}")
+    lines += ["", "Palavras-chave mais frequentes: " + ", ".join(f"{k} ({n})" for k, n in data["keywords"])]
+    _emit(args, data, lines)
+
+
+def cmd_draft_cards(args):
+    conn = db.connect(readonly=True)
+    snapshot = _draft_snapshot(conn, args)
+    rows = draft.ranking(snapshot, args.color, args.rarity, args.min_games, args.sort, args.limit)
+    _emit(args, rows, [_draft_head(snapshot)] + (_draft_table(rows) if snapshot["has_data"] else []))
+
+
+def cmd_draft_colors(args):
+    conn = db.connect(readonly=True)
+    snapshot = _draft_snapshot(conn, args)
+    rows = draft.color_pairs(snapshot)
+    lines = [_draft_head(snapshot)] + [
+        f"{_pct(c['win_rate'])}  {c['games']:>7} jogos  {c['name']}" for c in rows]
+    _emit(args, rows, lines)
+
+
+def cmd_draft_rate(args):
+    conn = db.connect(readonly=True)
+    snapshot = _draft_snapshot(conn, args)
+    names = list(args.cards)
+    if args.file:
+        deck = _read_deck(args.file)
+        names += [e.name for e in deck.entries()]
+    found, missing = draft.rate(snapshot, names)
+    found.sort(key=lambda c: (c["color"], -(c["gih"] or 0)))
+    lines = [_draft_head(snapshot)] + _draft_table(found)
+    if missing:
+        lines.append("Sem dados no 17Lands: " + ", ".join(missing))
+    _emit(args, {"cards": found, "missing": missing}, lines)
+
+
+def cmd_draft_gaps(args):
+    conn = db.connect(readonly=True)
+    snapshot = _draft_snapshot(conn, args)
+    data = draft.over_under(snapshot, args.min_games)
+    lines = [_draft_head(snapshot), "", "Subestimadas (rendem muito, saem tarde):"]
+    lines += _draft_table(data["subestimadas"]) + ["", "Superestimadas (saem cedo, rendem pouco):"]
+    lines += _draft_table(data["superestimadas"])
+    _emit(args, data, lines)
+
+
 def main(argv=None):
     sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(prog="mtg", description=__doc__)
@@ -398,6 +496,34 @@ def main(argv=None):
     p.add_argument("--url", help="endereço de onde os dados foram tirados")
     p.add_argument("--date", help="data dos dados (AAAA-MM-DD); padrão: hoje")
     p.set_defaults(func=cmd_meta_import)
+
+    draft_cmd = sub.add_parser("draft", help="dados de limitado: 17Lands e leitura da coleção")
+    draft_sub = draft_cmd.add_subparsers(dest="draft_command", required=True)
+
+    def draft_parser(name, help_text, func, mode_default="premier", modes=tuple(draft.MODES)):
+        parser_ = draft_sub.add_parser(name, help=help_text)
+        parser_.add_argument("set", help="código ou nome da coleção")
+        parser_.add_argument("--mode", choices=modes, default=mode_default,
+                             help="premier, quick, trad (BO3), sealed, tradsealed, picktwo")
+        parser_.set_defaults(func=func)
+        return parser_
+
+    p = draft_parser("update", "coleta os dados do 17Lands (no máximo 1x por dia)", cmd_draft_update,
+                     modes=tuple(draft.MODES) + ("all",))
+    p.add_argument("--force", action="store_true")
+    draft_parser("set", "leitura da coleção pela base: cores, raridades, curva, remoção", cmd_draft_set)
+    p = draft_parser("cards", "ranking de cartas por win rate", cmd_draft_cards)
+    p.add_argument("--color", help="W, U, B, R, G, multi ou colorless")
+    p.add_argument("--rarity", choices=["common", "uncommon", "rare", "mythic"])
+    p.add_argument("--sort", choices=["gih", "oh", "gd", "iwd", "alsa", "ata", "gp"], default="gih")
+    p.add_argument("--min-games", type=int, default=draft.MIN_GAMES)
+    p.add_argument("--limit", type=int, default=15)
+    draft_parser("colors", "win rate por par de cores", cmd_draft_colors)
+    p = draft_parser("rate", "estatísticas das cartas de um pacote ou pool", cmd_draft_rate)
+    p.add_argument("cards", nargs="*", help="nomes das cartas")
+    p.add_argument("--file", help="arquivo de lista com o pool")
+    p = draft_parser("gaps", "cartas subestimadas e superestimadas (GIH WR vs. ALSA)", cmd_draft_gaps)
+    p.add_argument("--min-games", type=int, default=draft.MIN_GAMES)
 
     p = sub.add_parser("commander", help="confere se uma carta pode ser comandante no formato")
     p.add_argument("commander")

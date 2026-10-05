@@ -1,6 +1,6 @@
 # 008 — Draft
 
-**Status:** 📝 Especificada
+**Status:** ✅ Concluída
 
 ## Objetivo
 
@@ -44,13 +44,13 @@ existirem, dados reais de desempenho.
 
 ## Critérios de aceite
 
-- [ ] Para uma coleção com dados no 17Lands, o guia traz os 10 arquétipos com win rate e
+- [x] Para uma coleção com dados no 17Lands, o guia traz os 10 arquétipos com win rate e
       rankings baseados em dados, com a data da coleta.
-- [ ] Os dados de cada modo (Premier, Quick, Traditional, Sealed) ficam separados e o
+- [x] Os dados de cada modo (Premier, Quick, Traditional, Sealed) ficam separados e o
       guia diz de qual modo vem cada número.
-- [ ] Para uma coleção sem dados, o guia é gerado e se declara teórico.
-- [ ] Toda carta citada pertence à coleção (ou à sua folha bônus) na base local.
-- [ ] Dado um pool de 45 cartas, o deck montado tem 40 cartas válidas e base de mana conferida.
+- [x] Para uma coleção sem dados, o guia é gerado e se declara teórico.
+- [x] Toda carta citada pertence à coleção (ou à sua folha bônus) na base local.
+- [x] Dado um pool de 45 cartas, o deck montado tem 40 cartas válidas e base de mana conferida.
 
 ## Fora do escopo
 
@@ -59,5 +59,6 @@ existirem, dados reais de desempenho.
 
 ## Questões em aberto
 
-- Confirmar a forma de acesso permitida aos dados do 17Lands (datasets públicos vs.
-  endpoint de card ratings) antes de implementar.
+- Vale baixar os datasets públicos de partidas do 17Lands para análises que as páginas
+  não dão (ordem de pick, arquétipos de três cores)? Seria o caso de reavaliar o
+  armazenamento (ver plano da spec 001).

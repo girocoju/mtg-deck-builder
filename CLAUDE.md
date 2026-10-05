@@ -30,6 +30,8 @@ pedidos como "crie um deck anti meta no Standard" ou "estratégia de draft para 
   cartas em formatos de construído, inclusive anti-meta. Siga as etapas dela.
 - `deck-comandante` (`.claude/skills/deck-comandante/SKILL.md`): Commander, Brawl e
   Standard Brawl, a partir de um comandante.
+- `draft` (`.claude/skills/draft/SKILL.md`): guia de draft de uma coleção, ajuda com
+  picks e montagem de deck de 40 a partir de um pool.
 
 ## Ferramentas
 
@@ -50,6 +52,10 @@ Ambiente: `.venv` com o pacote instalado em modo editável (`pip install -e ".[d
 .venv\Scripts\mtg odds --copies 4 --turn 4 [--deck 60] [--min 1] [--draw]
 .venv\Scripts\mtg commander "Nome" [--partner "Nome"] --format brawl   # pode ser comandante?
 .venv\Scripts\mtg edhrec "Nome" --format brawl --game arena [--average]  # sinergias filtradas pela base
+.venv\Scripts\mtg draft update fra --mode all      # 17Lands: premier, quick, trad, sealed, tradsealed, picktwo
+.venv\Scripts\mtg draft set|colors|gaps fra        # leitura da coleção, pares de cores, sub/superestimadas
+.venv\Scripts\mtg draft cards fra --color U --rarity common [--mode trad]
+.venv\Scripts\mtg draft rate fra "Carta A" "Carta B" [--file pool.txt]
 .venv\Scripts\mtg meta update standard          # coleta do MTGGoldfish (BO3), no máximo 1x por dia
 .venv\Scripts\mtg meta show standard [--mode bo1|bo3]   # arquétipos, resumo, cartas mais jogadas
 .venv\Scripts\mtg meta import meta.csv --format standard --mode bo1 --source untapped
@@ -72,4 +78,5 @@ Formatos usam as chaves do Scryfall: `standard`, `pioneer`, `modern`, `legacy`, 
 - `knowledge/` — teoria de deck building por tema; comece por `knowledge/README.md`, que diz
   o que ler para cada tipo de pedido. Para acrescentar fonte ou lição: `knowledge/COMO-ADICIONAR.md`
 - `scripts/` — extração de PDF e verificação de cópia para a base de conhecimento
-- `decks/` — decks gerados (lista em bloco de código + explicação); `drafts/` — spec 008
+- `decks/` — decks gerados (lista em bloco de código + explicação)
+- `drafts/` — guias de draft por coleção (`drafts/fra.md` é o modelo)
