@@ -112,6 +112,16 @@ def test_resolve_ignores_accents(conn):
     assert deck.main[0].card["name"] == deck.main[1].card["name"] == "Mjölnir Bear"
 
 
+def test_resolve_translated_names_by_set_and_collector_number(conn):
+    conn.execute("UPDATE printings SET collector_number = '77' WHERE name = 'Elk'")
+    conn.execute("INSERT INTO sets (code, name, arena_code) VALUES ('tst', 'Test', 'TS1')")
+    deck = decklist.parse("2 Alce (TST) 77\n1 Alce (TS1) 77\n1 Urso (TST) 999\n1 Lobo\n")
+    unknown = decklist.resolve(conn, deck)
+    assert [e.card["name"] for e in deck.main[:2]] == ["Elk", "Elk"]
+    assert [e.name for e, _ in unknown] == ["Urso", "Lobo"]
+    assert decklist.export(deck, "arena").startswith("Deck\n3 Elk\n")
+
+
 def test_resolve_front_face_split_slash_and_suggestion(conn):
     deck = decklist.parse("1 delver\n1 Fire/Ice\n1 Beer\n")
     unknown = decklist.resolve(conn, deck)

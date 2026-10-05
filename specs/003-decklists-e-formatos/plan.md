@@ -50,6 +50,7 @@ Dois comandantes: partner, partner with, friends forever, background, Doctor's c
 
 - Não conferidos: condição de construção do companion; raridade do comandante em Pauper
   Commander; oathbreaker e signature spell.
-- A importação no cliente do Arena e no MTGO não foi testada dentro dos jogos; o
-  formato do `.txt` do MTGO para comandante (no bloco do sideboard) é suposição.
+- A importação no MTGO não foi testada; o formato do `.txt` do MTGO para comandante
+  (no bloco do sideboard) é suposição. No Arena, a importação foi confirmada pelo usuário.
+- Listas em outro idioma só são lidas se trouxerem coleção e número (`(SET) 123`).
 - Preços e raridades são os da última sincronização com o Scryfall.

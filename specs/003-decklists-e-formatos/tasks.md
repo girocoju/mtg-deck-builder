@@ -29,4 +29,13 @@ Correção de 2026-10-04: o usuário informou que o sideboard em BO1 no Arena pa
 até 15 cartas; a opção `--bo1` (que limitava a 7) foi removida. Ver a lição em
 `knowledge/licoes/`.
 
-Não verificado: importação dentro do cliente do Arena e do MTGO (ver limitações no plano).
+**Importação no Arena confirmada pelo usuário em 2026-10-05:** as listas exportadas foram
+coladas no cliente mais de uma vez, sem problemas, inclusive as cartas de duas faces
+exportadas só com o nome da frente.
+
+**Listas do Arena em português (2026-10-05):** o cliente em português exporta os nomes
+traduzidos, que não existem na base. O leitor passou a resolver a carta pela coleção e
+pelo número de colecionador da linha (`2 Beladona Tûk (HOB) 4`), com teste. A lista de
+60 cartas do usuário foi lida e validada assim.
+
+Não verificado: importação no MTGO.

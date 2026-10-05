@@ -17,7 +17,10 @@
 - [x] Ingerir uma fonte nova seguindo só o `COMO-ADICIONAR.md`: dois artigos por URL sobre
       Brawl e Commander → `commander-e-brawl.md` (2026-10-04). O processo ganhou o
       extrator de HTML (`scripts/extract_html.py`) para páginas que não carregam direto
-- [ ] Registrar a primeira lição a partir de feedback real e usá-la em um pedido posterior
+- [x] Registrar lições a partir de feedback real e usá-las em pedidos posteriores: a
+      correção do sideboard em BO1 (2026-10-04) foi aplicada na adaptação da spec 009; o
+      resultado do primeiro teste do Boros Tokens (2026-10-05) foi citado na otimização
+      do mono-red sem coringas
 
 ## Verificação (2026-10-04)
 

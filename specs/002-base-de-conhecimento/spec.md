@@ -1,6 +1,6 @@
 # 002 — Base de conhecimento
 
-**Status:** 🚧 Em andamento — base construída; falta o critério de lições, que depende de uso (ver tasks.md)
+**Status:** ✅ Concluída
 
 ## Objetivo
 
@@ -59,7 +59,7 @@ vídeos transcritos) e acumula o que for aprendido no uso do próprio deck build
 - [x] Dado o pedido "por que 24 terrenos neste deck?", o agente encontra a resposta em
       `knowledge/` lendo no máximo dois arquivos.
 - [x] Uma fonte nova (um artigo por URL) é adicionada seguindo só o processo documentado.
-- [ ] Um feedback do usuário sobre um deck vira uma lição registrada e é citado em um
+- [x] Um feedback do usuário sobre um deck vira uma lição registrada e é citado em um
       pedido posterior semelhante.
 
 ## Fora do escopo

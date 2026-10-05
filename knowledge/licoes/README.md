@@ -8,6 +8,7 @@ lições do formato ou tema envolvido. Processo em [COMO-ADICIONAR.md](../COMO-A
 
 | Data | Lição | Formato / tema | Situação |
 | --- | --- | --- | --- |
+| 2026-10-05 | [Boros Tokens em BO1: 1–3 no primeiro teste, duas derrotas para decks brancos](2026-10-05-boros-tokens-bo1-primeiro-teste.md) | Standard, BO1, Arena | ativa (hipótese, 4 partidas) |
 | 2026-10-04 | [Sideboard em BO1 no Arena é de até 15 cartas](2026-10-04-sideboard-bo1-arena.md) | Arena, BO1, todos os formatos de 60 | ativa |
 
 ## Modelo

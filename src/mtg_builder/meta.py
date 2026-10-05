@@ -175,7 +175,7 @@ def update_goldfish(conn, fmt, top=12, force=False, log=print, fetch=_get, delay
     return snapshot
 
 
-def import_csv(conn, csv_path, fmt, mode, source, decks_dir=None, url=None, collected=None):
+def import_csv(conn, csv_path, fmt, mode, source, decks_dir=None, url=None, collected=None, note=None):
     """Importa um meta de qualquer fonte a partir de um CSV com colunas
     `archetype,share[,winrate][,games]` (percentuais com ou sem %). Se `decks_dir` for
     dado, um arquivo `<nome do arquétipo>.txt` nessa pasta vira a lista de referência."""
@@ -205,7 +205,7 @@ def import_csv(conn, csv_path, fmt, mode, source, decks_dir=None, url=None, coll
     snapshot = {
         "source": source, "url": url, "format": fmt, "mode": mode,
         "collected_at": (collected or date.today().isoformat()) + "T00:00:00",
-        "note": "Importado manualmente de CSV.", "archetypes": archetypes,
+        "note": note or "Importado manualmente de CSV.", "archetypes": archetypes,
     }
     snapshot["file"] = str(save(snapshot))
     return snapshot

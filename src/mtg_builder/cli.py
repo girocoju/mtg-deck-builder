@@ -252,7 +252,8 @@ def cmd_meta_import(args):
     conn = db.connect(readonly=True)
     try:
         snapshot = meta.import_csv(conn, args.file, args.format.lower(), args.mode, args.source,
-                                   decks_dir=args.decks, url=args.url, collected=args.date)
+                                   decks_dir=args.decks, url=args.url, collected=args.date,
+                                   note=args.note)
     except (RuntimeError, OSError) as error:
         sys.exit(f"Importação falhou: {error}")
     print(f"{len(snapshot['archetypes'])} arquétipos importados em {snapshot['file']}")
@@ -516,6 +517,7 @@ def main(argv=None):
     p.add_argument("--decks", help="pasta com '<arquétipo>.txt' para as listas de referência")
     p.add_argument("--url", help="endereço de onde os dados foram tirados")
     p.add_argument("--date", help="data dos dados (AAAA-MM-DD); padrão: hoje")
+    p.add_argument("--note", help="ressalvas sobre os dados (recorte, filtros, o que 'share' mede)")
     p.set_defaults(func=cmd_meta_import)
 
     draft_cmd = sub.add_parser("draft", help="dados de limitado: 17Lands e leitura da coleção")

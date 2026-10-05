@@ -3,7 +3,10 @@
 - [x] Skill `deck-construido` com o fluxo de oito etapas
 - [x] Execução completa do fluxo para "Crie um deck anti meta no formato Standard" (BO3)
 - [ ] Execução em Pioneer, Modern e Pauper (inclui a primeira coleta de meta desses formatos)
-- [ ] Execução com restrição de orçamento, demonstrando o custo
+- [ ] Execução com restrição de orçamento, demonstrando o custo. *Parcial (2026-10-05):*
+      `decks/standard/mono-red-prowess-bo1-sem-coringas.md` otimiza uma lista sem gastar
+      coringas, mas só com as cartas que o usuário mostrou ter; sem a coleção, não é
+      possível demonstrar o custo zero
 - [ ] Execução do mesmo pedido em BO1 com snapshot BO1 (depende do CSV do Untapped)
 - [ ] Teste da skill em sessão nova do Claude Code, acionada só pelo pedido em linguagem natural
 

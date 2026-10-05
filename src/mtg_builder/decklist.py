@@ -107,12 +107,26 @@ def _name_index(conn):
     return index
 
 
+def _by_printing(conn, entry):
+    """Carta pela coleção e pelo número de colecionador da linha (`(HOB) 4`). É o que
+    permite ler listas exportadas pelo Arena em outro idioma, cujos nomes não estão na base."""
+    if not entry.set_code or not entry.number:
+        return None
+    return conn.execute(
+        "SELECT c.* FROM printings p JOIN cards c ON c.oracle_id = p.oracle_id "
+        "WHERE p.collector_number = ?1 AND p.set_code IN ("
+        "  SELECT code FROM sets WHERE code = ?2 COLLATE NOCASE OR arena_code = ?2 COLLATE NOCASE"
+        "  UNION SELECT lower(?2)) LIMIT 1",
+        (entry.number, entry.set_code),
+    ).fetchone()
+
+
 def resolve(conn, deck):
     """Associa cada linha a uma carta da base. Devolve [(entrada, sugestões)] das não encontradas."""
     index = _name_index(conn)
     unknown = []
     for entry in deck.entries():
-        entry.card = index.get(_key(entry.name))
+        entry.card = index.get(_key(entry.name)) or _by_printing(conn, entry)
         if entry.card is None:
             close = difflib.get_close_matches(_key(entry.name), index.keys(), n=3, cutoff=0.75)
             unknown.append((entry, [index[c]["name"] for c in close]))
