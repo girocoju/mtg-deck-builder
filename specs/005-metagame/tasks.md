@@ -15,7 +15,10 @@
       rate e número de partidas, sem decklists nem fatia por arquétipo
 - [x] Snapshot BO1 com fatia por arquétipo (2026-10-05): aba Meta do Untapped, lida de
       captura do usuário — 8 arquétipos mais jogados e 8 maiores win rates
-- [ ] Decklists de referência dos arquétipos BO1 (modo "Text" da página Decks)
+- [x] Win rate, partidas, tier, duração e cartas mais usadas dos 8 arquétipos mais jogados
+      em BO1 (2026-10-05), das páginas de arquétipo do Untapped; a importação por CSV
+      ganhou as colunas `tier`, `minutes` e `key_cards` (conferidas com a base)
+- [ ] Decklists completas de referência dos arquétipos BO1
 
 ## Verificação (2026-10-04)
 

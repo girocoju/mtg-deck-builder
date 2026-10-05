@@ -42,7 +42,7 @@ uma lista de 60 cartas + sideboard, válida, exportável e com a estratégia exp
 
 - [x] O pedido "Crie um deck anti meta no formato Standard" produz uma lista que passa no
       validador, com sideboard de 15 e todos os itens de entrega do requisito 4.
-- [ ] O mesmo pedido em BO1 e em BO3 usa o snapshot de meta do modo certo e a resposta
+- [x] O mesmo pedido em BO1 e em BO3 usa o snapshot de meta do modo certo e a resposta
       declara para qual modo o deck foi construído.
 - [x] A explicação cita os arquétipos do snapshot e a data dele.
 - [x] Toda carta da lista existe na base e é legal no formato na data da sincronização.

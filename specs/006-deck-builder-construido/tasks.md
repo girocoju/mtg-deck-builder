@@ -7,7 +7,10 @@
       `decks/standard/mono-red-prowess-bo1-sem-coringas.md` otimiza uma lista sem gastar
       coringas, mas só com as cartas que o usuário mostrou ter; sem a coleção, não é
       possível demonstrar o custo zero
-- [ ] Execução do mesmo pedido em BO1 com snapshot BO1 (depende do CSV do Untapped)
+- [x] Execução em BO1 com snapshot BO1 (2026-10-05): com o meta do Untapped enviado pelo
+      usuário, a escolha para Standard BO1 sem coringas foi o melhor deck do campo que ele
+      já tem (`decks/standard/mono-white-auras-bo1.md`), e não um deck novo. A lista foi
+      reconstruída do resumo do Untapped, não construída carta a carta
 - [ ] Teste da skill em sessão nova do Claude Code, acionada só pelo pedido em linguagem natural
 
 ## Verificação (2026-10-04)

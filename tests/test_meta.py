@@ -139,6 +139,24 @@ def test_bo1_import_is_kept_separate_from_bo3(conn, tmp_path):
     assert meta.latest("pioneer", "bo1") is None
 
 
+def test_import_checks_key_cards_against_the_base(conn, tmp_path):
+    csv_file = tmp_path / "bo1.csv"
+    csv_file.write_text(
+        "archetype,share,winrate,games,tier,minutes,key_cards\n"
+        'Blue Sphinxes,13,57.7,36000,A,4.6,"Sphinx 99.9; cancel like 86,2%; Carta Inventada 50; Wrath Like"\n'
+        "Só Win Rate,,55.0,,,,\n", "utf-8")
+    snapshot = meta.import_csv(conn, csv_file, "standard", "bo1", "untapped", note="recorte de teste")
+    blue, other = snapshot["archetypes"]
+    assert blue["key_cards"] == [{"name": "Sphinx", "inclusion": 99.9}, {"name": "Cancel Like", "inclusion": 86.2},
+                                 {"name": "Wrath Like", "inclusion": None}]
+    assert blue["unknown_cards"] == ["Carta Inventada"]
+    assert blue["tier"] == "A" and blue["minutes"] == 4.6 and blue["games"] == 36000
+    assert other["share"] is None and "key_cards" not in other and snapshot["note"] == "recorte de teste"
+    text = meta.report(snapshot, meta.summarize(conn, snapshot))
+    assert "tier A" in text and "cartas: Sphinx 99.9%, Cancel Like 86.2%, Wrath Like" in text
+    assert "fora da base: Carta Inventada" in text and "    ?  Só Win Rate | win rate 55%" in text
+
+
 def test_summary_weights_by_meta_share(conn):
     snapshot = update(conn, FakeSite())
     summary = meta.summarize(conn, snapshot)

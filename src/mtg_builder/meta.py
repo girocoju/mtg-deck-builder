@@ -175,10 +175,30 @@ def update_goldfish(conn, fmt, top=12, force=False, log=print, fetch=_get, delay
     return snapshot
 
 
+def _key_cards(index, archetype, text):
+    """Cartas mais usadas do arquétipo: `Nome 99.8; Outro Nome 86` (o número, opcional, é
+    a porcentagem das listas que usam a carta). Nomes fora da base ficam à parte."""
+    cards, unknown = [], []
+    for item in text.split(";"):
+        match = re.match(r"\s*(.+?)(?:\s+([\d.,]+)%?)?\s*$", item)
+        if not match or not match[1]:
+            continue
+        card = index.get(decklist._key(match[1]))
+        if card is None:
+            unknown.append(match[1])
+            continue
+        cards.append({"name": card["name"],
+                      "inclusion": float(match[2].replace(",", ".")) if match[2] else None})
+    archetype["key_cards"] = cards
+    if unknown:
+        archetype["unknown_cards"] = unknown
+
+
 def import_csv(conn, csv_path, fmt, mode, source, decks_dir=None, url=None, collected=None, note=None):
     """Importa um meta de qualquer fonte a partir de um CSV com colunas
-    `archetype,share[,winrate][,games]` (percentuais com ou sem %). Se `decks_dir` for
-    dado, um arquivo `<nome do arquétipo>.txt` nessa pasta vira a lista de referência."""
+    `archetype,share[,winrate][,games][,tier][,minutes][,key_cards]` (percentuais com ou
+    sem %). `key_cards` é uma lista `Nome 99.8; Nome 86`, conferida com a base. Se
+    `decks_dir` for dado, `<nome do arquétipo>.txt` nessa pasta vira a lista de referência."""
     if mode not in MODES:
         raise RuntimeError(f"Modo inválido: {mode}. Use bo1 ou bo3.")
     with open(csv_path, encoding="utf-8-sig", newline="") as f:
@@ -190,12 +210,17 @@ def import_csv(conn, csv_path, fmt, mode, source, decks_dir=None, url=None, coll
         value = (value or "").replace("%", "").replace(",", ".").strip()
         return float(value) if value else None
 
+    index = decklist._name_index(conn)
     archetypes = []
     for row in rows:
         archetype = {"name": row["archetype"].strip(), "share": number(row["share"])}
-        for key in ("winrate", "games"):
+        for key in ("winrate", "games", "minutes"):
             if number(row.get(key)) is not None:
                 archetype[key] = number(row[key])
+        if (row.get("tier") or "").strip():
+            archetype["tier"] = row["tier"].strip()
+        if (row.get("key_cards") or "").strip():
+            _key_cards(index, archetype, row["key_cards"])
         deck_file = Path(decks_dir) / f"{archetype['name']}.txt" if decks_dir else None
         if deck_file and deck_file.exists():
             _enrich(conn, archetype, deck_file.read_text("utf-8-sig"))
@@ -265,6 +290,16 @@ def report(snapshot, summary, limit=20):
                      f"{archetype['stats']['lands']:g} terrenos")
         if archetype.get("winrate") is not None:
             extra += f" | win rate {archetype['winrate']:g}%"
+        if archetype.get("games"):
+            extra += f" em {archetype['games']:g} partidas"
+        if archetype.get("tier"):
+            extra += f" | tier {archetype['tier']}"
+        if archetype.get("minutes"):
+            extra += f" | {archetype['minutes']:g} min por partida"
+        if isinstance((archetype.get("key_cards") or [None])[0], dict):
+            extra += "\n           cartas: " + ", ".join(
+                c["name"] + (f" {c['inclusion']:g}%" if c["inclusion"] is not None else "")
+                for c in archetype["key_cards"])
         if archetype.get("unknown_cards"):
             extra += f" | fora da base: {', '.join(archetype['unknown_cards'])}"
         share = f"{archetype['share']:>5.1f}%" if archetype.get("share") is not None else "    ?"
