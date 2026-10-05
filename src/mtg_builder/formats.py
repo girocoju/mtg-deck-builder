@@ -94,6 +94,12 @@ def validate(conn, deck, fmt, game=None):
         hint = f" Você quis dizer: {'; '.join(suggestions)}?" if suggestions else ""
         errors.append(f"Carta não encontrada: {entry.name}.{hint}")
     known = [e for e in deck.entries() if e.card is not None]
+    two_faced = sorted({e.card["name"] for e in known
+                        if "//" in e.name and e.card["layout"] != "split"})
+    if two_faced:
+        warnings.append(
+            "O Arena recusa nomes com as duas faces. Entregue a saída de `mtg deck export --to arena`, "
+            "que usa só a face da frente: " + "; ".join(two_faced) + ".")
 
     # Tamanho
     size = deck.count("main", "commander") if rules.get("commander") else deck.count("main")

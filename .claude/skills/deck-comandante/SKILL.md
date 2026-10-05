@@ -86,6 +86,12 @@ exato, cópia única, identidade de cor, legalidade, disponibilidade na platafor
 
 ## 8. Entregar
 
+**Nomes para o Arena:** a lista que vai para o usuário e para o bloco de código do arquivo
+do deck é sempre a saída de `mtg deck export <arquivo> --to arena`, nunca nomes digitados
+à mão. O Arena recusa cartas de duas faces escritas com os dois nomes (`Tithing Blade //
+Consuming Sepulcher`): ele quer só a face da frente (`Tithing Blade`). Depois de trocar o
+bloco, rode a validação de novo; ela avisa se sobrar algum nome assim.
+
 1. lista exportável (`mtg deck export --to arena|mtgo|text`), por categoria no texto;
 2. plano de jogo, como o deck vence e o plano B;
 3. principais sinergias e combos, explicados;

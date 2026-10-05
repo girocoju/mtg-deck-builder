@@ -77,6 +77,8 @@ Entrada: as cartas do pacote e as já escolhidas (e o número do pick, se inform
    cor para a carta do splash é esperado e deve ser explicado. Terrenos que entram
    virados "a menos que" são contados como desvirados.
 5. Entregue a lista, o porquê das cores, o que ficou de fora e os compromissos assumidos.
+   A lista entregue é a saída de `mtg deck export <arquivo> --to arena`: o Arena recusa
+   cartas de duas faces escritas com os dois nomes.
 
 ## Entrega e honestidade
 

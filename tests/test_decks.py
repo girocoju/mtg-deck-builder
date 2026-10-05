@@ -231,6 +231,15 @@ def test_arena_export_roundtrip(conn):
     assert decklist.export(again, "arena") == exported
 
 
+def test_validate_warns_about_two_faced_names_the_arena_rejects(conn):
+    text = sixty("4 Delver // Aberration", "1 Fire // Ice")
+    errors, warnings = formats.validate(conn, decklist.parse(text), "limited")
+    assert errors == []
+    assert warnings == ["O Arena recusa nomes com as duas faces. Entregue a saída de "
+                        "`mtg deck export --to arena`, que usa só a face da frente: Delver // Aberration."]
+    assert formats.validate(conn, decklist.parse(sixty("4 Delver", "1 Fire // Ice")), "limited")[1] == []
+
+
 def test_mtgo_export_puts_sideboard_after_blank_line(conn):
     deck = decklist.parse("Deck\n4 Bear\n1 Delver\n\nSideboard\n2 Elk\n")
     decklist.resolve(conn, deck)

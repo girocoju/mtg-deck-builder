@@ -77,6 +77,12 @@ Quando existir no snapshot um arquétipo próximo do plano, **use a lista dele c
 
 ## 8. Entregar
 
+**Nomes para o Arena:** a lista que vai para o usuário e para o bloco de código do arquivo
+do deck é sempre a saída de `mtg deck export <arquivo> --to arena`, nunca nomes digitados
+à mão. O Arena recusa cartas de duas faces escritas com os dois nomes (`Tithing Blade //
+Consuming Sepulcher`): ele quer só a face da frente (`Tithing Blade`). Depois de trocar o
+bloco, rode a validação de novo; ela avisa se sobrar algum nome assim.
+
 Na resposta e no arquivo do deck:
 
 1. lista exportável (`mtg deck export --to arena|mtgo|text`);

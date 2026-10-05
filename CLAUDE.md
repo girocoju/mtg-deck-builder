@@ -20,6 +20,9 @@ pedidos como "crie um deck anti meta no Standard" ou "estratégia de draft para 
 - **Meta é dado com data.** Ao usar `mtg meta show`, cite fonte, data e modo (BO1/BO3).
   Sem snapshot do modo pedido, diga isso e trate a análise como teórica; nunca use o
   meta BO3 como se fosse BO1.
+- **Lista para o Arena sai do exportador.** O que você mostra ao usuário e grava no bloco
+  de código do deck é a saída de `mtg deck export --to arena`. Cartas de duas faces vão só
+  com o nome da frente; com os dois nomes, o Arena dá "título de card desconhecido".
 - **Coleção do usuário:** não há importação da coleção. Para pedidos "sem gastar
   coringas", use só cartas que o usuário mostrou ter (decks montados, capturas) e peça
   confirmação; diga o que não dá para saber.

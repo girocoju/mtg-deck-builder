@@ -38,4 +38,12 @@ traduzidos, que não existem na base. O leitor passou a resolver a carta pela co
 pelo número de colecionador da linha (`2 Beladona Tûk (HOB) 4`), com teste. A lista de
 60 cartas do usuário foi lida e validada assim.
 
-Não verificado: importação no MTGO.
+**Falha de importação relatada em 2026-10-05:** uma sessão nova gravou no arquivo do deck
+`Tithing Blade // Consuming Sepulcher` (carta de duas faces com os dois nomes) e o Arena
+recusou com "título de card desconhecido". O exportador já gerava o nome certo, mas a
+lista tinha sido escrita à mão. Correções: `mtg deck validate` passou a avisar quando a
+lista tem nomes assim; as quatro skills, o `CLAUDE.md` e o `decks/README.md` mandam
+entregar sempre a saída de `mtg deck export --to arena`.
+
+Não verificado: importação no MTGO; cartas split (`Fire // Ice`) no Arena, que o
+exportador mantém com os dois nomes.
