@@ -16,7 +16,7 @@ Nenhuma funcionalidade é implementada sem uma spec aprovada.
 | 006 | [Deck builder construído](006-deck-builder-construido/spec.md) | "Crie um deck anti meta no formato Standard"                | 🚧 Em andamento |
 | 007 | [Commander e Brawl](007-commander-e-brawl/spec.md)          | "Monte um deck de Brawl com o commander X" (EDHREC)            | ✅ Concluída    |
 | 008 | [Draft](008-draft/spec.md)                                  | "Crie uma estratégia de draft para a coleção X" (17Lands)      | ✅ Concluída    |
-| 009 | [Adaptação BO3 ↔ BO1](009-adaptacao-bo3-bo1/spec.md)        | "Adapte o deck em questão BO3 para BO1"                        | 📝 Especificada |
+| 009 | [Adaptação BO3 ↔ BO1](009-adaptacao-bo3-bo1/spec.md)        | "Adapte o deck em questão BO3 para BO1"                        | 🚧 Em andamento |
 
 Status possíveis: 📝 Especificada → 📐 Planejada → 🚧 Em andamento → ✅ Concluída.
 

@@ -161,6 +161,22 @@ def export(deck, target="text"):
     return "\n\n".join("\n".join(b) for b in blocks) + "\n"
 
 
+def diff(before, after):
+    """Diferença entre duas listas já resolvidas, por seção: [(variação, nome)], com
+    variação negativa para o que saiu e positiva para o que entrou."""
+    result = {}
+    for section in SECTIONS:
+        counts = {}
+        for sign, deck in ((-1, before), (1, after)):
+            for entry in merged(getattr(deck, section)):
+                name = entry.card["name"] if entry.card is not None else entry.name
+                counts[name] = counts.get(name, 0) + sign * entry.qty
+        changes = sorted(((n, name) for name, n in counts.items() if n), key=lambda x: (x[0] > 0, x[1]))
+        if changes:
+            result[section] = changes
+    return result
+
+
 def is_basic(card):
     return "Basic" in (card["type_line"] or "").split(" // ")[0].split("—")[0]
 

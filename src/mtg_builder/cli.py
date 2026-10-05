@@ -180,6 +180,22 @@ def cmd_deck_cost(args):
     _emit(args, data, lines)
 
 
+def cmd_deck_diff(args):
+    conn = db.connect(readonly=True)
+    before, after = _read_deck(args.before), _read_deck(args.after)
+    decklist.resolve(conn, before)
+    decklist.resolve(conn, after)
+    data = decklist.diff(before, after)
+    titles = {"commander": "Comandante", "main": "Deck principal", "sideboard": "Sideboard"}
+    lines = []
+    for section, changes in data.items():
+        lines.append(f"{titles[section]}:")
+        lines += [f"  {'saiu ' if n < 0 else 'entrou'} {abs(n)} {name}" for n, name in changes]
+    for label, deck in (("antes", before), ("depois", after)):
+        lines.append(f"{label}: {deck.count('main')} no principal, {deck.count('sideboard')} no sideboard")
+    _emit(args, data, lines or ["As listas são iguais."])
+
+
 def cmd_deck_analyze(args):
     conn = db.connect(readonly=True)
     deck = _read_deck(args.file)
@@ -467,6 +483,11 @@ def main(argv=None):
     p = deck_sub.add_parser("cost", help="preço em papel/MTGO e wildcards do Arena")
     p.add_argument("file", help=file_help)
     p.set_defaults(func=cmd_deck_cost)
+
+    p = deck_sub.add_parser("diff", help="o que saiu e o que entrou entre duas versões de uma lista")
+    p.add_argument("before", help="lista original")
+    p.add_argument("after", help="lista nova")
+    p.set_defaults(func=cmd_deck_diff)
 
     p = deck_sub.add_parser("analyze", help="curva, base de mana, papéis e probabilidades")
     p.add_argument("file", help=file_help)

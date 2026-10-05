@@ -32,6 +32,8 @@ pedidos como "crie um deck anti meta no Standard" ou "estratégia de draft para 
   Standard Brawl, a partir de um comandante.
 - `draft` (`.claude/skills/draft/SKILL.md`): guia de draft de uma coleção, ajuda com
   picks e montagem de deck de 40 a partir de um pool.
+- `adaptar-bo1-bo3` (`.claude/skills/adaptar-bo1-bo3/SKILL.md`): adapta uma lista de 60
+  cartas entre BO3 e BO1, nos dois sentidos.
 
 ## Ferramentas
 
@@ -48,6 +50,7 @@ Ambiente: `.venv` com o pacote instalado em modo editável (`pip install -e ".[d
 .venv\Scripts\mtg deck validate <arquivo> --format brawl [--game arena]
 .venv\Scripts\mtg deck export <arquivo> --to arena|mtgo|text
 .venv\Scripts\mtg deck cost <arquivo>
+.venv\Scripts\mtg deck diff <antes> <depois>      # o que saiu e o que entrou
 .venv\Scripts\mtg deck analyze <arquivo>          # curva, terrenos, fontes por cor, papéis, alertas
 .venv\Scripts\mtg odds --copies 4 --turn 4 [--deck 60] [--min 1] [--draw]
 .venv\Scripts\mtg commander "Nome" [--partner "Nome"] --format brawl   # pode ser comandante?

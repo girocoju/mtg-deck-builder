@@ -1,6 +1,6 @@
 # 009 — Adaptação de deck entre BO3 e BO1
 
-**Status:** 📝 Especificada
+**Status:** 🚧 Em andamento — skill pronta e exercitada nos dois sentidos; faltam os critérios marcados abaixo
 
 ## Objetivo
 
@@ -54,9 +54,10 @@ por efeitos que buscam cartas de fora do jogo.
 
 - [ ] Dada uma lista BO3 de Standard com sideboard, o resultado BO1 passa no validador,
       traz a tabela de trocas justificadas e cita o snapshot de meta BO1 usado.
-- [ ] Nenhuma carta nova entra sem ter sido consultada na base e ser legal no formato.
-- [ ] A base de mana da lista adaptada é reconferida e o relatório mostra o antes e o depois.
-- [ ] O caminho BO1 → BO3 produz sideboard de 15 com guia por matchup.
+      *(Parcial: validado e com a tabela, mas sem snapshot BO1 — feito em modo teórico.)*
+- [x] Nenhuma carta nova entra sem ter sido consultada na base e ser legal no formato.
+- [x] A base de mana da lista adaptada é reconferida e o relatório mostra o antes e o depois.
+- [x] O caminho BO1 → BO3 produz sideboard de 15 com guia por matchup.
 - [ ] Para um deck que depende do sideboard, a resposta contém o aviso do requisito 6.
 
 ## Dependências

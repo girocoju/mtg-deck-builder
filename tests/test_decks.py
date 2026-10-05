@@ -227,6 +227,18 @@ def test_mtgo_export_puts_sideboard_after_blank_line(conn):
     assert decklist.export(deck, "mtgo") == "4 Bear\n1 Delver // Aberration\n\n2 Elk\n"
 
 
+def test_diff_lists_what_left_and_what_came_in(conn):
+    before = decklist.parse("Deck\n4 Bear\n2 Elk\n20 Forest\n\nSideboard\n2 Drake\n1 Imp\n")
+    after = decklist.parse("Deck\n4 Bear\n1 Elk\n2 Drake\n19 Forest\n\nSideboard\n1 Imp\n")
+    decklist.resolve(conn, before)
+    decklist.resolve(conn, after)
+    assert decklist.diff(before, after) == {
+        "main": [(-1, "Elk"), (-1, "Forest"), (2, "Drake")],
+        "sideboard": [(-2, "Drake")],
+    }
+    assert decklist.diff(before, before) == {}
+
+
 def test_cost(conn):
     deck = decklist.parse("4 Bear\n2 Elk\n1 Wolf\n1 Drake\n20 Forest\n")
     decklist.resolve(conn, deck)
