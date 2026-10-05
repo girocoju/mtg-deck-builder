@@ -1,7 +1,10 @@
 """Consultas à base local de cartas."""
 
 # Layouts que não são cartas jogáveis em deck.
-EXTRA_LAYOUTS = ("token", "double_faced_token", "emblem", "art_series")
+EXTRA_LAYOUTS = (
+    "token", "double_faced_token", "emblem", "art_series",
+    "front_card", "planar", "scheme", "vanguard",
+)
 
 ORDERS = {
     "name": "c.name",

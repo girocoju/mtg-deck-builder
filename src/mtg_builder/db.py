@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS legalities (
     status TEXT NOT NULL,
     PRIMARY KEY (format, oracle_id)
 ) WITHOUT ROWID;
+CREATE INDEX IF NOT EXISTS idx_legalities_oracle ON legalities(oracle_id);
 
 -- Uma linha por impressão (carta em uma coleção).
 CREATE TABLE IF NOT EXISTS printings (

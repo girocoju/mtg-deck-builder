@@ -9,6 +9,8 @@ pedidos como "crie um deck anti meta no Standard" ou "estratégia de draft para 
 - **Spec-driven:** antes de implementar qualquer coisa, leia `specs/README.md` (roadmap e
   processo) e `specs/000-constituicao.md` (princípios). Trabalhe na spec ativa; ao
   concluir tarefas, marque-as em `tasks.md` e atualize o status no roadmap.
+- **Use a teoria.** Ao construir, ajustar ou explicar um deck, leia os documentos de
+  `knowledge/` indicados no índice e cite o conceito usado.
 - **Nunca cite carta de memória.** Texto, custo e legalidade vêm sempre de `mtg card` /
   `mtg search`. Se a carta não está na base, ela não entra na lista.
 - **Idioma:** respostas, specs e docs em PT-BR; nomes de cartas, formatos e código em inglês.
@@ -43,4 +45,7 @@ Formatos usam as chaves do Scryfall: `standard`, `pioneer`, `modern`, `legacy`, 
 - `specs/` — especificações e roadmap (fonte da verdade do andamento)
 - `src/mtg_builder/` — código; `tests/` — testes sem rede
 - `data/` — base SQLite e downloads (fora do git, reconstruível)
-- `knowledge/`, `decks/`, `drafts/` — criados pelas specs 002, 003/006/007 e 008
+- `knowledge/` — teoria de deck building por tema; comece por `knowledge/README.md`, que diz
+  o que ler para cada tipo de pedido. Para acrescentar fonte ou lição: `knowledge/COMO-ADICIONAR.md`
+- `scripts/` — extração de PDF e verificação de cópia para a base de conhecimento
+- `decks/`, `drafts/` — criados pelas specs 003/006/007 e 008

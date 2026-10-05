@@ -9,18 +9,19 @@ Nenhuma funcionalidade é implementada sem uma spec aprovada.
 | --- | ----------------------------------------------------------- | -------------------------------------------------------------- | --------------- |
 | 000 | [Constituição](000-constituicao.md)                         | Princípios que valem para todas as specs                       | Vigente         |
 | 001 | [Base de cartas](001-base-de-cartas/spec.md)                | Base local completa (Scryfall) + CLI `mtg` de consulta         | ✅ Concluída    |
-| 002 | [Base de conhecimento](002-base-de-conhecimento/spec.md)    | Teoria de deck building destilada do *Next Level Magic*        | 📝 Especificada |
+| 002 | [Base de conhecimento](002-base-de-conhecimento/spec.md)    | Teoria de deck building (Chapin, Karsten) em `knowledge/`       | 🚧 Em andamento |
 | 003 | [Decklists e formatos](003-decklists-e-formatos/spec.md)    | Ler, validar e exportar listas (Arena, MTGO, papel)            | 📝 Especificada |
 | 004 | [Análise de deck](004-analise-de-deck/spec.md)              | Curva, base de mana, papéis das cartas, diagnóstico            | 📝 Especificada |
 | 005 | [Metagame](005-metagame/spec.md)                            | Snapshots do meta (MTGGoldfish / MTGTop8)                      | 📝 Especificada |
 | 006 | [Deck builder construído](006-deck-builder-construido/spec.md) | "Crie um deck anti meta no formato Standard"                | 📝 Especificada |
 | 007 | [Commander e Brawl](007-commander-e-brawl/spec.md)          | "Monte um deck de Brawl com o commander X" (EDHREC)            | 📝 Especificada |
 | 008 | [Draft](008-draft/spec.md)                                  | "Crie uma estratégia de draft para a coleção X" (17Lands)      | 📝 Especificada |
+| 009 | [Adaptação BO3 ↔ BO1](009-adaptacao-bo3-bo1/spec.md)        | "Adapte o deck em questão BO3 para BO1"                        | 📝 Especificada |
 
 Status possíveis: 📝 Especificada → 📐 Planejada → 🚧 Em andamento → ✅ Concluída.
 
 Dependências: 003 e 004 dependem de 001; 006, 007 e 008 dependem de 002–004;
-006 depende de 005. A ordem numérica é a ordem sugerida de execução.
+006 depende de 005; 009 depende de 003–006. A ordem numérica é a ordem sugerida de execução.
 
 ## Processo
 

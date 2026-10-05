@@ -1,6 +1,6 @@
 # 002 — Base de conhecimento
 
-**Status:** 📝 Especificada
+**Status:** 🚧 Em andamento — base construída; faltam os dois critérios que dependem de uso (ver tasks.md)
 
 ## Objetivo
 
@@ -52,11 +52,11 @@ vídeos transcritos) e acumula o que for aprendido no uso do próprio deck build
 
 ## Critérios de aceite
 
-- [ ] Todo capítulo do livro está mapeado em `fontes.md` como "coberto em X" ou "fora do escopo".
-- [ ] Os artigos de base de mana estão integrados ao tema, com tabelas de referência
+- [x] Todo capítulo do livro está mapeado em `fontes.md` como "coberto em X" ou "fora do escopo".
+- [x] Os artigos de base de mana estão integrados ao tema, com tabelas de referência
       (terrenos por curva, fontes por custo colorido) para decks de 40, 60 e 100 cartas.
-- [ ] Nenhum documento contém trechos longos copiados das fontes.
-- [ ] Dado o pedido "por que 24 terrenos neste deck?", o agente encontra a resposta em
+- [x] Nenhum documento contém trechos longos copiados das fontes.
+- [x] Dado o pedido "por que 24 terrenos neste deck?", o agente encontra a resposta em
       `knowledge/` lendo no máximo dois arquivos.
 - [ ] Uma fonte nova (um artigo por URL) é adicionada seguindo só o processo documentado.
 - [ ] Um feedback do usuário sobre um deck vira uma lição registrada e é citado em um
