@@ -34,17 +34,6 @@ no papel.
 5. **Custo** opcional da lista: preço em USD/EUR (papel), tix (MTGO) e contagem de
    wildcards por raridade (Arena).
 6. Listas salvas em `decks/<formato>/<nome>.md`, com a lista e a explicação.
-7. **Coleção do usuário (Arena):**
-   - O Arena não tem exportação oficial da coleção. A importação é feita a partir do
-     arquivo CSV/texto exportado por um tracker (ex.: Untapped.gg, MTGA Assistant,
-     AetherHub), que o usuário salva em `data/colecao/`. Fica fora do git.
-   - O importador aceita os formatos dos trackers mais comuns e casa as cartas com a base
-     por `arena_id` ou por nome + coleção; o que não casar é listado, não descartado.
-   - Também é possível informar os wildcards disponíveis por raridade.
-   - Com a coleção carregada, a validação informa, por lista: cartas que o usuário já
-     tem, cartas que faltam e wildcards necessários por raridade.
-   - Os deck builders (specs 006–008) podem receber "priorize minha coleção" ou "use só
-     o que eu tenho" como restrição.
 
 ## Critérios de aceite
 
@@ -54,16 +43,11 @@ no papel.
 - [ ] Nome com erro de digitação gera sugestão em vez de falha genérica.
 - [ ] Um deck de Brawl com carta fora da identidade do comandante é rejeitado.
 
-- [ ] Um arquivo de coleção exportado de um tracker é importado e, para uma lista de
-      Standard, o relatório mostra cartas faltantes e wildcards por raridade.
 
 ## Fora do escopo
 
-- Ler a coleção direto do cliente do Arena (memória ou logs do jogo).
-- Coleção de papel e de MTGO (pode entrar depois pelo mesmo importador).
+- **Coleção do usuário** (importar a coleção do Arena para priorizar cartas que ele já
+  tem). Adiada por decisão do usuário em 2026-10-04: o Arena não exporta a coleção e o
+  tracker que ele usa (Untapped.gg) só exporta no plano pago. Retomar como spec própria
+  se surgir um caminho gratuito.
 - Formatos não cobertos pelas legalidades do Scryfall.
-
-## Questões em aberto
-
-- Qual tracker o usuário usa (ou prefere instalar)? O primeiro formato de arquivo
-  suportado será o dele.

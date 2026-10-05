@@ -20,7 +20,7 @@ uma lista de 60 cartas + sideboard, válida, exportável e com a estratégia exp
    no repositório disparam o mesmo fluxo.
 2. **Fluxo de construção** (cada etapa usa as specs anteriores):
    1. Entender o pedido: formato, plataforma, BO1 ou BO3, restrições (cores, orçamento,
-      cartas obrigatórias, usar a coleção do usuário). Perguntar só o que for
+      cartas obrigatórias). Perguntar só o que for
       indispensável. BO1 e BO3 geram decks diferentes: meta próprio (spec 005), sideboard
       de 15 com guia em BO3, e em BO1 lista principal mais robusta sem depender de sideboard.
    2. Ler o meta do formato (spec 005) e a teoria aplicável (spec 002).
