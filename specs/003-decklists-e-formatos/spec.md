@@ -1,6 +1,6 @@
 # 003 — Decklists e formatos
 
-**Status:** 📝 Especificada
+**Status:** ✅ Concluída
 
 ## Objetivo
 
@@ -29,19 +29,20 @@ no papel.
 3. **Validação** que aponta cada problema: carta inexistente (com sugestão de nome),
    carta ilegal/banida, excesso de cópias, tamanho errado, fora da identidade de cor,
    comandante inválido, carta indisponível na plataforma escolhida.
-4. **Exportação** para Arena, MTGO e texto simples, escolhendo impressões que existem na
-   plataforma de destino.
+4. **Exportação** para Arena, MTGO e texto simples, só com quantidade e nome (sem código
+   de coleção, que varia entre plataformas). Se a carta existe na plataforma de destino
+   é conferido pela validação (requisito 3).
 5. **Custo** opcional da lista: preço em USD/EUR (papel), tix (MTGO) e contagem de
    wildcards por raridade (Arena).
 6. Listas salvas em `decks/<formato>/<nome>.md`, com a lista e a explicação.
 
 ## Critérios de aceite
 
-- [ ] Uma lista válida de cada família (60 cartas, singleton com comandante, limitado)
+- [x] Uma lista válida de cada família (60 cartas, singleton com comandante, limitado)
       passa na validação; variações inválidas de cada regra são apontadas individualmente.
-- [ ] Uma lista exportada para o Arena é reimportada pelo leitor sem diferença.
-- [ ] Nome com erro de digitação gera sugestão em vez de falha genérica.
-- [ ] Um deck de Brawl com carta fora da identidade do comandante é rejeitado.
+- [x] Uma lista exportada para o Arena é reimportada pelo leitor sem diferença.
+- [x] Nome com erro de digitação gera sugestão em vez de falha genérica.
+- [x] Um deck de Brawl com carta fora da identidade do comandante é rejeitado.
 
 
 ## Fora do escopo

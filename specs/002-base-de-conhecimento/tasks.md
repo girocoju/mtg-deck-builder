@@ -14,7 +14,9 @@
 - [x] Índice (`knowledge/README.md`), registro de fontes (`fontes.md`), processo
       (`COMO-ADICIONAR.md`) e estrutura de lições (`licoes/`)
 - [x] Verificador de cópia (`scripts/check_copy.py`)
-- [ ] Ingerir uma fonte nova seguindo só o `COMO-ADICIONAR.md` (valida o processo)
+- [x] Ingerir uma fonte nova seguindo só o `COMO-ADICIONAR.md`: dois artigos por URL sobre
+      Brawl e Commander → `commander-e-brawl.md` (2026-10-04). O processo ganhou o
+      extrator de HTML (`scripts/extract_html.py`) para páginas que não carregam direto
 - [ ] Registrar a primeira lição a partir de feedback real e usá-la em um pedido posterior
 
 ## Verificação (2026-10-04)

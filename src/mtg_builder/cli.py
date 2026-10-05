@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 
-from . import db, query, scryfall
+from . import db, decklist, formats, query, scryfall
 
 
 def _card_dict(row):
@@ -126,6 +126,60 @@ def cmd_sql(args):
           ["\t".join("" if v is None else str(v) for v in r) for r in rows])
 
 
+def _read_deck(path):
+    try:
+        text = sys.stdin.read() if path == "-" else open(path, encoding="utf-8-sig").read()
+    except OSError as error:
+        sys.exit(f"Não foi possível ler a lista: {error}")
+    return decklist.parse(text, markdown=path.lower().endswith(".md"))
+
+
+def cmd_deck_validate(args):
+    conn = db.connect(readonly=True)
+    deck = _read_deck(args.file)
+    errors, warnings = formats.validate(conn, deck, args.format, bo1=args.bo1, game=args.game)
+    data = {"valid": not errors, "format": args.format.lower(),
+            "main": deck.count("main"), "sideboard": deck.count("sideboard"),
+            "commander": [e.name for e in deck.commander], "errors": errors, "warnings": warnings}
+    lines = [f"{args.format.lower()}: {data['main']} no deck principal, "
+             f"{data['sideboard']} no sideboard"
+             + (f", comandante: {' + '.join(data['commander'])}" if deck.commander else "")]
+    lines += [f"ERRO: {e}" for e in errors] + [f"aviso: {w}" for w in warnings]
+    lines.append("Lista válida." if not errors else f"Lista inválida ({len(errors)} problemas).")
+    _emit(args, data, lines)
+    if errors:
+        sys.exit(1)
+
+
+def cmd_deck_export(args):
+    conn = db.connect(readonly=True)
+    deck = _read_deck(args.file)
+    unknown = decklist.resolve(conn, deck)
+    for entry, _ in unknown:
+        print(f"aviso: carta não encontrada, exportada como está: {entry.name}", file=sys.stderr)
+    print(decklist.export(deck, args.to), end="")
+
+
+def cmd_deck_cost(args):
+    conn = db.connect(readonly=True)
+    deck = _read_deck(args.file)
+    decklist.resolve(conn, deck)
+    data = decklist.cost(conn, deck)
+    wild = ", ".join(f"{n} {r}" for r, n in data["wildcards"].items())
+    lines = [
+        f"Papel: US$ {data['usd']:.2f} | € {data['eur']:.2f}   MTGO: {data['tix']:.2f} tix",
+        f"Arena (wildcards, sem contar o que você já tem): {wild}",
+    ]
+    for key, names in data["sem_preco"].items():
+        if names:
+            lines.append(f"Sem preço em {key} ({len(names)}): {', '.join(names[:10])}"
+                         + (" ..." if len(names) > 10 else ""))
+    if data["fora_do_arena"]:
+        lines.append(f"Fora do Arena ({len(data['fora_do_arena'])}): "
+                     + ", ".join(data["fora_do_arena"][:10]))
+    _emit(args, data, lines)
+
+
 def main(argv=None):
     sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(prog="mtg", description=__doc__)
@@ -171,6 +225,27 @@ def main(argv=None):
     p = sub.add_parser("sql", help="consulta SQL somente leitura na base")
     p.add_argument("query")
     p.set_defaults(func=cmd_sql)
+
+    deck = sub.add_parser("deck", help="valida, exporta e calcula o custo de decklists")
+    deck_sub = deck.add_subparsers(dest="deck_command", required=True)
+    file_help = "arquivo da lista (.txt, ou .md com a lista em bloco de código); '-' lê da entrada padrão"
+
+    p = deck_sub.add_parser("validate", help="confere a lista contra as regras do formato")
+    p.add_argument("file", help=file_help)
+    p.add_argument("--format", required=True, help=f"um de: {', '.join(sorted(formats.RULES))}")
+    p.add_argument("--bo1", action="store_true", help="melhor-de-um no Arena (sideboard de até 7)")
+    p.add_argument("--game", choices=["paper", "arena", "mtgo"],
+                   help="exige que toda carta exista na plataforma")
+    p.set_defaults(func=cmd_deck_validate)
+
+    p = deck_sub.add_parser("export", help="exporta para Arena, MTGO ou texto")
+    p.add_argument("file", help=file_help)
+    p.add_argument("--to", choices=["arena", "mtgo", "text"], default="arena")
+    p.set_defaults(func=cmd_deck_export)
+
+    p = deck_sub.add_parser("cost", help="preço em papel/MTGO e wildcards do Arena")
+    p.add_argument("file", help=file_help)
+    p.set_defaults(func=cmd_deck_cost)
 
     args = parser.parse_args(argv)
     args.func(args)

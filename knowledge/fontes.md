@@ -94,8 +94,44 @@ Observações da ingestão:
   só aparecem nelas estão como "não verificado".
 - Valores marcados como "calculado" são contas feitas com as fórmulas dos artigos.
 
+## 3. Guia de Brawl do MTG Arena — BlueStacks
+
+- **Tipo:** artigo de blog (BlueStacks Content Team), 2026-08-27.
+- **Original:** <https://www.bluestacks.com/blog/game-guides/magic-the-gathering-arena/mtga-best-brawl-decks-en.html>
+- **Ingerido em:** 2026-10-04, indicado pelo usuário.
+- **Papel na base:** regras e particularidades do Brawl no Arena e diretrizes de
+  construção. Guia de divulgação, não fonte oficial: afirmações conferidas na base
+  local quando possível (comandantes citados, banidas da fila ranqueada).
+
+| Seção do artigo | Coberto em |
+| --- | --- |
+| O que é Brawl; regras | commander-e-brawl (seção 1) |
+| Peso do deck e pareamento; Ranked Brawl e banidas | commander-e-brawl (seção 2) |
+| Melhores decks casuais e ranqueados | commander-e-brawl (seção 3, como exemplos de planos). Listas de cartas-chave não transcritas |
+| Diretrizes de construção | commander-e-brawl (seção 3) |
+| Dicas de jogo | Fora do escopo (jogo técnico), exceto mulligan gratuito e força do aggro |
+
+## 4. MTG Commander Decks 2026 — Tistaminis
+
+- **Tipo:** artigo de blog de loja, setembro de 2026.
+- **Original:** <https://tistaminis.com/blogs/blog/mtg-commander-decks-2026-new-releases-best-picks>.
+  Texto extraído em `data/fontes/tistaminis-commander-2026/` com `scripts/extract_html.py`.
+- **Ingerido em:** 2026-10-04, indicado pelo usuário.
+- **Papel na base:** vocabulário de Brackets e Game Changers, método para melhorar um
+  deck pré-construído e lista dos produtos de Commander de 2026. Texto comercial.
+
+| Seção do artigo | Coberto em |
+| --- | --- |
+| O que é Commander; por que é popular | Fora do escopo (introdução) |
+| Produtos de 2026 e descrição de cada deck | commander-e-brawl (seção 6, só nomes e datas) |
+| Qual deck combina com cada estilo | Fora do escopo (guia de compra) |
+| Sistema de Brackets e Game Changers | commander-e-brawl (seção 4) |
+| Impacto no hobby, lojas, colecionismo, acessórios | Fora do escopo |
+| Comprar pronto ou montar; quando e como fazer upgrades; erros comuns | commander-e-brawl (seção 5) |
+| Perguntas frequentes | commander-e-brawl (seções 1 e 4) |
+
 ## Fontes desejadas
 
-- Teoria de Commander/Brawl (estrutura do deck por categorias, multiplayer).
+- Teoria de Commander/Brawl com números (quantidades por função, multiplayer).
 - Teoria moderna de limitado apoiada em dados (ex.: material do 17Lands).
 - "Who's the Beatdown?" (Mike Flores) e outros artigos clássicos citados pelo livro.

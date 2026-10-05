@@ -15,7 +15,7 @@ Regra de uso: ao justificar uma escolha, cite o conceito e o documento ("base de
 | --- | --- |
 | **Construir um deck de construído** (60 cartas) | [arquetipos](arquetipos.md) → [papel-no-jogo](papel-no-jogo.md) → [fases-do-jogo](fases-do-jogo.md) → [quantidade-de-copias](quantidade-de-copias.md) → [base-de-mana](base-de-mana.md) → [sideboard](sideboard.md) |
 | **Deck anti-meta** | [preparacao-e-metagame](preparacao-e-metagame.md) → [arquetipos](arquetipos.md) (seções "Como os arquétipos se relacionam" e "Roteiro anti-meta") → [papel-no-jogo](papel-no-jogo.md) → [valor-das-cartas](valor-das-cartas.md), e então o roteiro de construção acima |
-| **Commander / Brawl** | [quantidade-de-copias](quantidade-de-copias.md) (nota sobre singleton) → [base-de-mana](base-de-mana.md) (colunas de 99 cartas e seção de Commander) → [vantagem-de-cartas-e-tempo](vantagem-de-cartas-e-tempo.md) → [fases-do-jogo](fases-do-jogo.md). Ainda não há fonte dedicada a esses formatos; ver "Lacunas" |
+| **Commander / Brawl** | [commander-e-brawl](commander-e-brawl.md) → [quantidade-de-copias](quantidade-de-copias.md) (nota sobre singleton) → [base-de-mana](base-de-mana.md) (colunas de 99 cartas e seção de Commander) → [vantagem-de-cartas-e-tempo](vantagem-de-cartas-e-tempo.md) → [fases-do-jogo](fases-do-jogo.md) |
 | **Guia de draft, pick ou deck de 40 cartas** | [limitado-e-draft](limitado-e-draft.md) → [base-de-mana](base-de-mana.md) (colunas de 40 cartas) |
 | **Ajustar ou diagnosticar uma lista existente** | [metodo-quatro-perspectivas](metodo-quatro-perspectivas.md) → [valor-das-cartas](valor-das-cartas.md) → [quantidade-de-copias](quantidade-de-copias.md) → [base-de-mana](base-de-mana.md) → [sideboard](sideboard.md) |
 | **"Por que N terrenos?" / "quantas fontes de tal cor?"** | [base-de-mana](base-de-mana.md) (comece pela "Resposta rápida") |
@@ -31,6 +31,7 @@ Regra de uso: ao justificar uma escolha, cite o conceito e o documento ("base de
 | [arquetipos.md](arquetipos.md) | Os dez arquétipos clássicos: plano, ingredientes, forças, fraquezas e como vencê-los; relações entre eles; roteiro anti-meta |
 | [atalhos-de-construcao.md](atalhos-de-construcao.md) | Heurísticas de construção e de escolha de deck: definir o objetivo, partir de precedentes, avaliar listas pela fonte |
 | [base-de-mana.md](base-de-mana.md) | Princípios (Chapin) e números (Karsten): fórmula de terrenos, tabela de fontes por custo colorido, contagem de fontes, land drops, curvas ótimas; 40, 60, 80 e 99 cartas |
+| [commander-e-brawl.md](commander-e-brawl.md) | Diferenças entre Commander, Brawl e Standard Brawl; pareamento e fila ranqueada do Arena; roteiro de construção; Brackets e Game Changers; como melhorar um deck pré-construído |
 | [fases-do-jogo.md](fases-do-jogo.md) | Os três estágios do jogo, o que cada tipo de deck quer em cada um, e como isso define curva e base de mana |
 | [glossario.md](glossario.md) | Termos de estratégia em inglês, uso em português e definição curta |
 | [jogo-mental-e-mentalidade.md](jogo-mental-e-mentalidade.md) | Resumo de melhoria deliberada, grupos de teste, armadilhas de pensamento (information cascades) e jogo mental |
@@ -57,9 +58,10 @@ Regra de uso: ao justificar uma escolha, cite o conceito e o documento ("base de
 
 ## Lacunas conhecidas
 
-- **Commander e Brawl:** só há números de base de mana e curva (Karsten) e uma nota sobre
-  singleton. Falta teoria própria desses formatos (categorias do deck, multiplayer,
-  política de mesa). Prioridade para a spec 007.
+- **Commander e Brawl:** há regras, roteiro e brackets em
+  [commander-e-brawl](commander-e-brawl.md), vindos de guias de divulgação. Faltam
+  quantidades-alvo por função (aceleração, compra, remoção) e teoria de multiplayer.
+  Prioridade para a spec 007.
 - **Terrenos utilitários:** nenhuma das fontes dá regra numérica.
 - **Arena melhor-de-um:** o algoritmo de mão inicial não é público; não há números.
 - **Midrange e tempo modernos:** o livro os trata dentro de "Good Stuff" e "Aggro-Control".

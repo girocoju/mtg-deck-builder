@@ -13,6 +13,9 @@ pedidos como "crie um deck anti meta no Standard" ou "estratégia de draft para 
   `knowledge/` indicados no índice e cite o conceito usado.
 - **Nunca cite carta de memória.** Texto, custo e legalidade vêm sempre de `mtg card` /
   `mtg search`. Se a carta não está na base, ela não entra na lista.
+- **Lista entregue é lista validada.** Antes de mostrar uma decklist, rode
+  `mtg deck validate` no formato pedido e corrija até passar. Decks ficam em
+  `decks/<formato>/<nome>.md` (convenção em `decks/README.md`).
 - **Idioma:** respostas, specs e docs em PT-BR; nomes de cartas, formatos e código em inglês.
 - `NextLevelMagic2015.pdf` é material protegido: não vai para o git e não deve ser
   reproduzido; só conceitos destilados com palavras próprias (spec 002).
@@ -29,6 +32,9 @@ Ambiente: `.venv` com o pacote instalado em modo editável (`pip install -e ".[d
 .venv\Scripts\mtg search --set <código> --rarity common --booster --text "flying"
 .venv\Scripts\mtg sets "<nome ou código>"
 .venv\Scripts\mtg sql "SELECT ..."        # somente leitura; schema em src/mtg_builder/db.py
+.venv\Scripts\mtg deck validate <arquivo> --format brawl [--bo1] [--game arena]
+.venv\Scripts\mtg deck export <arquivo> --to arena|mtgo|text
+.venv\Scripts\mtg deck cost <arquivo>
 .venv\Scripts\python -m pytest -q
 ```
 
@@ -48,4 +54,4 @@ Formatos usam as chaves do Scryfall: `standard`, `pioneer`, `modern`, `legacy`, 
 - `knowledge/` — teoria de deck building por tema; comece por `knowledge/README.md`, que diz
   o que ler para cada tipo de pedido. Para acrescentar fonte ou lição: `knowledge/COMO-ADICIONAR.md`
 - `scripts/` — extração de PDF e verificação de cópia para a base de conhecimento
-- `decks/`, `drafts/` — criados pelas specs 003/006/007 e 008
+- `decks/` — decks gerados (lista em bloco de código + explicação); `drafts/` — spec 008
