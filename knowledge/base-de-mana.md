@@ -372,6 +372,24 @@ cEDH [K7].
 **MTG Arena melhor-de-um [K4].** O algoritmo de suavização de mão inicial não é público;
 Karsten declara não saber como ajustar a base de mana para ele. Não há número.
 
+O que se sabe por outras fontes, sem confirmação oficial: em BO1 o Arena gera mais de uma
+mão inicial (o material de apoio do usuário fala em 2 ou 3) e entrega a que tem a
+proporção de terrenos mais próxima da proporção do deck. O efeito é reduzir mãos com
+terrenos de menos ou de mais. Consequências práticas:
+
+- as probabilidades de mão inicial calculadas por `mtg deck analyze` e pelas tabelas
+  deste documento são de sorteio puro e **subestimam** a regularidade das mãos em BO1;
+- o algoritmo só atua na mão inicial: as compras seguintes são aleatórias, então a
+  contagem de terrenos continua valendo para bater os land drops dos turnos 3 a 5;
+- por isso, a regra do projeto é **não cortar terrenos por causa do BO1** sem evidência
+  de teste. Um corte de 1 terreno em deck de curva baixa é hipótese a registrar como
+  lição, não regra.
+
+Números de terceiros, **não verificados**: o material do usuário cita mais de 80% de
+mãos com 2 a 4 terrenos para decks de 24 a 26 terrenos em BO1; o artigo que ele indica
+(MTG Arena Zone, 2020) traz tabelas medidas em amostras pequenas (mínimo de 100 mãos
+por contagem) e não descreve o mecanismo. Tratar como ordem de grandeza. [A1]
+
 **Brawl.** Nenhum dos artigos lidos trata de Brawl especificamente. Para Brawl de 100
 cartas, usar os números de 99 cartas como aproximação (a regra 103.4c citada em [K2] dá
 mulligan grátis a qualquer jogo de Brawl). Para Standard Brawl (60 cartas com
@@ -796,6 +814,10 @@ página.
 - **[K7]** Frank Karsten, "Eight intriguing numbers in Magic: the Gathering". Ultimate
   Guard (blog), 2024-11-14.
   <https://ultimateguard.com/en/blog/eight-intriguing-numbers-in-magic-the-gathering-magic-the-gathering>
+
+- **[A1]** DotGG, "Finding the Ideal Land Count for BO1". MTG Arena Zone, 2020-03-27.
+  <https://mtgazone.com/finding-the-ideal-land-count-for-bo1/> — indicado pelo usuário;
+  só a nota sobre BO1 da seção 1.4. Acesso em 2026-10-04.
 
 Código e dados do autor citados nos artigos (não consultados): repositório
 `frankkarsten/MTG-Math` no GitHub e o conjunto de dados `frankkarsten/mtg-lands` no

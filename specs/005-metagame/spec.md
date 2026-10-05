@@ -1,6 +1,6 @@
 # 005 — Metagame
 
-**Status:** 📝 Especificada
+**Status:** ✅ Concluída
 
 ## Objetivo
 
@@ -15,8 +15,15 @@ builder possa escolher e ajustar listas contra o campo real.
 
 ## Requisitos
 
-1. **Fontes:** MTGGoldfish (fatia do meta por arquétipo) e MTGTop8 (resultados de
-   torneios), coletados das páginas públicas.
+1. **Fontes** (definidas pelo usuário em 2026-10-04):
+   - **MTGGoldfish**, coleta automática das páginas públicas: fatia do meta por
+     arquétipo e uma lista de referência por arquétipo. São resultados de torneios de
+     MTGO e papel, portanto **BO3**.
+   - **Untapped.gg**, para o meta do Arena (inclusive **BO1**), por **importação
+     manual** de CSV. Não há coleta automática: os dados do site são carregados por uma
+     API interna, o acesso automatizado é recusado, o `robots.txt` restringe as páginas
+     de decks e parte dos dados é do plano pago.
+   - A importação por CSV aceita qualquer outra fonte.
 2. **Formatos:** no mínimo Standard, Pioneer, Modern, Legacy, Vintage, Pauper; os formatos
    do Arena (Historic, Timeless, Alchemy) quando a fonte os cobrir.
 3. **Snapshot por formato** com: data da coleta, fonte, arquétipos, fatia do meta, e ao
@@ -36,12 +43,12 @@ builder possa escolher e ajustar listas contra o campo real.
 
 ## Critérios de aceite
 
-- [ ] Um comando gera o snapshot de Standard com pelo menos os 10 arquétipos principais.
-- [ ] Todo snapshot tem data e fonte; o agente as cita ao usá-lo.
-- [ ] Todo snapshot e toda lista de referência indica BO1 ou BO3, e o resumo de meta de
+- [x] Um comando gera o snapshot de Standard com pelo menos os 10 arquétipos principais.
+- [x] Todo snapshot tem data e fonte; o agente as cita ao usá-lo.
+- [x] Todo snapshot e toda lista de referência indica BO1 ou BO3, e o resumo de meta de
       um formato do Arena apresenta os dois separadamente quando houver dados.
-- [ ] Rodar o comando duas vezes seguidas não refaz as requisições.
-- [ ] Com a rede indisponível, o erro é claro e o snapshot anterior continua utilizável.
+- [x] Rodar o comando duas vezes seguidas não refaz as requisições.
+- [x] Com a rede indisponível, o erro é claro e o snapshot anterior continua utilizável.
 
 ## Fora do escopo
 
@@ -50,7 +57,5 @@ builder possa escolher e ajustar listas contra o campo real.
 
 ## Questões em aberto
 
-- Conferir termos de uso e `robots.txt` de cada site antes de implementar a coleta; se
-  algum proibir, a alternativa é a busca na web sob demanda para aquele site.
-- MTGGoldfish e MTGTop8 refletem principalmente BO3. Definir no plano a fonte de dados
-  de BO1 do Arena (ex.: Untapped.gg, MTGA Zone, AetherHub) e sua forma de acesso.
+- Há um caminho gratuito e permitido para obter o meta BO1 do Untapped em arquivo? Até
+  lá, o snapshot BO1 depende de o usuário copiar a tabela do site para um CSV.

@@ -228,6 +228,53 @@ Consolidação do conteúdo acima, na ordem em que o guia de draft é construíd
 17. **Sealed.** Qual cor ou par deve dominar, quais bombs definem o formato, e se a preferência é jogar primeiro ou comprar.
 18. **Dados contra impressão.** Onde os dados da coleção contradizem a avaliação teórica, registre a divergência e siga os dados.
 
+## Ler dados de win rate (17Lands)
+
+**O que é.** O 17Lands publica, por coleção e por modo de jogo, estatísticas de milhões
+de partidas de limitado no Arena. São a base dos guias de draft do projeto (spec 008)
+quando existem para a coleção. [17L]
+
+| Métrica | Significado | Uso |
+| --- | --- | --- |
+| GIH WR (Games in Hand) | Win rate dos jogos em que a carta esteve na mão inicial ou foi comprada | Principal medida do impacto de uma carta |
+| OH WR (Opening Hand) | Win rate quando a carta está na mão inicial | Avaliar cartas baratas e agressivas |
+| GD WR (Game Drawn) | Win rate quando a carta foi comprada depois da mão inicial | Comparar com OH WR: cartas de fim de jogo rendem mais aqui |
+| GP WR (Games Played) | Win rate dos decks que têm a carta, tendo ela sido comprada ou não | Mede a força dos decks em que a carta entra |
+| ALSA (Average Last Seen At) | Pick médio em que a carta ainda é vista no pacote | Quanto a comunidade valoriza a carta; base para ler sinais |
+| IWD (Improvement When Drawn) | Diferença entre o win rate com a carta comprada e sem ela | Isola o efeito da carta da força do deck |
+
+ALSA e IWD não aparecem no artigo consultado: vêm do material de apoio do usuário (que
+grafa a segunda como "IHD"; a sigla usual é IWD). Conferir os nomes exatos na tabela de
+dados do site ao implementar a spec 008.
+
+**Vieses, segundo o artigo:**
+
+- **Força do deck:** uma carta forte em um arquétipo fraco pode ter o mesmo número de uma
+  carta mediana em um arquétipo forte. Olhar o win rate da carta **por par de cores**.
+- **Combinação de cores:** cartas multicoloridas saem infladas, porque só entram no deck
+  certo; cartas de uma cor são puxadas para baixo por decks em que encaixam mal.
+- **Duração do jogo:** cartas caras e finalizadores têm GIH WR inflado, pois só são
+  compradas e conjuradas em jogos longos, que o jogador já estava conseguindo sustentar.
+- **Momento da compra:** uma carta comprada nos últimos turnos conta como "em mão" sem
+  ter influído no resultado.
+- **Nível dos jogadores:** os dados vêm de jogadores de médios a bons; iniciantes e
+  jogadores muito fortes terão resultados diferentes com a mesma carta.
+- **Contexto:** o número não diz em que tipo de deck e plano de jogo a carta rende.
+
+**Como usar na construção de guias e na recomendação de picks.**
+
+- Ranquear por GIH WR **dentro da mesma cor ou par de cores**, não a coleção inteira.
+- Para cartas de custo alto, descontar o viés de duração: comparar com OH WR e GD WR; um
+  finalizador com GIH WR alto e OH WR baixo é bom no fim do jogo e ruim na mão inicial.
+- Cruzar GIH WR com ALSA para achar cartas **subestimadas** (rendem muito e saem tarde)
+  e **superestimadas** (saem cedo e rendem pouco): é a seção "armadilhas" do guia.
+- Dados de um modo não valem para outro: bots do Quick Draft escolhem diferente de
+  humanos, e BO3 muda o valor de cartas de sideboard.
+- O artigo não dá tamanho mínimo de amostra. Regra do projeto, a calibrar: informar o
+  número de jogos ao lado de cada win rate e tratar como incerto o que tiver poucos jogos.
+- Os dados medem o que aconteceu, não substituem a leitura da coleção: usar junto com os
+  princípios das seções anteriores, que valem quando ainda não há dados.
+
 ## Referências
 
 *Next Level Magic* (Chapin, 2015). Páginas conforme a numeração impressa no rodapé da edição.
@@ -245,3 +292,7 @@ Consolidação do conteúdo acima, na ordem em que o guia de draft é construíd
 | 9. Diferenças entre as cores | Seção 6, "Understanding the Differences Between the Colors in Limited"; "Four Perspectives..." (Front-Back) | 392-397; 387-388 |
 | 10. Sealed | Seção 6, "Winning With Forty Cards" | 357-358 |
 | 11. Depois do draft | Seção 6, "Drafting a Winner Is Only Half the Battle"; "Four Perspectives..." | 366-367; 378-380; 387, 390-391 |
+
+- **[17L]** Sierkovitz, "Using Win Rate Data". 17Lands Blog, 2021-04-27 (atualizado em
+  2026-06-03). <https://blog.17lands.com/posts/using-win-rate-data/> — seção "Ler dados de
+  win rate". Indicado pelo usuário; acesso em 2026-10-04.

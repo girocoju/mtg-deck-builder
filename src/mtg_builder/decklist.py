@@ -2,6 +2,7 @@
 
 import difflib
 import re
+import unicodedata
 from dataclasses import dataclass, field
 
 from .query import EXTRA_LAYOUTS
@@ -82,6 +83,12 @@ def parse(text, markdown=False):
     return deck
 
 
+def _key(name):
+    """Chave de comparação de nomes: minúsculas e sem acentos (Mjölnir = Mjolnir)."""
+    folded = unicodedata.normalize("NFKD", name)
+    return "".join(c for c in folded if not unicodedata.combining(c)).lower()
+
+
 def _name_index(conn):
     """nome (minúsculo) → carta. Cartas jogáveis em algum formato têm prioridade em
     nomes repetidos; faces da frente também são chaves."""
@@ -93,10 +100,10 @@ def _name_index(conn):
     ).fetchall()
     index = {}
     for row in rows:
-        index.setdefault(row["name"].lower(), row)
+        index.setdefault(_key(row["name"]), row)
     for row in rows:
         if " // " in row["name"]:
-            index.setdefault(row["name"].split(" // ")[0].lower(), row)
+            index.setdefault(_key(row["name"].split(" // ")[0]), row)
     return index
 
 
@@ -105,9 +112,9 @@ def resolve(conn, deck):
     index = _name_index(conn)
     unknown = []
     for entry in deck.entries():
-        entry.card = index.get(entry.name.lower())
+        entry.card = index.get(_key(entry.name))
         if entry.card is None:
-            close = difflib.get_close_matches(entry.name.lower(), index.keys(), n=3, cutoff=0.75)
+            close = difflib.get_close_matches(_key(entry.name), index.keys(), n=3, cutoff=0.75)
             unknown.append((entry, [index[c]["name"] for c in close]))
     return unknown
 

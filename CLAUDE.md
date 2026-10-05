@@ -17,6 +17,9 @@ pedidos como "crie um deck anti meta no Standard" ou "estratégia de draft para 
   `mtg deck validate` no formato pedido e corrija até passar; rode `mtg deck analyze`
   e resolva ou justifique cada alerta. Decks ficam em
   `decks/<formato>/<nome>.md` (convenção em `decks/README.md`).
+- **Meta é dado com data.** Ao usar `mtg meta show`, cite fonte, data e modo (BO1/BO3).
+  Sem snapshot do modo pedido, diga isso e trate a análise como teórica; nunca use o
+  meta BO3 como se fosse BO1.
 - **Idioma:** respostas, specs e docs em PT-BR; nomes de cartas, formatos e código em inglês.
 - `NextLevelMagic2015.pdf` é material protegido: não vai para o git e não deve ser
   reproduzido; só conceitos destilados com palavras próprias (spec 002).
@@ -38,6 +41,9 @@ Ambiente: `.venv` com o pacote instalado em modo editável (`pip install -e ".[d
 .venv\Scripts\mtg deck cost <arquivo>
 .venv\Scripts\mtg deck analyze <arquivo>          # curva, terrenos, fontes por cor, papéis, alertas
 .venv\Scripts\mtg odds --copies 4 --turn 4 [--deck 60] [--min 1] [--draw]
+.venv\Scripts\mtg meta update standard          # coleta do MTGGoldfish (BO3), no máximo 1x por dia
+.venv\Scripts\mtg meta show standard [--mode bo1|bo3]   # arquétipos, resumo, cartas mais jogadas
+.venv\Scripts\mtg meta import meta.csv --format standard --mode bo1 --source untapped
 .venv\Scripts\python -m pytest -q
 ```
 

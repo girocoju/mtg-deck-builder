@@ -16,7 +16,7 @@ Regra de uso: ao justificar uma escolha, cite o conceito e o documento ("base de
 | **Construir um deck de construído** (60 cartas) | [arquetipos](arquetipos.md) → [papel-no-jogo](papel-no-jogo.md) → [fases-do-jogo](fases-do-jogo.md) → [quantidade-de-copias](quantidade-de-copias.md) → [base-de-mana](base-de-mana.md) → [sideboard](sideboard.md) |
 | **Deck anti-meta** | [preparacao-e-metagame](preparacao-e-metagame.md) → [arquetipos](arquetipos.md) (seções "Como os arquétipos se relacionam" e "Roteiro anti-meta") → [papel-no-jogo](papel-no-jogo.md) → [valor-das-cartas](valor-das-cartas.md), e então o roteiro de construção acima |
 | **Commander / Brawl** | [commander-e-brawl](commander-e-brawl.md) → [quantidade-de-copias](quantidade-de-copias.md) (nota sobre singleton) → [base-de-mana](base-de-mana.md) (colunas de 99 cartas e seção de Commander) → [vantagem-de-cartas-e-tempo](vantagem-de-cartas-e-tempo.md) → [fases-do-jogo](fases-do-jogo.md) |
-| **Guia de draft, pick ou deck de 40 cartas** | [limitado-e-draft](limitado-e-draft.md) → [base-de-mana](base-de-mana.md) (colunas de 40 cartas) |
+| **Guia de draft, pick ou deck de 40 cartas** | [limitado-e-draft](limitado-e-draft.md) (inclui como ler os dados do 17Lands) → [base-de-mana](base-de-mana.md) (colunas de 40 cartas) |
 | **Ajustar ou diagnosticar uma lista existente** | [metodo-quatro-perspectivas](metodo-quatro-perspectivas.md) → [valor-das-cartas](valor-das-cartas.md) → [quantidade-de-copias](quantidade-de-copias.md) → [base-de-mana](base-de-mana.md) → [sideboard](sideboard.md) |
 | **"Por que N terrenos?" / "quantas fontes de tal cor?"** | [base-de-mana](base-de-mana.md) (comece pela "Resposta rápida") |
 | **Sideboard e planos por matchup; BO1 vs. BO3** | [sideboard](sideboard.md) → [papel-no-jogo](papel-no-jogo.md) |
@@ -58,11 +58,11 @@ Regra de uso: ao justificar uma escolha, cite o conceito e o documento ("base de
 
 ## Lacunas conhecidas
 
-- **Commander e Brawl:** há regras, roteiro e brackets em
-  [commander-e-brawl](commander-e-brawl.md), vindos de guias de divulgação. Faltam
-  quantidades-alvo por função (aceleração, compra, remoção) e teoria de multiplayer.
-  Prioridade para a spec 007.
+- **Commander e Brawl:** há regras, proporções por categoria e brackets em
+  [commander-e-brawl](commander-e-brawl.md), vindos de guias de terceiros. As proporções
+  são de Commander de mesa; a adaptação para Brawl (um contra um) ainda não tem fonte.
 - **Terrenos utilitários:** nenhuma das fontes dá regra numérica.
-- **Arena melhor-de-um:** o algoritmo de mão inicial não é público; não há números.
+- **Arena melhor-de-um:** o algoritmo de mão inicial não é público; há só descrição e
+  números de terceiros, não verificados (base-de-mana, seção 1.4).
 - **Midrange e tempo modernos:** o livro os trata dentro de "Good Stuff" e "Aggro-Control".
 - **Pendências numéricas** de base de mana: lista no fim de [base-de-mana](base-de-mana.md).

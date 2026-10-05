@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 
-from . import analysis, db, decklist, formats, query, scryfall
+from . import analysis, db, decklist, formats, meta, query, scryfall
 
 
 def _card_dict(row):
@@ -201,6 +201,47 @@ def cmd_odds(args):
                        f"turno {args.turn} ({seen} cartas vistas de {args.deck}, sem mulligan)"])
 
 
+def cmd_meta_update(args):
+    conn = db.connect(readonly=True)
+    try:
+        meta.update_goldfish(conn, args.format.lower(), top=args.top, force=args.force)
+    except RuntimeError as error:
+        previous = meta.latest(args.format.lower(), "bo3")
+        hint = (f" O snapshot anterior ({previous['collected_at'][:10]}) continua disponível."
+                if previous else " Não há snapshot anterior; use a busca na web e declare isso.")
+        sys.exit(f"Coleta falhou: {error}{hint}")
+
+
+def cmd_meta_show(args):
+    conn = db.connect(readonly=True)
+    fmt = args.format.lower()
+    modes = meta.MODES if args.mode == "all" else (args.mode,)
+    data, lines = {}, []
+    for mode in modes:
+        snapshot = meta.latest(fmt, mode)
+        if snapshot is None:
+            data[mode] = None
+            lines.append(f"{fmt} ({mode.upper()}): sem snapshot. "
+                         + ("Rode `mtg meta update`." if mode == "bo3" else
+                            "Não há coleta automática de BO1; importe com `mtg meta import`."))
+        else:
+            summary = meta.summarize(conn, snapshot)
+            data[mode] = {"snapshot": snapshot, "summary": summary}
+            lines.append(meta.report(snapshot, summary, limit=args.limit))
+        lines.append("")
+    _emit(args, data, lines)
+
+
+def cmd_meta_import(args):
+    conn = db.connect(readonly=True)
+    try:
+        snapshot = meta.import_csv(conn, args.file, args.format.lower(), args.mode, args.source,
+                                   decks_dir=args.decks, url=args.url, collected=args.date)
+    except (RuntimeError, OSError) as error:
+        sys.exit(f"Importação falhou: {error}")
+    print(f"{len(snapshot['archetypes'])} arquétipos importados em {snapshot['file']}")
+
+
 def main(argv=None):
     sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(prog="mtg", description=__doc__)
@@ -270,6 +311,31 @@ def main(argv=None):
     p = deck_sub.add_parser("analyze", help="curva, base de mana, papéis e probabilidades")
     p.add_argument("file", help=file_help)
     p.set_defaults(func=cmd_deck_analyze)
+
+    meta_cmd = sub.add_parser("meta", help="snapshots de metagame de construído")
+    meta_sub = meta_cmd.add_subparsers(dest="meta_command", required=True)
+
+    p = meta_sub.add_parser("update", help="coleta o meta no MTGGoldfish (torneios, BO3)")
+    p.add_argument("format", help=f"um de: {', '.join(sorted(meta.GOLDFISH_FORMATS))}")
+    p.add_argument("--top", type=int, default=12, help="quantas listas de referência baixar")
+    p.add_argument("--force", action="store_true", help="coleta mesmo com snapshot recente")
+    p.set_defaults(func=cmd_meta_update)
+
+    p = meta_sub.add_parser("show", help="mostra o snapshot mais recente e o resumo do meta")
+    p.add_argument("format")
+    p.add_argument("--mode", choices=["bo1", "bo3", "all"], default="all")
+    p.add_argument("--limit", type=int, default=20, help="arquétipos listados")
+    p.set_defaults(func=cmd_meta_show)
+
+    p = meta_sub.add_parser("import", help="importa um meta de CSV (ex.: BO1 do Arena)")
+    p.add_argument("file", help="CSV com colunas archetype,share[,winrate][,games]")
+    p.add_argument("--format", required=True)
+    p.add_argument("--mode", required=True, choices=["bo1", "bo3"])
+    p.add_argument("--source", required=True, help="nome curto da fonte, ex.: untapped")
+    p.add_argument("--decks", help="pasta com '<arquétipo>.txt' para as listas de referência")
+    p.add_argument("--url", help="endereço de onde os dados foram tirados")
+    p.add_argument("--date", help="data dos dados (AAAA-MM-DD); padrão: hoje")
+    p.set_defaults(func=cmd_meta_import)
 
     p = sub.add_parser("odds", help="chance de comprar N cópias até um turno (hipergeométrica)")
     p.add_argument("--deck", type=int, default=60, help="cartas no deck (padrão 60)")

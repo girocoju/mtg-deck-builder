@@ -105,6 +105,13 @@ def test_parse_markdown_reads_first_code_block():
     assert [(e.qty, e.name) for e in deck.main] == [(4, "Bear")]
 
 
+def test_resolve_ignores_accents(conn):
+    conn.execute("UPDATE cards SET name = 'Mjölnir Bear' WHERE name = 'Bear'")
+    deck = decklist.parse("1 Mjolnir Bear\n1 MJÖLNIR BEAR\n")
+    assert decklist.resolve(conn, deck) == []
+    assert deck.main[0].card["name"] == deck.main[1].card["name"] == "Mjölnir Bear"
+
+
 def test_resolve_front_face_split_slash_and_suggestion(conn):
     deck = decklist.parse("1 delver\n1 Fire/Ice\n1 Beer\n")
     unknown = decklist.resolve(conn, deck)

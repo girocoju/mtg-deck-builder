@@ -130,8 +130,23 @@ Observações da ingestão:
 | Comprar pronto ou montar; quando e como fazer upgrades; erros comuns | commander-e-brawl (seção 5) |
 | Perguntas frequentes | commander-e-brawl (seções 1 e 4) |
 
+## 5. Material de apoio do usuário e as quatro fontes que ele indica
+
+- **Tipo:** resumo em Markdown entregue pelo usuário em 2026-10-04 ("Material de Apoio
+  MTG — Commander, Brackets, Arena BO1 e 17Lands"), com um link por tema.
+- **Como foi tratado:** o resumo serviu de índice; cada afirmação foi conferida na página
+  indicada. O que só consta do resumo está marcado como não verificado.
+
+| Tema | Fonte indicada | Coberto em | Conferência |
+| --- | --- | --- | --- |
+| Proporções para 100 cartas | Spellweave, "Commander Deck Building Guide" (abr. 2026) | commander-e-brawl (seção 3) | Números iguais aos da página |
+| Brackets e Game Changers | Kraken The Meta, "MTG Commander Brackets Guide" (2026-08-08) | commander-e-brawl (seção 4) | Limites conferidos. **Divergência:** o resumo lista Sol Ring como Game Changer; a página e a base dizem que não é |
+| Mão inicial em BO1 | MTG Arena Zone, "Finding the Ideal Land Count for BO1" (2020) | base-de-mana (Parte 2, seção 1.4) | O artigo não descreve o mecanismo nem o número de 80% do resumo: ficaram como não verificados |
+| Métricas do 17Lands | 17Lands Blog, "Using Win Rate Data" (2021, atualizado em 2026) | limitado-e-draft (seção "Ler dados de win rate") | GIH, OH, GD e GP WR e os vieses conferidos; ALSA e "IHD" (IWD) não constam do artigo |
+
 ## Fontes desejadas
 
-- Teoria de Commander/Brawl com números (quantidades por função, multiplayer).
-- Teoria moderna de limitado apoiada em dados (ex.: material do 17Lands).
+- Proporções específicas de Brawl (um contra um) e de Standard Brawl.
+- Anúncio oficial da Wizards sobre Brackets e Game Changers.
+- Descrição oficial ou medição robusta da mão inicial em BO1 no Arena.
 - "Who's the Beatdown?" (Mike Flores) e outros artigos clássicos citados pelo livro.

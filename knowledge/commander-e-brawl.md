@@ -81,10 +81,40 @@ Consolidação das recomendações de [B] e [T], na ordem em que o agente as apl
    Commander, somar ao menos uma remoção em massa confiável [T].
 5. **Funções que todo deck precisa cobrir**, derivadas das perguntas de diagnóstico de
    [T]: mana suficiente, compra de cartas, remoção de permanentes problemáticas,
-   proteção do comandante, plano B e condição de vitória clara. As quantidades-alvo por
-   função não vêm destas fontes (ver "Lacunas").
+   proteção do comandante, plano B e condição de vitória clara. As quantidades-alvo
+   estão na tabela abaixo.
 6. **Singleton pede redundância por função**, não por cópia: ver a nota em
    [quantidade-de-copias.md](quantidade-de-copias.md).
+
+### Proporções de referência para 100 cartas [S]
+
+| Categoria | Quantidade | Observação |
+| --- | --- | --- |
+| Terrenos | 36–38 | Karsten recomenda 38–39 mais ~8 fontes extras; ver nota abaixo |
+| Aceleração (ramp) | 8–12 | Pedras de mana, criaturas de mana, busca de terreno |
+| Compra de cartas | 8–12 | Preferir motores contínuos a cantrips de uso único |
+| Remoção pontual | 8–10 | De preferência em velocidade de instantânea; cobrir criaturas, artefatos e encantamentos |
+| Remoção em massa | 2–4 | Para redefinir a mesa |
+| Condições de vitória | 2–4 | Peças de finalização |
+| Sinergia com o comandante | 25–30 | O que faz o deck ser "deste" comandante |
+
+**Como usar na construção.**
+
+- É o ponto de partida do agente para qualquer deck de 100 cartas: montar por categoria,
+  conferir as contagens com `mtg deck analyze` (papéis) e justificar cada desvio.
+- **Terrenos:** as duas fontes divergem. [S] dá 36–38; Karsten, com base em simulação,
+  dá 38–39 mais cerca de 8 fontes extras, e a fórmula dele desce quando a curva é baixa
+  e há muita compra/ramp barato. Prevalece o cálculo de [base-de-mana.md](base-de-mana.md);
+  a faixa de [S] serve de conferência.
+- **As categorias se sobrepõem:** uma carta de sinergia que também compra cartas conta
+  nas duas. O total não precisa fechar em 100 por soma simples.
+- **Desvios legítimos:** um comandante que já é motor de compra dispensa parte da compra;
+  um deck de curva muito baixa precisa de menos aceleração; um deck que protege uma única
+  ameaça troca remoção em massa por proteção.
+- **Brawl (interpretação nossa, não da fonte):** a tabela foi escrita para Commander de
+  mesa. Em Brawl, um contra um e com 25 de vida, faz sentido ficar no piso de remoção em
+  massa (ou abaixo, em decks agressivos) e no teto de remoção pontual, com curva mais
+  baixa. A confirmar com testes e registrar como lição.
 
 Arquétipos que [B] apresenta como exemplos de planos de Brawl, úteis como vocabulário
 (todos os comandantes abaixo foram conferidos na base como legais em `brawl`):
@@ -114,23 +144,41 @@ partida, que tipo de jogo querem [T]:
 | 4 – Optimized | Commander altamente otimizado |
 | 5 – cEDH | Competitivo, construído para vencer com a máxima eficiência |
 
-**Game Changers** são cartas listadas oficialmente por mudarem o tipo de jogo; brackets
-baixos as restringem e os altos as liberam. A base local marca essas cartas na coluna
-`game_changer` (53 cartas em 2026-10-04):
+Limites por bracket, segundo [K] (agosto de 2026):
+
+| Bracket | Game Changers | Turnos extras | Combos infinitos de 2 cartas | Negação de terrenos em massa | Duração esperada |
+| --- | --- | --- | --- | --- | --- |
+| 1 – Exhibition | 0 | Não | Não | Não | 9+ turnos |
+| 2 – Core | 0 | Poucos | Não | Não | 8+ turnos |
+| 3 – Upgraded | Até 3 | Sim | Só os que não saem no começo do jogo | Não | 6+ turnos |
+| 4 – Optimized | Sem limite | Sim | Sim | Sim | 4+ turnos |
+| 5 – cEDH | Sem limite | Sim | Sim | Sim | Qualquer turno |
+
+Tutores deixaram de ter restrição geral em outubro de 2025: só contam os que estão na
+própria lista de Game Changers [K]. Os brackets são vocabulário para a conversa antes do
+jogo, não uma regra aplicada por juiz.
+
+**Game Changers** são cartas listadas oficialmente por mudarem o tipo de jogo (ex.:
+Rhystic Study, Smothering Tithe, Cyclonic Rift). A base local marca essas cartas na
+coluna `game_changer` (53 cartas em 2026-10-04, mesmo número que [K] informa):
 `mtg sql "SELECT name FROM cards WHERE game_changer = 1 ORDER BY name"`.
+**Sol Ring não é Game Changer** e é legal em todos os brackets (conferido na base e em
+[K]; o material de apoio que indicou esta fonte dizia o contrário).
 
 **Como usar na construção.**
 
 - Perguntar ou propor o bracket alvo antes de montar um Commander, e declarar na entrega
   qual bracket a lista pretende e por quê. É uma estimativa explicada, não um cálculo.
-- Contar os Game Changers da lista pela base e informar o número.
+- Contar os Game Changers da lista pela base e informar o número: nenhum para brackets
+  1 e 2, até 3 para o bracket 3.
+- Conferir também os outros critérios da tabela (turnos extras, combos de 2 cartas,
+  negação de terrenos) lendo o texto das cartas; a base não os marca.
 - O que desloca um deck para cima não é a quantidade de trocas, e sim o tipo [T]: mana
   rápida, tutores eficientes, interação gratuita poderosa, combinações que encerram o
   jogo e negação de recursos em massa. Evitar essas categorias quando o alvo é bracket
   baixo, mesmo que as cartas sejam legais.
 - Um pré-construído não é automaticamente bracket 2: alguns trazem cartas mais fortes, e
   dez trocas já podem mudar a faixa [T].
-- Os limites exatos de Game Changers por bracket não estão na fonte: **não verificado**.
 
 ## 5. Melhorar um deck existente ou pré-construído
 
@@ -178,12 +226,13 @@ conferidas. As cartas dessas coleções estão na base e são consultáveis pelo
 
 ## Lacunas
 
-- **Quantidades-alvo por função** (quantas peças de aceleração, compra, remoção etc. em
-  100 cartas): nenhuma das duas fontes dá números. Para terrenos e aceleração há
-  Karsten; para o resto falta fonte.
+- **Proporções específicas de Brawl** (um contra um, 25 de vida): a tabela de [S] é de
+  Commander; a adaptação para Brawl é interpretação nossa, ainda sem fonte nem teste.
+- **Proporções para Standard Brawl (60 cartas):** sem fonte.
 - **Standard Brawl:** as fontes só o mencionam; vida inicial e particularidades não informadas.
 - **Política de mesa e ameaça percebida em multiplayer:** não cobertas.
-- **Limites de Game Changers por bracket** e a lista oficial comentada: não cobertos.
+- **Fonte oficial dos Brackets:** os limites vêm de um guia de terceiros [K], não do
+  anúncio da Wizards.
 
 ## Referências
 
@@ -199,4 +248,11 @@ Data de acesso: 2026-10-04.
   <https://tistaminis.com/blogs/blog/mtg-commander-decks-2026-new-releases-best-picks>
   — Usado nas seções 3, 4, 5 e 6. Texto de caráter comercial; as partes sobre mercado,
   colecionismo e lojas ficaram fora do escopo.
+- **[S]** Dan A., "Commander Deck Building Guide". Spellweave, atualizado em abril de 2026.
+  <https://spellweave.app/guides/commander-deck-building>
+  — Usado na tabela de proporções da seção 3. Indicado pelo usuário; números conferidos
+  na página.
+- **[K]** Kraken The Meta, "MTG Commander Brackets Guide". 2026-08-08.
+  <https://krakenthemeta.com/blog/mtg-commander-brackets/>
+  — Usado na seção 4. Indicado pelo usuário; limites conferidos na página.
 - Números de terrenos e curva: [base-de-mana.md](base-de-mana.md) (Frank Karsten).
