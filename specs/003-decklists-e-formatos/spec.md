@@ -35,6 +35,10 @@ no papel.
 5. **Custo** opcional da lista: preço em USD/EUR (papel), tix (MTGO) e contagem de
    wildcards por raridade (Arena).
 6. Listas salvas em `decks/<formato>/<nome>.md`, com a lista e a explicação.
+7. **Restrição por coleção** (tarefas do Arena do tipo "20 cards não terrenos de X"):
+   contagem das cartas não terreno do deck principal que têm impressão na coleção, feita
+   pela base (`printings.set_code`), nunca pelo nome; a validação reprova a lista quando
+   o mínimo pedido não é atingido e lista o que não conta.
 
 ## Critérios de aceite
 
@@ -43,6 +47,9 @@ no papel.
 - [x] Uma lista exportada para o Arena é reimportada pelo leitor sem diferença.
 - [x] Nome com erro de digitação gera sugestão em vez de falha genérica.
 - [x] Um deck de Brawl com carta fora da identidade do comandante é rejeitado.
+- [x] `mtg deck validate --set fra --min-set 20` reprova uma lista com 19 cartas de FRA
+      e aprova uma com 20; `mtg deck setcount` mostra, carta a carta, as coleções de cada
+      impressão (teste automatizado com a base de testes; execução real em 2026-10-13).
 
 
 ## Fora do escopo

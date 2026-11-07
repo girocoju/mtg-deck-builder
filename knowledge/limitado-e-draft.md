@@ -29,6 +29,16 @@ O livro lista regras gerais que valem para a maioria dos formatos, ressalvando q
 
 **Como usar.** Vale muito, desde que o deck consiga sustentá-la. A regra do livro: não estrague um deck agressivo de duas cores para fazer splash de uma bomb. O custo de mana pior aparece em todas as partidas; a bomb aparece em algumas. Em controle a conta muda: o deck já investe em correção de mana e quer o jogo longo.
 
+**Atualização posterior ao livro (FRA, 2026).** O custo do splash depende da correção
+que a coleção dá nas comuns, e isso muda de coleção para coleção. Em Reality Fracture,
+com landcycling básico em comuns caras de todas as cores, uma pedra comum de qualquer
+cor e dez terrenos duplos comuns, um guia escrito após uma semana de drafts relatou
+quase nunca terminar em duas cores e tratou o splash de remoção e bombas (e até de
+peças de sinergia) como padrão; no Untapped, cerca de 28% dos jogos de Premier Draft
+foram de decks com uma ou com três ou mais cores (calculado a partir dos jogos por
+combinação de cores). Regra: antes de aplicar a cautela do livro, conte a correção
+comum da coleção (item 10 do checklist) e veja nos dados quantos decks fazem splash. [DS-FRA][UT-FRA]
+
 ### Truques de combate
 
 **O que é.** Efeitos em velocidade de instantânea que alteram o combate: aumento de poder e resistência no estilo de Giant Growth, prevenção de dano e similares.
@@ -76,6 +86,7 @@ O livro lista regras gerais que valem para a maioria dos formatos, ressalvando q
 4. **Flexibilidade tem valor.** Dê algum peso a quanto o pick mantém opções abertas. Uma bomb de duas cores compromete duas cores de uma vez; uma removal de uma cor, um pouco menos forte, deixa o draft aberto.
 5. **Hate draft não é o padrão.** Em uma mesa de oito você enfrenta três dos sete oponentes, o dono da carta pode não comprá-la, você pode ter resposta, e ele jogará outra carta no lugar. A carta boa para o seu deck ajuda em todas as partidas. Exceções: no terceiro pacote, quando nada no pacote serve ao seu deck; e em Team Draft, em que alguém do seu time vai enfrentar a carta.
 6. **Em treino, experimente.** Entre uma comum sólida e uma rara desconhecida que não parece bomb, o livro recomenda pegar a rara em drafts de treino, para aprender o que ela faz. Para o agente, o equivalente é marcar no guia as raras de avaliação incerta em vez de chutar uma nota.
+7. **Pick orders pré-lançamento envelhecem rápido (interpretação posterior).** Listas e simuladores publicados antes dos dados são avaliação teórica. Em FRA, cartas com nota baixa no simulador da Draftsim (Way of the Mind Sculptor, Surveillance Phantasm, Protege's Awakening, Sphinx's Approach) ficaram entre as melhores da cor nos dados de partidas, e o próprio autor do guia da Draftsim reviu suas quatro melhores comuns de cada cor após uma semana. Depois da primeira semana, prevalecem os dados; o simulador serve para treinar picks, não para ranquear. [DS-PO][DS-FRA]
 
 **Exemplo histórico.** Em Zendikar, o par preto e vermelho tinha boas jogadas nos turnos dois e quatro e poucas nos turnos um e três. Por isso Vampire Lacerator, de custo um, podia ser o pick certo sobre Surrakar Marauder, de custo dois e mais forte em abstrato, quando o deck já tinha cartas de dois. Em um deck azul e preto, que travava o chão e vencia com evasão, a preferência se invertia.
 
@@ -92,6 +103,9 @@ O livro lista regras gerais que valem para a maioria dos formatos, ressalvando q
 - **Controle nem sempre é viável.** Há formatos em que a estratégia defensiva é ruim; o guia deve dizer a velocidade do formato antes de recomendar planos.
 - **Plano principal e planos reserva.** Entre no draft com uma direção preferida, saídas definidas, critérios de quando desviar e direções a evitar.
 - **Considere a mesa.** O arquétipo mais forte em abstrato é o mais disputado. Às vezes vale mais a cor menos procurada, que chega mais aberta. A boa estratégia aproveita o arquétipo forte quando ele vem e muda de base sem desperdiçar os primeiros picks quando ele seca.
+- **A pilha de boas cartas é o arquétipo extra (interpretação posterior).** Quando a correção da coleção é boa, um deck de cartas individualmente fortes com splash, que empresta um ou dois temas dos pares, compete com os arquétipos temáticos e às vezes os supera. Descreva-o no guia como décimo primeiro arquétipo quando os dados mostrarem muitos decks de três cores. [DS-FRA]
+- **Payoff só vale com enabler a tempo.** Uma carta que fica ótima a partir de uma condição (sete cartas no cemitério, vida ganha no turno, uma ficha em jogo) é fraca se o deck só atinge a condição no fim do jogo. Conte os enablers antes de pegar payoffs: enabler barato que já é carta jogável primeiro, payoff exigente depois. A sinergia deve premiar cartas boas, não justificar cartas ruins. [PF-FRA]
+- **Sinalizadora não é ordem.** Receber tarde uma incomum de par indica que o par pode estar aberto, mas não obriga a jogá-lo: pegue, observe os picks seguintes e mude se a cor secar. [PF-FRA]
 
 ### O deck perfeito
 
@@ -174,6 +188,8 @@ O livro usa a expressão mas não traz um procedimento. Os critérios abaixo sã
 **Exemplo histórico.** Em Shards of Alara, Branching Bolt podia matar duas criaturas de uma vez, uma com voar e uma sem. O autor montava seus decks para que isso quase nunca acontecesse e dava muito peso à diferença entre resistência três e quatro, porque várias removals comuns paravam em três. Criaturas boas em abstrato desciam no ranking por falharem nesse teste. Princípio: descubra o número de resistência que separa "morre para a removal comum" de "sobrevive" e use-o como critério.
 
 O mesmo raciocínio torna cartas do oponente inúteis: sem alvos para a removal barata do formato, ela fica parada na mão dele.
+
+**Métrica prática (interpretação posterior).** Dois números calculáveis a partir do arquivo de cartas resumem o teste: a fração das criaturas da coleção que morre a 3 de dano e a fração com resistência 4 ou mais. Guias gerados a partir dos dados das cartas publicam esses números comparados com coleções recentes (em FRA: 68% morrem a 3 de dano e 32% têm resistência 4 ou mais, iguais à média de nove coleções recentes; 61 cartas de remoção, 15 delas comuns e 22 em velocidade de instantânea). São leitura das cartas, não de partidas: dizem o que a remoção mata e quanta existe, não se o formato é rápido. Em FRA a leitura das cartas apontou "velocidade usual" e as partidas mostraram jogos mais longos que o normal; quando divergem, prevalece o que as partidas mostram. [LM-FRA][DS-FRA]
 
 ## 9. Diferenças entre as cores
 
@@ -275,6 +291,26 @@ dados do site ao implementar a spec 008.
 - Os dados medem o que aconteceu, não substituem a leitura da coleção: usar junto com os
   princípios das seções anteriores, que valem quando ainda não há dados.
 
+### Untapped.gg como segunda fonte de dados
+
+O Untapped.gg publica estatísticas de limitado do Arena por coleção e modo, filtráveis
+por rank (bronze a platina na versão gratuita). As métricas equivalem às do 17Lands com
+outros nomes: **Included WR** (carta no deck, equivale ao GP WR), win rate com a carta
+**disponível em mão** (equivale ao GIH WR) e **opening hand** (equivale ao OH WR). O que
+muda na leitura:
+
+- **População mais ampla e mais fraca.** Em FRA, a média ponderada dos usuários foi de
+  52,2% contra 54,8% no 17Lands. Cada número só se compara à média da própria fonte;
+  os win rates por carta saem mais baixos e as diferenças entre cartas, menores (uma
+  comum excelente fica 4 a 5 pontos acima da média, não 6 a 8).
+- **Mesma ordem, outra escala.** Em FRA as duas fontes ordenaram as comuns de cada cor
+  quase na mesma sequência; o Untapped serve como checagem de robustez do ranking do
+  17Lands, não como substituto.
+- **Popularidade por combinação de cores** (jogos por par e por rank) vem junto e mostra
+  quanto a mesa disputa cada par e quantos decks têm três cores.
+- A página carrega os dados por JavaScript; o endpoint e o formato da resposta estão
+  registrados em [fontes.md](fontes.md), seção 6. [UT-FRA]
+
 ## Referências
 
 *Next Level Magic* (Chapin, 2015). Páginas conforme a numeração impressa no rodapé da edição.
@@ -296,3 +332,20 @@ dados do site ao implementar a spec 008.
 - **[17L]** Sierkovitz, "Using Win Rate Data". 17Lands Blog, 2021-04-27 (atualizado em
   2026-06-03). <https://blog.17lands.com/posts/using-win-rate-data/> — seção "Ler dados de
   win rate". Indicado pelo usuário; acesso em 2026-10-04.
+- **[DS-FRA]** Bryan Hohns (Veveil), "The Ultimate Guide to Reality Fracture Draft".
+  Draftsim, atualizado em 2026-10-09. <https://draftsim.com/mtg-reality-fracture-draft-guide/>
+  — seções 2 (splash), 3 (pick orders), 4 (pilha de boas cartas), 8. Indicado pelo
+  usuário; acesso em 2026-10-12.
+- **[DS-PO]** Draftsim, "Reality Fracture (FRA) Pick Order & Tier List" (simulador, sem
+  data). <https://draftsim.com/FRA-pick-order/> — seção 3. Acesso em 2026-10-12.
+- **[UT-FRA]** Untapped.gg, "Reality Fracture Draft Guide" e API de estatísticas de
+  limitado (Premier Draft, ranks bronze a platina).
+  <https://mtga.untapped.gg/limited/draft/reality-fracture/set-guide> — seções 2 e "Ler
+  dados de win rate". Dados coletados em 2026-10-12.
+- **[LM-FRA]** LimitedMTG, "Reality Fracture MTG Draft & Sealed Guide" (gerado a partir do
+  arquivo de cartas), outubro de 2026. <https://limitedmtg.com/reality-fracture/> — seção 8.
+  Acesso em 2026-10-12.
+- **[PF-FRA]** Master Forger, "Reality Fracture Draft & Sealed Guide: Best Archetypes,
+  Commons and Uncommons". PreconForge, 2026-09-22.
+  <https://preconforge.com/reality-fracture-draft-sealed-guide-best-archetypes-commons-and-uncommons/>
+  — seção 4. Acesso em 2026-10-12.

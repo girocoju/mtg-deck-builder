@@ -74,6 +74,10 @@ Quando existir no snapshot um arquétipo próximo do plano, **use a lista dele c
 ## 7. Validar
 
 `mtg deck validate <arquivo> --format <formato> --game <plataforma>` até passar sem erros.
+Se o pedido tiver restrição de coleção (tarefa do Arena "N cards não terrenos de X"),
+acrescente `--set <código> --min-set N`: a contagem é feita pela impressão na base e a
+lista é reprovada abaixo do mínimo. Mostre essa linha da saída na entrega e nunca conte
+de cabeça. `mtg deck setcount <arquivo> --set <código>` lista carta a carta.
 
 ## 8. Entregar
 

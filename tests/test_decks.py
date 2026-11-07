@@ -266,3 +266,25 @@ def test_cost(conn):
     assert result["wildcards"] == {"common": 4, "uncommon": 1, "rare": 2, "mythic": 0}
     assert result["fora_do_arena"] == ["Wolf"]
     assert result["sem_preco"]["tix"] == ["Wolf"]
+
+
+def test_set_count_uses_printings_not_names(conn):
+    deck = decklist.parse("Deck\n4 Bear\n2 Elk\n1 Drake\n20 Forest\n\nSideboard\n3 Imp\n")
+    decklist.resolve(conn, deck)
+    result = decklist.set_count(conn, deck, "TST")
+    assert result["count"] == 7          # terrenos e sideboard ficam de fora
+    assert result["nonland"] == 7
+    assert [c["name"] for c in result["cards"] if c["land"]] == ["Forest"]
+    assert all(c["in_set"] for c in result["cards"] if not c["land"])
+    nothing = decklist.set_count(conn, deck, "fra")
+    assert nothing["count"] == 0
+    assert all(not c["in_set"] for c in nothing["cards"])
+
+
+def test_set_count_ignores_unknown_cards(conn):
+    deck = decklist.parse("4 Bear\n2 Nonexistent Card\n")
+    decklist.resolve(conn, deck)
+    result = decklist.set_count(conn, deck, "tst")
+    assert result["count"] == 4
+    assert result["cards"][1] == {"name": "Nonexistent Card", "qty": 2, "land": False,
+                                  "sets": [], "in_set": False}

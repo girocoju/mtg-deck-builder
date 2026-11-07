@@ -48,3 +48,10 @@ que a lista corrigida (só `Tithing Blade`) foi importada sem erro.
 
 Não verificado: importação no MTGO; cartas split (`Fire // Ice`) no Arena, que o
 exportador mantém com os dois nomes.
+
+**Validador de coleção (2026-10-13):** em duas entregas seguidas o agente contou como de
+Reality Fracture cartas que não eram (Erode é de SOS; a contagem caiu de 22 para 19 e só
+um script avulso pegou). O usuário exigiu uma verificação na ferramenta. Entraram
+`decklist.set_count` (conta pela impressão), `mtg deck validate --set <código> --min-set N`
+(reprova a lista abaixo do mínimo e lista o que não conta) e `mtg deck setcount`, com
+testes. As skills passaram a exigir a opção sempre que o pedido tiver restrição de coleção.

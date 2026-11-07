@@ -82,7 +82,9 @@ comandante e ao tamanho do deck. Singleton pede redundância por função
 ## 7. Validar
 
 `mtg deck validate <arquivo> --format <formato> --game <plataforma>` até passar: tamanho
-exato, cópia única, identidade de cor, legalidade, disponibilidade na plataforma.
+exato, cópia única, identidade de cor, legalidade, disponibilidade na plataforma. Se a
+tarefa exigir comandante ou cartas de uma coleção, confira a coleção do comandante com
+`mtg card` (linha "Impressões") e a contagem com `--set <código> --min-set N`.
 
 ## 8. Entregar
 

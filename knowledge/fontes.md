@@ -144,6 +144,53 @@ Observações da ingestão:
 | Mão inicial em BO1 | MTG Arena Zone, "Finding the Ideal Land Count for BO1" (2020); texto do usuário sobre o algoritmo (sem fonte primária); MTG Arena Zone, "Opening Hand Algorithm and Smoothing" (2021), localizado por nós | base-de-mana (Parte 2, seção 1.4) | Mecanismo conferido nas declarações oficiais reproduzidas no artigo de 2021. Duas ou três mãos e mulligans: fontes divergem, não verificado. Efeito calculado por modelo próprio |
 | Métricas do 17Lands | 17Lands Blog, "Using Win Rate Data" (2021, atualizado em 2026) | limitado-e-draft (seção "Ler dados de win rate") | GIH, OH, GD e GP WR e os vieses conferidos; ALSA e "IHD" (IWD) não constam do artigo |
 
+## 6. Guias de draft de Reality Fracture (FRA) indicados pelo usuário
+
+- **Tipo:** cinco páginas da web sobre limitado de FRA, indicadas pelo usuário em 2026-10-12.
+- **Original:** HTML em `data/fontes/draft-fra-2026/raw/` e texto extraído com
+  `scripts/extract_html.py` em `data/fontes/draft-fra-2026/<fonte>/artigo.txt` (fora do
+  git). As duas páginas dinâmicas tiveram os dados recuperados à parte:
+  `draftsim-pickorder/FRA.tsv` (tabela de notas embutida no código do simulador) e
+  `untapped-setguide/premier-card-stats.tsv` (decodificado da API pública, ver abaixo).
+- **Ingerido em:** 2026-10-12.
+- **Papel na base:** leitura qualitativa do formato FRA (arquétipos, splash, comuns,
+  dicas de jogo) na seção "O que dizem os guias externos" de `drafts/fra.md`; lições
+  gerais de limitado em [limitado-e-draft.md](limitado-e-draft.md). Nenhuma delas é
+  fonte oficial; a hierarquia adotada é dados de partidas (17Lands, Untapped) > relato de
+  jogador com dados (Draftsim) > leitura das cartas (LimitedMTG) > pré-lançamento (PreconForge).
+
+| Fonte | Autor e tipo | Data | Base da avaliação | Coberto em |
+| --- | --- | --- | --- | --- |
+| Draftsim, "The Ultimate Guide to Reality Fracture Draft" <https://draftsim.com/mtg-reality-fracture-draft-guide/> | Bryan Hohns (Veveil), jogador e criador de conteúdo | atualizado 2026-10-09 | uma semana de drafts no Arena e dados do 17Lands | fra.md (guias externos: arquétipos, splash, comuns, dicas); limitado-e-draft (splash, pilha de boas cartas, pick order vs. dados) |
+| Untapped.gg, "Reality Fracture Draft Guide" <https://mtga.untapped.gg/limited/draft/reality-fracture/set-guide> | página dinâmica (Next.js) da HearthSim | dados coletados em 2026-10-12 | partidas de Premier Draft no Arena, ranks bronze a platina | fra.md (popularidade por par, win rate das comuns); limitado-e-draft ("Ler dados de win rate") |
+| Draftsim, "Reality Fracture Pick Order & Tier List" <https://draftsim.com/FRA-pick-order/> | simulador de draft da Draftsim | sem data na página | notas de 0 a 5 por carta, aparentemente anteriores aos dados | fra.md (armadilhas: simulador vs. dados); limitado-e-draft (pick order pré-lançamento) |
+| LimitedMTG, "Reality Fracture MTG Draft & Sealed Guide" <https://limitedmtg.com/reality-fracture/> | guia gerado a partir do arquivo de cartas (Scryfall) | outubro de 2026 | só leitura das cartas, sem partidas | fra.md (contagens de remoção, curva, correção, pares); limitado-e-draft (parâmetros do formato) |
+| PreconForge, "Reality Fracture Draft & Sealed Guide" <https://preconforge.com/reality-fracture-draft-sealed-guide-best-archetypes-commons-and-uncommons/> | "Master Forger", blog com conteúdo comercial | 2026-09-22 (pré-lançamento) | leitura das cartas antes do lançamento | fra.md (sealed, enabler e payoff); limitado-e-draft (payoff a tempo, sinalizadora não é ordem) |
+
+Observações da ingestão:
+
+- A página do Untapped só entrega em HTML o texto das mecânicas; tabelas e rankings
+  vêm de uma API. Endpoint usado, sem autenticação:
+  `https://api.mtga.untapped.gg/api/v1/analytics/query/card_stats_limited_by_set/free?CardSetFilter=FRA&LimitedEventTypeFilter=PREMIER_DRAFT`.
+  Resposta: por `titleId` da carta e por combinação de cores (bitmask W=1, U=2, B=4,
+  R=8, G=16; chave `ALL` para o total), por rank (`b`, `s`, `g`, `p`), três grupos:
+  `[games, wins, in_main_games, dist, in_side_games, dist]`, `[available_games,
+  available_wins]` (carta em mão, equivalente ao GIH) e `[in_opening_hands,
+  in_opening_hand_wins]`. Nomes via `https://mtgajson.untapped.gg/v1/latest/cards.json`
+  (campo `titleId`) e `loc_en.json`. `metadata.games` traz jogos por combinação de cores
+  e rank. A tabela de pares com "6+ vitórias" da página usa outro endpoint, não
+  localizado; a popularidade por par veio de `metadata.games`.
+- A tabela do simulador da Draftsim está embutida no bundle JavaScript do app
+  (`/draft-app/dist/assets/index-*.js`, variável com cabeçalho `Name Name_2
+  Casting_Cost_1 ... Rating List Archetype`). 280 cartas base, 10 "special_guest" e 5
+  terrenos básicos. A página não informa data nem método das notas.
+- 193 cartas citadas pelos artigos foram conferidas na base local (`fra`). Os cinco
+  nomes não encontrados como carta (Peer Review, Omit Variables, Vicious Verse, Seed
+  Suture, Soul Tether) são as mágicas da segunda face das criaturas *prepared*. Quatro
+  cartas do simulador (Mind Twist, Austere Command, Sublime Epiphany, Flesh Duplicate)
+  não constam da coleção `fra` na base e não entram em listas.
+- O artigo da Draftsim traz listas de "trophy decks" como imagens, não transcritas.
+
 ## Fontes desejadas
 
 - Proporções específicas de Brawl (um contra um) e de Standard Brawl.

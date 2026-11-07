@@ -191,6 +191,42 @@ def diff(before, after):
     return result
 
 
+def _set_codes(conn, set_code):
+    """Códigos de coleção que respondem por `set_code`: o próprio e o código do Arena."""
+    rows = conn.execute(
+        "SELECT code FROM sets WHERE code = ?1 COLLATE NOCASE OR arena_code = ?1 COLLATE NOCASE",
+        (set_code,),
+    ).fetchall()
+    return {r["code"] for r in rows} | {set_code.lower()}
+
+
+def set_count(conn, deck, set_code, section="main"):
+    """Quantas cartas não terreno de uma seção têm impressão na coleção `set_code`.
+
+    É a conferência das tarefas do Arena do tipo "20 cards não terrenos de <coleção>".
+    Conta pela impressão registrada na base (`printings.set_code`), nunca pelo nome.
+    Devolve {"set": código, "count": total não terreno da coleção, "nonland": total não
+    terreno, "cards": [{name, qty, land, sets, in_set}, ...]} para as linhas da seção;
+    linhas sem carta na base entram com sets vazio e não contam.
+    """
+    codes = _set_codes(conn, set_code)
+    cards, total, nonland = [], 0, 0
+    for entry in getattr(deck, section):
+        sets, land = set(), False
+        if entry.card is not None:
+            land = "Land" in (entry.card["type_line"] or "").split(" // ")[0]
+            sets = {r["set_code"] for r in conn.execute(
+                "SELECT set_code FROM printings WHERE oracle_id = ?", (entry.card["oracle_id"],))}
+        in_set = bool(sets & codes) and not land
+        if not land and entry.card is not None:
+            nonland += entry.qty
+        if in_set:
+            total += entry.qty
+        cards.append({"name": entry.card["name"] if entry.card is not None else entry.name,
+                      "qty": entry.qty, "land": land, "sets": sorted(sets), "in_set": in_set})
+    return {"set": set_code.lower(), "count": total, "nonland": nonland, "cards": cards}
+
+
 def is_basic(card):
     return "Basic" in (card["type_line"] or "").split(" // ")[0].split("—")[0]
 
