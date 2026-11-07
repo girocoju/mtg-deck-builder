@@ -116,5 +116,10 @@ Spec 010 (leitor de log, base de cartas do Arena, Oráculo), 001 (base de cartas
   (não documentados); tratar como opacos até haver evidência.
 - **Coleção.** O cliente não grava a coleção no log, nem com a aba Coleção aberta
   (testado em 2026-11-07). Requisito 8 abaixo: aproximação por baixo pelos decks salvos
-  e pelos boosters abertos. Pendente: ver no log a mensagem de abertura de booster (o
-  usuário vai abrir um com o log acompanhado) e somar as cartas dela à coleção.
+  e por importação de CSV. **Boosters também não:** o usuário abriu três boosters em
+  2026-11-07 com o log acompanhado e o cliente gravou só a troca de tela
+  (`Client.SceneChange` para `BoosterChamber`) e linhas "Index Reveal complete", sem
+  nenhuma carta nem atualização do cofre. O que entra na conta vindo de boosters, hoje,
+  é só o baú e os curingas na próxima abertura do Arena (`StartHook`). Fonte restante
+  de ganhos de cartas no log: a resposta final do draft em modo bot (`DTO_InventoryInfo`,
+  segundo o guia do log de 2026), a conferir no primeiro draft.
