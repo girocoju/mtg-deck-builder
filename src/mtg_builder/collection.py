@@ -78,6 +78,56 @@ def update(data, quantities, source, resolve, mode=None):
     return changed
 
 
+def import_csv(data, path, conn=None, source="csv"):
+    """Importa uma exportação de coleção em CSV (colunas com nome e quantidade; coleção e
+    número de colecionador quando houver), como a de rastreadores externos. Linhas sem
+    carta reconhecida na base entram só pelo nome. Devolve (importadas, não reconhecidas)."""
+    import csv
+    from . import decklist as decklist_module
+    text = Path(path).read_text("utf-8-sig")
+    reader = csv.DictReader(text.splitlines())
+    fields = {f.lower(): f for f in reader.fieldnames or []}
+
+    def pick(*names):
+        for name in names:
+            if name in fields:
+                return fields[name]
+        return None
+
+    col_name = pick("name", "card name", "card", "nome", "carta")
+    col_qty = pick("quantity", "qty", "count", "owned", "quantidade", "cópias", "copias")
+    col_set = pick("set", "set code", "expansion", "coleção", "colecao", "edição")
+    col_num = pick("collector number", "number", "collector_number", "número", "numero")
+    if not col_name or not col_qty:
+        raise RuntimeError(f"CSV sem colunas de nome e quantidade; colunas: {reader.fieldnames}")
+    index = decklist_module._name_index(conn) if conn is not None else {}
+    cards = data.setdefault("cards", {})
+    imported, unknown = 0, []
+    for row in reader:
+        name = (row.get(col_name) or "").strip()
+        try:
+            qty = int(float(row.get(col_qty) or 0))
+        except ValueError:
+            continue
+        if not name or qty <= 0:
+            continue
+        set_code = (row.get(col_set) or "").strip().lower() if col_set else ""
+        number = (row.get(col_num) or "").strip() if col_num else ""
+        card = index.get(decklist_module._key(name)) or index.get(decklist_module._key(name.split(" // ")[0]))
+        if card is None:
+            unknown.append(name)
+        key = f"csv:{set_code or '?'}:{number or '?'}:{decklist_module._key(name.split(' // ')[0])}"
+        entry = cards.setdefault(key, {"name": card["name"] if card else name, "set": set_code or None,
+                                       "number": number or None, "rarity": None, "qty": 0, "sources": []})
+        entry["qty"] = max(entry["qty"], qty)
+        if source not in entry["sources"]:
+            entry["sources"].append(source)
+        imported += 1
+    data.setdefault("sources", {})[source] = {"at": datetime.now().isoformat(timespec="seconds"),
+                                              "cards": sum(1 for e in cards.values() if source in e["sources"])}
+    return imported, unknown
+
+
 def by_name(data):
     """{nome (face da frente, minúsculas): quantidade somada entre impressões}."""
     totals = Counter()

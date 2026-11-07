@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from mtg_builder import arena_log, arena_match, collection
 from test_arena_log import H, fake_arena_db
 from test_decks import conn  # noqa: F401
@@ -37,6 +39,20 @@ def test_update_from_decks_then_booster(conn, tmp_path):  # noqa: F811
     assert "4 cartas distintas" in text and "decks (3 cartas" in text
     assert "  4 Bear (C)" not in text and "Bear" not in collection.format_summary(loaded, "zzz")
     assert "  2 Nameless Wonder (U)" in collection.format_summary(loaded, "zzz")
+
+
+def test_import_csv_from_an_external_tracker(conn, tmp_path):  # noqa: F811
+    csv_path = tmp_path / "colecao.csv"
+    csv_path.write_text("Name,Set,Collector Number,Quantity\nBear,TST,1,4\nElk,TST,1,2\nCarta Inventada,ZZZ,9,1\n",
+                        encoding="utf-8")
+    data = collection.load(tmp_path / "collection.json")
+    imported, unknown = collection.import_csv(data, csv_path, conn)
+    assert imported == 3 and unknown == ["Carta Inventada"]
+    assert collection.owned(data, "Bear") == 4 and collection.owned(data, "Carta Inventada") == 1
+    assert data["cards"]["csv:tst:1:bear"]["sources"] == ["csv"] and data["sources"]["csv"]["cards"] == 3
+    with pytest.raises(RuntimeError, match="sem colunas"):
+        (tmp_path / "ruim.csv").write_text("a,b\n1,2\n", encoding="utf-8")
+        collection.import_csv(data, tmp_path / "ruim.csv", conn)
 
 
 def test_startup_message_feeds_the_collection(conn, tmp_path):  # noqa: F811

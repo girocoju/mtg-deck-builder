@@ -842,7 +842,15 @@ def cmd_arena_collection(args):
     arena_db = arena_log.find_arena_db(args.arena_dir)
     arena = arena_log.ArenaCards(arena_db) if arena_db else None
     data = collection.load(collection.PATH)
-    if not args.no_scan:
+    if args.import_csv:
+        try:
+            imported, unknown = collection.import_csv(data, args.import_csv, conn)
+        except (OSError, RuntimeError) as error:
+            sys.exit(f"Não consegui importar: {error}")
+        collection.save(data, collection.PATH)
+        print(f"{imported} linha(s) importada(s) de {args.import_csv}" +
+              (f"; {len(unknown)} nome(s) não reconhecido(s) na base: {unknown[:5]}" if unknown else ""))
+    if not args.no_scan and not args.import_csv:
         paths = [Path(p) for p in args.log] if args.log else arena_history.default_logs()
         found = 0
         for path in paths:
@@ -1149,6 +1157,7 @@ def main(argv=None):
     p.add_argument("--find", nargs="*", help="quantas cópias destas cartas há na coleção aproximada")
     p.add_argument("--log", nargs="*", help="logs a varrer (padrão: Player-prev.log e Player.log)")
     p.add_argument("--no-scan", action="store_true", help="só o que já está em data/collection.json")
+    p.add_argument("--import-csv", help="importa uma exportação de coleção (CSV com nome e quantidade)")
     p.add_argument("--arena-dir", help="pasta de instalação do Arena")
     p.set_defaults(func=cmd_arena_collection)
 
