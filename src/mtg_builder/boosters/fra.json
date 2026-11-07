@@ -1,0 +1,18 @@
+{
+  "set": "fra",
+  "name": "Reality Fracture — Play Booster (aproximação para o Arena)",
+  "source": "https://mtg.wtf/pack/fra-play (folhas do booster de papel, lidas em 2026-11-06) e https://mtg.wiki/page/Play_Booster",
+  "collected_at": "2026-11-06",
+  "cards": 14,
+  "note": "O mtg.wtf só publica a colação do papel, com posições de par de planeswalkers e uma posição 'third_not' que não se sabe como o Arena reproduz. Aqui: 7 comuns (uma pode ser incomum), 3 incomuns, 1 rara ou mítica (mítica em 1 de 8), 1 curinga, 1 substituição de foil e 1 terreno; o terreno é um dos dez terrenos comuns Annex/Commons em 30/55 dos casos e um básico nos demais (folha do papel). Uma amostra de 13 Play Boosters de papel (fra-paper.json) tem mais incomuns (5,3 por pacote) e menos comuns (7,6) que este perfil (3,7 e 9,0). Confrontar com os pacotes capturados no log e ajustar.",
+  "nonbasic_land_share": 0.545,
+  "slots": [
+    {"name": "rara ou mítica", "count": 1, "odds": {"rare": 0.875, "mythic": 0.125}},
+    {"name": "incomum", "count": 3, "odds": {"uncommon": 1.0}},
+    {"name": "comum", "count": 6, "odds": {"common": 1.0}},
+    {"name": "comum ou incomum", "count": 1, "odds": {"common": 0.875, "uncommon": 0.125}},
+    {"name": "curinga", "count": 1, "odds": {"common": 0.55, "uncommon": 0.30, "rare": 0.13, "mythic": 0.02}},
+    {"name": "substituição de foil", "count": 1, "odds": {"common": 0.60, "uncommon": 0.27, "rare": 0.11, "mythic": 0.02}},
+    {"name": "terreno", "count": 1, "odds": {"land": 1.0}}
+  ]
+}

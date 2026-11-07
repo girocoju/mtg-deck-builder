@@ -17,15 +17,25 @@ pedidos como "crie um deck anti meta no Standard" ou "estratégia de draft para 
   `mtg deck validate` no formato pedido e corrija até passar; rode `mtg deck analyze`
   e resolva ou justifique cada alerta. Decks ficam em
   `decks/<formato>/<nome>.md` (convenção em `decks/README.md`).
+- **Restrição por coleção é conferida pela ferramenta.** Pedido do tipo "20 cards de
+  Reality Fracture" (tarefas do Arena): valide com `--set <código> --min-set N` e mostre a
+  saída; nunca conte de cabeça nem pelo nome da carta (Erode parece de FRA e é de SOS).
 - **Meta é dado com data.** Ao usar `mtg meta show`, cite fonte, data e modo (BO1/BO3).
   Sem snapshot do modo pedido, diga isso e trate a análise como teórica; nunca use o
   meta BO3 como se fosse BO1.
 - **Lista para o Arena sai do exportador.** O que você mostra ao usuário e grava no bloco
   de código do deck é a saída de `mtg deck export --to arena`. Cartas de duas faces vão só
   com o nome da frente; com os dois nomes, o Arena dá "título de card desconhecido".
-- **Coleção do usuário:** não há importação da coleção. Para pedidos "sem gastar
-  coringas", use só cartas que o usuário mostrou ter (decks montados, capturas) e peça
-  confirmação; diga o que não dá para saber.
+- **Partidas registradas:** o Oráculo (`mtg arena companion`) grava cada jogo em
+  `data/games/<data>-<evento>-<oponente>-g<n>.md` (lances por turno, mesa final) e `.json`.
+  Para "o que fiz de errado?" ou "analise minha partida", leia esse registro, cite os
+  lances e registre a lição por `knowledge/COMO-ADICIONAR.md`.
+- **Coleção do usuário:** o Arena não grava a coleção no log; o projeto mantém uma
+  **aproximação por baixo** em `data/collection.json`, montada pelos decks salvos (resposta
+  de abertura do cliente) e pelos boosters abertos com o Oráculo ligado. `mtg arena
+  collection --find "Carta"` diz quantas cópias são conhecidas. Para pedidos "sem gastar
+  coringas", use só o que está lá ou o que o usuário mostrou, e diga que o que não está
+  pode existir mesmo assim.
 - **Idioma:** respostas, specs e docs em PT-BR; nomes de cartas, formatos e código em inglês.
 - `NextLevelMagic2015.pdf` é material protegido: não vai para o git e não deve ser
   reproduzido; só conceitos destilados com palavras próprias (spec 002).
@@ -53,7 +63,8 @@ Ambiente: `.venv` com o pacote instalado em modo editável (`pip install -e ".[d
 .venv\Scripts\mtg search --set <código> --rarity common --booster --text "flying"
 .venv\Scripts\mtg sets "<nome ou código>"
 .venv\Scripts\mtg sql "SELECT ..."        # somente leitura; schema em src/mtg_builder/db.py
-.venv\Scripts\mtg deck validate <arquivo> --format brawl [--game arena]
+.venv\Scripts\mtg deck validate <arquivo> --format brawl [--game arena] [--set fra --min-set 20]
+.venv\Scripts\mtg deck setcount <arquivo> --set fra    # quais cartas têm impressão na coleção
 .venv\Scripts\mtg deck export <arquivo> --to arena|mtgo|text
 .venv\Scripts\mtg deck cost <arquivo>
 .venv\Scripts\mtg deck diff <antes> <depois>      # o que saiu e o que entrou
@@ -65,6 +76,16 @@ Ambiente: `.venv` com o pacote instalado em modo editável (`pip install -e ".[d
 .venv\Scripts\mtg draft set|colors|gaps fra        # leitura da coleção, pares de cores, sub/superestimadas
 .venv\Scripts\mtg draft cards fra --color U --rarity common [--mode trad]
 .venv\Scripts\mtg draft rate fra "Carta A" "Carta B" [--file pool.txt]
+.venv\Scripts\mtg draft pick fra "Carta A" "Carta B" --pack 1 --pick 1 [--picked ...] [--state f]  # nota por carta, componentes
+.venv\Scripts\mtg draft watch [--window] [--check] [--file log]   # draft ao vivo pelo Player.log do Arena (spec 010)
+.venv\Scripts\mtg draft pool <estado> --to arena                 # pool capturado → montagem do deck de 40
+.venv\Scripts\mtg draft sim fra [--auto N] [--seed S] [--booster paper]   # draft contra 7 bots, sem gastar fichas
+.venv\Scripts\mtg draft synergy fra                              # arquétipos da coleção: cartas marcadas e sinal nos dados
+.venv\Scripts\mtg arena watch [--window] [--file log]            # partida: deck, oponente, mão, campos, lances, resultado
+.venv\Scripts\mtg arena companion --install|--start|--stop|--status|--uninstall   # Oráculo: tarefa agendada, janela com o Arena
+.venv\Scripts\mtg arena history [--deck "Nome"] [--decks]        # partidas conhecidas por deck, rank da temporada, cofre
+.venv\Scripts\mtg arena collection [--set fra] [--find "Carta"]  # coleção aproximada (decks salvos + boosters)
+.venv\Scripts\mtg arena advise data/games/<registro>.json [--turn N] [--dry-run] [--api ollama|openai]  # conselheiro local (Ollama ou LocalAI)
 .venv\Scripts\mtg meta update standard          # coleta do MTGGoldfish (BO3), no máximo 1x por dia
 .venv\Scripts\mtg meta show standard [--mode bo1|bo3]   # arquétipos, resumo, cartas mais jogadas
 .venv\Scripts\mtg meta import meta.csv --format standard --mode bo1 --source untapped

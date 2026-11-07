@@ -51,12 +51,42 @@ def find_set(conn, term):
     return rows[0]
 
 
-def _path(set_code, mode):
-    return db.DATA_DIR / "17lands" / set_code.lower() / f"{mode}.json"
+def _dir(set_code, mode):
+    return db.DATA_DIR / "17lands" / set_code.lower() / mode
 
 
-def cached(set_code, mode):
-    path = _path(set_code, mode)
+def _path(set_code, mode, day=None):
+    """Snapshot de um dia (`<data>.json`) ou o mais recente (`latest.json`)."""
+    return _dir(set_code, mode) / (f"{day}.json" if day else "latest.json")
+
+
+def _save(set_code, mode, snapshot):
+    """Grava o snapshot no arquivo do dia e na cópia `latest.json`; dias anteriores ficam."""
+    folder = _dir(set_code, mode)
+    folder.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(snapshot, ensure_ascii=False)
+    (folder / f"{snapshot['collected_at'][:10]}.json").write_text(text, encoding="utf-8")
+    (folder / "latest.json").write_text(text, encoding="utf-8")
+
+
+def _migrate_legacy(set_code, mode):
+    """Antes da spec 010 o snapshot ficava em `<coleção>/<modo>.json` e era sobrescrito."""
+    legacy = db.DATA_DIR / "17lands" / set_code.lower() / f"{mode}.json"
+    if legacy.exists() and not _path(set_code, mode).exists():
+        _save(set_code, mode, json.loads(legacy.read_text("utf-8")))
+        legacy.unlink()
+
+
+def snapshots(set_code, mode):
+    """Datas dos snapshots guardados, da mais recente para a mais antiga."""
+    _migrate_legacy(set_code, mode)
+    folder = _dir(set_code, mode)
+    return sorted((p.stem for p in folder.glob("????-??-??.json")), reverse=True) if folder.exists() else []
+
+
+def cached(set_code, mode, day=None):
+    _migrate_legacy(set_code, mode)
+    path = _path(set_code, mode, day)
     return json.loads(path.read_text("utf-8")) if path.exists() else None
 
 
@@ -111,10 +141,63 @@ def update(conn, set_term, mode="premier", force=False, fetch=_download, today=N
             for c in colors
         ],
     }
-    path = _path(info["code"], mode)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(snapshot, ensure_ascii=False), encoding="utf-8")
+    _save(info["code"], mode, snapshot)
     return snapshot
+
+
+def untapped_ratings(set_code, mode="premier"):
+    """Win rate "em mão" por carta a partir do JSON bruto da API pública do Untapped
+    (formato descrito em `knowledge/fontes.md`, seção 6), guardado em
+    `data/untapped/<coleção>/<modo>/<data>-card-stats.json` com `titles.json` ao lado, ou
+    no local legado da ingestão de FRA. Devolve None sem arquivo. É a segunda fonte do
+    motor de picks, para cartas sem amostra no 17Lands."""
+    folder = db.DATA_DIR / "untapped" / set_code.lower() / mode
+    stats = sorted(folder.glob("*-card-stats.json"), reverse=True) if folder.exists() else []
+    titles_path = folder / "titles.json"
+    if not stats and set_code.lower() == "fra" and mode == "premier":
+        legacy = db.DATA_DIR / "fontes" / "draft-fra-2026" / "raw"
+        stats, titles_path = [legacy / "untapped-card-stats-premier.json"], legacy / "untapped-fra-titles.json"
+    if not stats or not stats[0].exists() or not titles_path.exists():
+        return None
+    raw = json.loads(stats[0].read_text("utf-8"))
+    titles = json.loads(titles_path.read_text("utf-8"))
+    cards, games_total, wins_total = {}, 0, 0
+    for title_id, by_colors in raw.get("data", {}).items():
+        if title_id not in titles or "ALL" not in by_colors:
+            continue
+        games = wins = 0
+        for rank in by_colors["ALL"].values():
+            available = list(rank[1]) + [0, 0] if len(rank) > 1 and isinstance(rank[1], list) else [0, 0]
+            games, wins = games + available[0], wins + available[1]
+        if games:
+            name = titles[title_id][0]
+            cards[decklist._key(name)] = {"name": name, "games": games, "wr": round(wins / games, 4)}
+            games_total, wins_total = games_total + games, wins_total + wins
+    day = datetime.fromtimestamp(stats[0].stat().st_mtime).date().isoformat()
+    return {"source": "untapped", "set": set_code, "mode": mode, "collected_at": day, "path": str(stats[0]),
+            "baseline": round(wins_total / games_total, 4) if games_total else None, "cards": cards}
+
+
+def draftsim_ratings(set_code):
+    """Notas de 0 a 5 do simulador da Draftsim (avaliação anterior aos dados), se a tabela
+    foi guardada em `data/fontes/draft-<coleção>-*/draftsim-pickorder/*.tsv`. Terceira
+    fonte do motor de picks; sempre marcada como teórica."""
+    hits = sorted((db.DATA_DIR / "fontes").glob(f"draft-{set_code.lower()}-*/draftsim-pickorder/*.tsv"))
+    if not hits:
+        return None
+    cards = {}
+    with open(hits[0], encoding="utf-8") as handle:
+        header = handle.readline().rstrip("\n").split("\t")
+        for line in handle:
+            row = dict(zip(header, line.rstrip("\n").split("\t")))
+            name = (row.get("Name") or "").replace("_", " ").strip()
+            try:
+                rating = float(row["Rating"])
+            except (KeyError, ValueError):
+                continue
+            if name:
+                cards[decklist._key(name)] = rating
+    return {"source": "draftsim", "set": set_code, "path": str(hits[0]), "cards": cards}
 
 
 def ranking(snapshot, color=None, rarity=None, min_games=MIN_GAMES, sort="gih", limit=None):

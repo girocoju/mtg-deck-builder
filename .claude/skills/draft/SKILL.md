@@ -41,7 +41,11 @@ Salve em `drafts/<código>.md`. Use `drafts/fra.md` como modelo de estrutura.
    usuários, aviso de amostra); visão geral (mecânicas, velocidade, cores fortes e
    fracas, remoção); os dez pares (win rate, sinalizadoras, plano); ranking de comuns e
    incomuns por cor; bombas; prioridade de picks e sinais; armadilhas; construção do
-   deck; outros modos; limites do guia.
+   deck; outros modos; limites do guia. Se o usuário indicar artigos ou guias externos,
+   ingira-os pelo processo de `knowledge/COMO-ADICIONAR.md` e acrescente a seção "O que
+   dizem os guias externos", confrontando cada afirmação com os dados (modelo em
+   `drafts/fra.md`); o Untapped.gg serve de segunda fonte de dados (como obter em
+   `knowledge/fontes.md`, seção 6).
 4. **Interprete, não só transcreva:** compare cada número com a média dos usuários do
    snapshot; ranqueie dentro da cor; desconte o viés de cartas caras; trate como incerto
    o que tiver poucos jogos e diga quantos são.
@@ -51,17 +55,56 @@ Salve em `drafts/<código>.md`. Use `drafts/fra.md` como modelo de estrutura.
 
 ## B. Recomendar um pick
 
-Entrada: as cartas do pacote e as já escolhidas (e o número do pick, se informado).
+Entrada: as cartas do pacote, as já escolhidas e o número do pacote e do pick.
 
-1. `mtg draft rate <coleção> "Carta A" "Carta B" ...` para o pacote, e de novo com
-   `--file` para as já escolhidas.
-2. Decida pesando, nesta ordem: poder bruto (GIH WR contra a média; bombas e remoção);
-   cores já escolhidas e o quanto o jogador está comprometido (picks 1 a 4 priorizam
-   poder, do meio do segundo pacote em diante priorizam o deck); força do par de cores;
-   o que o deck ainda precisa (curva, remoção, criaturas); sinais (ALSA da carta contra
-   o pick atual).
-3. Responda com **um pick**, a justificativa em duas ou três frases, a segunda opção e o
-   que o pacote sinaliza. Cartas sem dados: avalie pelo texto e diga que é avaliação teórica.
+1. `mtg draft pick <coleção> "Carta A" "Carta B" ... --pack N --pick M --picked "X" "Y"`
+   (as cartas do pacote vêm logo depois da coleção; com `--state <arquivo>` o comando
+   acumula os picks entre chamadas e dispensa `--picked`). A tabela traz a nota de cada
+   carta e os componentes: **poder** (fonte: `17lands`, `untapped`, `draftsim*` ou
+   `teorica*`; asterisco = sem amostra de partidas), **encaixe** nas cores já escolhidas
+   (peso cresce com o pick), **par**, **necessidade** (função vazia no deck),
+   **sinal** (ALSA contra o pick, cores que já passaram), **flexibilidade**, **sinergia**
+   (payoff ou enabler do arquétipo do par escolhido, pelos padrões de
+   `archetypes/<coleção>.json`; a coluna "arquétipos" lista os pares que a carta serve,
+   com `+` para payoff) e a chance estimada de a carta dar a volta.
+   `mtg draft synergy <coleção>` mostra os dez arquétipos, as cartas marcadas e se a
+   marcação carrega sinal nos dados (em FRA, quase nenhum: a sinergia desempata, não
+   decide).
+2. A tabela é ponto de partida, não veredito: confira o texto das cartas com `mtg card`
+   quando a diferença for pequena ou a nota for teórica, e pese o que o motor não vê
+   (sinergias da coleção, splash, o que o guia `drafts/<código>.md` diz do par).
+3. Responda com **um pick**, a justificativa em duas ou três frases citando os
+   componentes, a segunda opção e o que o pacote sinaliza. Diga a fonte e a data dos dados.
+
+## D. Acompanhar um draft ao vivo no Arena
+
+Pré-requisitos: no Arena, *Opções > Conta > Detailed Logs (Plugin Support)* ligado; para
+a janela flutuante, Arena em modo janela ou tela cheia sem bordas. Nada sai da máquina.
+
+O caminho normal é o **Oráculo** (`mtg arena companion`), instalado como tarefa agendada
+do Windows em 2026-11-07: dispara no login, espera o Arena abrir, mostra a janela sozinho
+e nela aparecem tanto o ranking de cada pacote quanto a partida em curso (mão, campos,
+cemitérios, exílio, dicas). `--status` diz se está rodando; `--start` reabre; `--stop`
+encerra; o registro fica em `data/companion.log`. Os passos abaixo valem para rodar à mão.
+
+1. Antes de gastar a ficha: `mtg draft watch --check --set <coleção>` confere o log, a
+   opção de logs detalhados, a base de cartas do Arena e os dados da coleção.
+2. Antes de entrar no evento: `mtg draft watch --window` (sem `--window`, a saída vai
+   para o terminal). A cada pacote a janela mostra o ranking da seção B; cada pick fica
+   registrado em `data/drafts/<data>-<evento>.json`. Teclas: Esc fecha, + e - mudam a
+   fonte, F troca de canto.
+3. Se o primeiro pick não aparecer antes da escolha (há relato de que o Arena não grava
+   o evento do P1P1), a mensagem combinada registra o pacote e o pick depois; para
+   pontuar antes, digite o pacote em `mtg draft pick`.
+4. No fim: `mtg draft pool <estado> --to arena` e siga a seção C. Registre no `tasks.md`
+   da spec 010 se o P1P1 apareceu e quantos picks foram reconhecidos; guarde um trecho
+   anonimizado do log em `tests/fixtures/`.
+
+Testes sem ficha: `mtg draft watch --file tests/fixtures/player-log-premier-fra-sintetico.txt`
+reproduz um draft de 42 picks; `mtg arena watch --window` numa partida comum mostra deck
+enviado, oponente, turnos, vida e resultado (prova que o log está sendo lido ao vivo);
+`mtg draft sim <coleção>` treina picks contra sete bots (`--booster paper` usa a colação
+do Play Booster de papel; `--auto N` mede o que a mesa deixa aberto).
 
 ## C. Montar o deck de 40 a partir de um pool
 

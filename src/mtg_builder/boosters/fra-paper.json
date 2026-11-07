@@ -1,0 +1,18 @@
+{
+  "set": "fra",
+  "profile": "paper",
+  "name": "Reality Fracture — Play Booster de papel (amostra de 13 pacotes)",
+  "source": "13 pacotes simulados no Booster Pack Generator (Play Booster de papel), capturas enviadas pelo usuário em 2026-11-07; contagem manual por raridade",
+  "collected_at": "2026-11-07",
+  "cards": 14,
+  "note": "Na amostra: 1 rara ou mítica em 12 pacotes e 2 em 1 (1,08 por pacote; 4 míticas em 14 raras ou míticas); incomuns 3 a 6 por pacote (média 5,3); comuns 7 a 9 (média 7,6), sendo uma delas um terreno (básico em 6 dos 13 pacotes, terreno comum Annex/Commons nos outros); 1 foil por pacote, de qualquer raridade. Perfil mais rico em incomuns que o genérico do Arena (fra.json). Qual dos dois o Arena usa no draft, só os pacotes capturados no log dirão.",
+  "nonbasic_land_share": 0.54,
+  "slots": [
+    {"name": "rara ou mítica", "count": 1, "odds": {"rare": 0.75, "mythic": 0.25}},
+    {"name": "incomum", "count": 4, "odds": {"uncommon": 1.0}},
+    {"name": "incomum ou rara", "count": 1, "odds": {"uncommon": 0.9, "rare": 0.1}},
+    {"name": "comum", "count": 6, "odds": {"common": 1.0}},
+    {"name": "comum ou incomum", "count": 1, "odds": {"common": 0.5, "uncommon": 0.5}},
+    {"name": "terreno", "count": 1, "odds": {"land": 1.0}}
+  ]
+}

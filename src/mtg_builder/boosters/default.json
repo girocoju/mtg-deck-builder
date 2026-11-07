@@ -1,0 +1,18 @@
+{
+  "set": "default",
+  "name": "Play Booster do Arena (composição genérica)",
+  "source": "https://mtg.wiki/page/Play_Booster e páginas de Arena Play Booster do mtg.wtf (ex.: /pack/eoe-play-arena)",
+  "collected_at": "2026-11-06",
+  "cards": 14,
+  "note": "Aproximação: 7 comuns (uma pode ser incomum), 3 incomuns, 1 rara ou mítica (mítica em 1 de 8), 1 curinga, 1 substituição de foil e 1 terreno. As taxas do curinga e do foil foram calibradas para cerca de 30% de pacotes com segunda rara, abaixo dos 37% + 4% que o mtg.wiki cita para o papel; o Arena não publica a sua.",
+  "nonbasic_land_share": 0.55,
+  "slots": [
+    {"name": "rara ou mítica", "count": 1, "odds": {"rare": 0.875, "mythic": 0.125}},
+    {"name": "incomum", "count": 3, "odds": {"uncommon": 1.0}},
+    {"name": "comum", "count": 6, "odds": {"common": 1.0}},
+    {"name": "comum ou incomum", "count": 1, "odds": {"common": 0.875, "uncommon": 0.125}},
+    {"name": "curinga", "count": 1, "odds": {"common": 0.55, "uncommon": 0.30, "rare": 0.13, "mythic": 0.02}},
+    {"name": "substituição de foil", "count": 1, "odds": {"common": 0.60, "uncommon": 0.27, "rare": 0.11, "mythic": 0.02}},
+    {"name": "terreno", "count": 1, "odds": {"land": 1.0}}
+  ]
+}

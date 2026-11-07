@@ -1,0 +1,67 @@
+{
+  "set": "fra",
+  "source": "Tela do evento Premier Draft de Reality Fracture no Arena (capturas do usuário, 2026-11-06): nome e descrição oficial de cada par; padrões escritos sobre o texto de regras das cartas na base local (2026-11-07)",
+  "note": "payoffs valem 1,0 e enablers 0,5 no componente de sinergia; uma carta pode servir a vários pares. Padrões: re: (texto de regras em minúsculas), kw: (palavra-chave), type: (linha de tipo), stat: (power/toughness/cmc com >=, <= ou ==), creature; & combina condições.",
+  "archetypes": {
+    "WU": {
+      "name": "Agressivo com Vigiar de Futurforte",
+      "plan": "Use vigiar e anteveja o futuro do seu grimório para construir ameaças e pressionar seus oponentes.",
+      "payoffs": ["re:whenever you (scry or )?surveil|you've surveiled|surveilled|if you surveilled"],
+      "enablers": ["kw:Surveil", "re:\\bscry\\b", "stat:cmc<=2&creature"]
+    },
+    "UB": {
+      "name": "Matemática do Cemitério de Theorix",
+      "plan": "Triture a si mesmo para atingir o limiar e transformar o cemitério em uma fonte de poder confiável.",
+      "payoffs": ["kw:Threshold", "re:seven or more cards in your graveyard|cards? in your graveyard"],
+      "enablers": ["kw:Mill", "kw:Surveil", "re:\\bmills?\\b|from your graveyard"]
+    },
+    "BR": {
+      "name": "Dano Direto de Aculeopena",
+      "plan": "Jogue sal na ferida usando cards que causam dano diretamente ao seu oponente, o que por sua vez permite fortalecer seus cards e manter a pressão.",
+      "payoffs": ["re:whenever (an opponent|a player|your opponents?|one or more opponents) (is|are) dealt|whenever you deal (noncombat )?damage|dealt (noncombat )?damage this turn|if an opponent was dealt"],
+      "enablers": ["re:deals? \\d+ damage to (any target|each opponent|target player|target opponent|each player|that player|each creature and each)"]
+    },
+    "RG": {
+      "name": "Aceleração de Mana de Konstrari",
+      "plan": "Crie fichas de Xilocardio (Heartwood) para obter muito mana e mostrar ao oponente a arte de construir coisas grandes!",
+      "payoffs": ["re:artifacts? (tokens? )?(you control|enters)|for each artifact|artifacts you control|mana value \\d+ or greater|power \\d+ or greater"],
+      "enablers": ["re:heartwood|add \\{|treasure token", "stat:cmc>=5&creature"]
+    },
+    "WG": {
+      "name": "Ganho de Vida de Vigorflor",
+      "plan": "Faça suas criaturas crescerem de várias maneiras enquanto aumenta a vida para dominar o campo de batalha com remédios amargos.",
+      "payoffs": ["re:whenever you gain life|if you gained life|gained life|life you gained"],
+      "enablers": ["re:gain \\d+ life|gain life", "kw:Lifelink"]
+    },
+    "WB": {
+      "name": "Desgaste de Liliana",
+      "plan": "Recorra ao cemitério para obter efeitos que permitem continuar colocando criaturas pequenas no campo de batalha até enterrar seus inimigos.",
+      "payoffs": ["re:return (target|up to \\w+ target|a|another) creature card|creature card from your graveyard|whenever (a|another) creature (you control )?dies|whenever a creature you control (dies|is put into)"],
+      "enablers": ["re:sacrifice (a|another|target) creature|when this creature dies|create (a|two|three|x) .*creature tokens?", "stat:cmc<=2&creature"]
+    },
+    "UR": {
+      "name": "Destreza de Chandra",
+      "plan": "Conjure mágicas que não sejam de criatura para desencadear habilidades e manter a pressão sobre seus oponentes.",
+      "payoffs": ["kw:Prowess", "re:whenever you cast a noncreature spell|noncreature spells? you cast|instant or sorcery spell|instants? and sorcer"],
+      "enablers": ["kw:Prepared", "type:Instant&stat:cmc<=2", "type:Sorcery&stat:cmc<=2"]
+    },
+    "BG": {
+      "name": "Bestiário de Garruk",
+      "plan": "Coloque criaturas assustadoras em jogo para caçar seus inimigos. Combine toque mortífero e atropelar para esmagar qualquer defesa!",
+      "payoffs": ["re:gains? (deathtouch|trample)|has (deathtouch|trample)|with (deathtouch|trample)|creatures you control with power|whenever a creature with power"],
+      "enablers": ["kw:Deathtouch", "kw:Trample", "stat:power>=4&creature"]
+    },
+    "WR": {
+      "name": "Exército de Ajani",
+      "plan": "Fortaleça suas criaturas com marcadores +1/+1 para partir para a agressão à vontade!",
+      "payoffs": ["re:\\+1/\\+1 counters? (is|are) put|with (a )?\\+1/\\+1 counters? on (it|them)|creatures you control get \\+1/\\+1|one or more \\+1/\\+1 counters|for each creature you control|each creature you control with a counter"],
+      "enablers": ["re:put (a|two|three|x|\\w+) \\+1/\\+1 counters?|enters with .*\\+1/\\+1 counters?|\\+1/\\+1 counter"]
+    },
+    "UG": {
+      "name": "Maestria de Jace",
+      "plan": "Continue empoderando Jace para manter um fluxo constante de cards ou escolha seu caminho para a vitória com cards que concedem habilidades aos seus planeswalkers!",
+      "payoffs": ["re:planeswalkers? you control|loyalty counters? on|loyalty abilit|if you control a planeswalker|whenever you put one or more loyalty|planeswalker you control"],
+      "enablers": ["kw:Empower Jace", "re:empower jace"]
+    }
+  }
+}

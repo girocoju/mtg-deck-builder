@@ -2,9 +2,14 @@
 
 import argparse
 import json
+import random
 import sys
+import time
+from datetime import datetime, timedelta
+from pathlib import Path
 
-from . import analysis, db, decklist, draft, edhrec, formats, meta, query, scryfall
+from . import (advisor, analysis, archetypes, arena_history, arena_log, arena_match, collection, companion, db,
+               decklist, draft, draft_pick, draft_sim, edhrec, formats, meta, overlay, query, scryfall)
 
 
 def _card_dict(row):
@@ -144,11 +149,39 @@ def cmd_deck_validate(args):
     lines = [f"{args.format.lower()}: {data['main']} no deck principal, "
              f"{data['sideboard']} no sideboard"
              + (f", comandante: {' + '.join(data['commander'])}" if deck.commander else "")]
+    if getattr(args, "set", None):
+        decklist.resolve(conn, deck)
+        sc = decklist.set_count(conn, deck, args.set)
+        data["set_count"] = sc
+        minimum = args.min_set
+        missing = [f"{c['qty']} {c['name']}" for c in sc["cards"] if not c["in_set"] and not c["land"]]
+        lines.append(f"Cartas não terreno de {sc['set']} no deck principal: {sc['count']} de {sc['nonland']}"
+                     + (f" (mínimo {minimum})" if minimum is not None else ""))
+        if missing:
+            lines.append(f"  não contam ({len(missing)} linhas): " + ", ".join(missing))
+        if minimum is not None and sc["count"] < minimum:
+            errors.append(f"A tarefa pede pelo menos {minimum} cards não terrenos de {sc['set']} "
+                          f"no deck principal; a lista tem {sc['count']}.")
+            data["valid"] = False
     lines += [f"ERRO: {e}" for e in errors] + [f"aviso: {w}" for w in warnings]
     lines.append("Lista válida." if not errors else f"Lista inválida ({len(errors)} problemas).")
     _emit(args, data, lines)
     if errors:
         sys.exit(1)
+
+
+def cmd_deck_setcount(args):
+    conn = db.connect(readonly=True)
+    deck = _read_deck(args.file)
+    decklist.resolve(conn, deck)
+    sc = decklist.set_count(conn, deck, args.set)
+    lines = []
+    for c in sc["cards"]:
+        tag = "terreno" if c["land"] else (sc["set"].upper() if c["in_set"] else "não conta")
+        sets = ", ".join(c["sets"][:8]) + (" ..." if len(c["sets"]) > 8 else "")
+        lines.append(f"{tag:>10}  {c['qty']} {c['name']}  [{sets or 'carta não encontrada'}]")
+    lines.append(f"Total de cartas não terreno de {sc['set']}: {sc['count']} de {sc['nonland']}")
+    _emit(args, sc, lines)
 
 
 def cmd_deck_export(args):
@@ -419,8 +452,498 @@ def cmd_draft_gaps(args):
     _emit(args, data, lines)
 
 
+# --- spec 010: assistente de draft -----------------------------------------------------
+
+def _ratings(conn, set_code, mode, allow_update=True, day=None, log=print):
+    """Fontes do motor de picks: snapshot do 17Lands (do dia pedido, ou o mais recente,
+    renovado se tiver mais de 24 h e a rede permitir), Untapped e Draftsim quando existirem."""
+    snapshot = draft.cached(set_code, mode, day)
+    if day is None and allow_update:
+        fresh = snapshot and (datetime.now() - datetime.fromisoformat(snapshot["collected_at"])
+                              < timedelta(hours=draft.MAX_AGE_HOURS))
+        if not fresh:
+            try:
+                snapshot = draft.update(conn, set_code, mode)
+            except RuntimeError as error:
+                log(f"17Lands indisponível ({error}). "
+                    + ("Usando o snapshot guardado." if snapshot else "Sem dados de partidas: notas teóricas."))
+    return draft_pick.Ratings(snapshot, draft.untapped_ratings(set_code, mode), draft.draftsim_ratings(set_code))
+
+
+def _pack_cards(args):
+    cards = list(args.cards)
+    if getattr(args, "file", None):
+        cards += [e.name for e in _read_deck(args.file).entries()]
+    return cards
+
+
+def cmd_draft_pick(args):
+    conn = db.connect(readonly=True)
+    info = draft.find_set(conn, args.set)
+    ratings = _ratings(conn, info["code"], args.mode, allow_update=not args.offline, day=args.snapshot)
+    engine = draft_pick.Engine(conn, ratings, info["code"], args.mode)
+    if args.state and Path(args.state).exists():
+        state = draft_pick.DraftState.load(args.state)
+    else:
+        state = draft_pick.DraftState(info["code"], args.mode, snapshot=(ratings.snapshot or {}).get("collected_at"))
+    if args.picked:
+        state.add_picks(args.picked)
+    pack, pick = (args.pack, args.pick) if args.pack and args.pick else state.next_position()
+    cards = _pack_cards(args)
+    if not cards:
+        sys.exit("Informe as cartas do pacote (nomes) ou --file.")
+    result = engine.rank(state, pack, pick, cards)
+    if args.state:
+        state.record_pack(pack, pick, cards, result["cartas"])
+        state.save(args.state)
+    _emit(args, result, [draft_pick.format_ranking(result, title=f"{info['name']} · ", sources=ratings.describe())])
+
+
+class _DraftSession:
+    """Estado do acompanhamento ao vivo: resolve as cartas, pontua cada pacote, grava o
+    estado e devolve o texto a mostrar."""
+
+    def __init__(self, conn, arena, set_code=None, mode=None, state_path=None, offline=False, day=None, log=print):
+        self.conn, self.arena, self.log = conn, arena, log
+        self.set_code, self.mode, self.day, self.offline = set_code, mode, day, offline
+        self.state_path = Path(state_path) if state_path else None
+        self.state = draft_pick.DraftState.load(self.state_path) if self.state_path and self.state_path.exists() else None
+        self.engine, self.ratings = None, None
+        self.text = "aguardando um draft no Arena... (entre no evento e abra o primeiro pacote)"
+        self.seen = set()
+        self.events = 0
+
+    def resolve(self, ids):
+        if self.arena is not None:
+            return self.arena.resolve(self.conn, ids)
+        return arena_log.resolve_by_arena_id(self.conn, ids)
+
+    def ensure_engine(self, set_code=None, mode=None, cards=None):
+        set_code = self.set_code or set_code
+        if set_code is None and cards:
+            codes = [c["set"] for c in cards if c.get("set")]
+            set_code = max(set(codes), key=codes.count) if codes else None
+        if set_code is None:
+            return False
+        mode = self.mode or mode or "premier"
+        if self.engine is None or self.engine.set_code != set_code or self.engine.mode != mode:
+            info = draft.find_set(self.conn, set_code)
+            self.ratings = _ratings(self.conn, info["code"], mode, allow_update=not self.offline, day=self.day,
+                                    log=self.log)
+            self.engine = draft_pick.Engine(self.conn, self.ratings, info["code"], mode)
+            if self.state is None or self.state.set_code != info["code"]:
+                self.state = draft_pick.DraftState(info["code"], mode, snapshot=(self.ratings.snapshot or {}).get("collected_at"))
+            self.state.mode = mode
+            self.log(f"coleção {info['name']} ({info['code']}), modo {mode}; dados: {self.ratings.describe()}")
+        return True
+
+    def save(self):
+        if self.state is None:
+            return
+        if self.state_path is None:
+            self.state_path = draft_pick.DraftState.default_path(self.state.set_code, self.state.mode, self.state.event)
+        self.state.save(self.state_path)
+
+    def handle(self, event):
+        kind = event["type"]
+        self.events += 1
+        if kind == "join":
+            if self.engine is not None and self.state is not None and self.state.event == event.get("event"):
+                return None                      # pedido e resposta do mesmo evento
+            mode, set_code = arena_log.parse_event_name(event.get("event"))
+            if self.ensure_engine(set_code, mode):
+                self.state.event = event.get("event")
+                self.text = f"entrou em {event['event']} · {self.ratings.describe()}\naguardando o primeiro pacote..."
+            return self.text
+        if kind in ("pack", "pack_and_pick"):
+            key = (event["pack"], event["pick"], tuple(event["cards"]))
+            if key in self.seen:
+                return None
+            self.seen.add(key)
+            cards = self.resolve(event["cards"])
+            mode, set_code = arena_log.parse_event_name(event.get("event"))
+            if not self.ensure_engine(set_code, mode, cards):
+                self.text = "pacote recebido, mas não sei a coleção: rode com --set <código>."
+                return self.text
+            if event.get("event"):
+                self.state.event = event["event"]
+            result = self.engine.rank(self.state, event["pack"], event["pick"], cards)
+            self.state.record_pack(event["pack"], event["pick"], [c["name"] for c in cards], result["cartas"])
+            unresolved = [c["grp"] for c in cards if c["card"] is None]
+            note = f"\n! {len(unresolved)} carta(s) sem nome na base: {unresolved}" if unresolved else ""
+            self.text = draft_pick.format_ranking(result, sources=self.ratings.describe()) + note
+            if kind == "pack_and_pick":
+                picked = self.resolve([event["card"]])[0]["name"]
+                self.state.record_pick(event["pack"], event["pick"], picked)
+                self.text += f"\n✔ pick registrado (mensagem combinada, chegou após a escolha): {picked}"
+            self.save()
+            return self.text
+        if kind == "pick":
+            if self.state is None or event.get("card") is None:
+                return None
+            name = self.resolve([event["card"]])[0]["name"]
+            self.state.record_pick(event["pack"], event["pick"], name)
+            self.save()
+            self.text += f"\n✔ pick registrado: {name}  (pool: {len(self.state.picked_names())})"
+            return self.text
+        if kind == "complete":
+            if self.state is None:
+                return None
+            self.save()
+            pool = self.state.picked_names()
+            self.text = (f"draft encerrado: {len(pool)} cartas no pool · estado em {self.state_path}\n"
+                         f"próximo passo: mtg draft pool \"{self.state_path}\" e a seção C da skill draft")
+            return self.text
+        if kind == "unknown":
+            self.log(f"[linha de draft não reconhecida] {event['header']} chaves={event['keys']}")
+        return None
+
+
+def _preflight(args, log_path, arena_db):
+    lines = []
+    if log_path:
+        enabled = arena_log.detailed_logs_enabled(log_path)
+        status = {True: "ligada", False: "DESLIGADA (ligue em Opções > Conta > Detailed Logs)", None: "não informada no log"}[enabled]
+        lines.append(f"log: {log_path} ({log_path.stat().st_size // 1024} KB) · Detailed Logs: {status}")
+    else:
+        lines.append("log: NÃO ENCONTRADO (informe --log <caminho do Player.log>)")
+    lines.append(f"base do Arena: {arena_db or 'NÃO ENCONTRADA (informe --arena-dir); cairá no arena_id do Scryfall'}")
+    if args.set:
+        conn = db.connect(readonly=True)
+        info = draft.find_set(conn, args.set)
+        ratings = _ratings(conn, info["code"], args.mode or "premier", allow_update=not args.offline, day=args.snapshot)
+        lines.append(f"coleção {info['name']} ({info['code']}): {ratings.describe()}")
+    else:
+        lines.append("coleção: será lida do nome do evento no log (ou informe --set)")
+    return lines
+
+
+def cmd_draft_watch(args):
+    log_path = Path(args.file) if args.file else arena_log.find_log(args.log)
+    arena_db = arena_log.find_arena_db(args.arena_dir)
+    for line in _preflight(args, log_path, arena_db):
+        print(line)
+    if args.check:
+        return
+    if log_path is None:
+        sys.exit("Sem log para ler.")
+    conn = db.connect(readonly=True)
+    arena = arena_log.ArenaCards(arena_db) if arena_db else None
+    session = _DraftSession(conn, arena, args.set, args.mode, args.state, offline=args.offline, day=args.snapshot)
+    follower = arena_log.LogFollower(log_path, from_start=bool(args.file) or args.from_start)
+
+    if args.file:
+        packs = picks = 0
+        for event in follower.finish():
+            text = session.handle(event)
+            if event["type"] in ("pack", "pack_and_pick"):
+                packs += 1
+                picks += event["type"] == "pack_and_pick"
+                print("\n" + text)
+            elif event["type"] == "pick":
+                picks += 1
+            elif text:
+                print("\n" + text)
+        print(f"\nreprodução: {packs} pacotes, {picks} picks, {session.events} eventos de draft, "
+              f"{follower.parser.unparsed} entradas de draft não decodificadas")
+        if session.state:
+            print(f"pool ({len(session.state.picked_names())}): " + ", ".join(session.state.picked_names()))
+        return
+
+    def poll():
+        changed = None
+        for event in follower.poll():
+            text = session.handle(event)
+            if text:
+                changed = text
+        return changed
+
+    print("acompanhando o log... (Ctrl+C para sair)")
+    if args.window:
+        overlay.run_window(poll, title="Draft — assistente")
+        return
+    try:
+        while True:
+            text = poll()
+            if text:
+                print("\n" + datetime.now().strftime("%H:%M:%S") + "\n" + text)
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        session.save()
+        if session.state_path:
+            print(f"\nestado salvo em {session.state_path}")
+
+
+def cmd_draft_synergy(args):
+    """Arquétipos da coleção: cartas marcadas por par e se a marcação tem sinal nos dados."""
+    conn = db.connect(readonly=True)
+    info = draft.find_set(conn, args.set)
+    data = archetypes.load(info["code"])
+    if not data:
+        sys.exit(f"Sem arquivo de arquétipos para {info['code']} (src/mtg_builder/archetypes/{info['code']}.json).")
+    ratings = _ratings(conn, info["code"], args.mode, allow_update=not args.offline, day=args.snapshot)
+    report = archetypes.report(conn, info["code"], ratings, archetypes.Tagger(data), top=args.limit)
+    _emit(args, report, [archetypes.format_report(report)])
+
+
+def cmd_draft_pool(args):
+    state = draft_pick.DraftState.load(args.state)
+    names = state.picked_names()
+    lines = [f"{state.set_code} · {state.mode} · {state.event or ''} · {len(names)} cartas"]
+    counts = {}
+    for name in names:
+        shown = name.split(" // ")[0] if args.to == "arena" else name
+        counts[shown] = counts.get(shown, 0) + 1
+    lines += [f"{qty} {name}" for name, qty in counts.items()]
+    _emit(args, {"set": state.set_code, "mode": state.mode, "pool": names}, lines)
+
+
+def cmd_draft_sim(args):
+    conn = db.connect(readonly=True)
+    info = draft.find_set(conn, args.set)
+    ratings = _ratings(conn, info["code"], args.mode, allow_update=not args.offline, day=args.snapshot)
+    engine = draft_pick.Engine(conn, ratings, info["code"], args.mode)
+    arena = None
+    arena_db = arena_log.find_arena_db(args.arena_dir)
+    if arena_db:
+        try:
+            arena = arena_log.ArenaCards(arena_db)
+        except Exception:  # base do cliente é opcional aqui
+            arena = None
+    pools, basis = draft_sim.card_pools(conn, info["code"], ratings.snapshot, arena)
+    try:
+        booster = draft_sim.load_booster(info["code"], args.booster)
+    except RuntimeError as error:
+        sys.exit(str(error))
+    rng = random.Random(args.seed)
+    print(f"{info['name']} ({info['code']}) · {args.mode} · dados: {ratings.describe()}")
+    print(f"cartas draftáveis ({basis}): " + ", ".join(f"{k} {len(v)}" for k, v in pools.items() if v))
+    print(f"colação: {booster['name']}" + (" [genérica]" if booster.get("generic") else "") + f" — {booster['source']}")
+
+    if args.auto:
+        pairs, rarities, total = {}, {}, 0
+        for _ in range(args.auto):
+            states = draft_sim.run_table(conn, engine, info["code"], rng, pools, booster)
+            for seat in draft_sim.summarize(engine, states):
+                pairs[seat["pair"]] = pairs.get(seat["pair"], 0) + 1
+                for rarity, n in seat["rarities"].items():
+                    rarities[rarity] = rarities.get(rarity, 0) + n
+                total += 1
+        lines = [f"{args.auto} mesas, {total} drafters (só bots, com ruído e preferência de cor):",
+                 "pares mais escolhidos: " + ", ".join(f"{p or '?'} {n}" for p, n in sorted(pairs.items(), key=lambda kv: -kv[1])),
+                 "raridades por pool de 42: " + ", ".join(f"{r} {n / total:.1f}" for r, n in sorted(rarities.items()))]
+        _emit(args, {"pairs": pairs, "rarities": rarities, "drafters": total}, lines)
+        return
+
+    def choose(result, names):
+        print("\n" + draft_pick.format_ranking(result))
+        while True:
+            answer = input("pick (número, nome, Enter = 1º, q = sair): ").strip()
+            if answer.lower() == "q":
+                raise KeyboardInterrupt
+            if not answer:
+                return result["cartas"][0]["name"]
+            if answer.isdigit() and 1 <= int(answer) <= len(result["cartas"]):
+                return result["cartas"][int(answer) - 1]["name"]
+            match = [n for n in names if decklist._key(n).startswith(decklist._key(answer))]
+            if len(match) == 1:
+                return match[0]
+            print("não entendi; tente o número da linha")
+
+    try:
+        states = draft_sim.run_table(conn, engine, info["code"], rng, pools, booster, human_seat=0, choose=choose)
+    except KeyboardInterrupt:
+        print("\nsimulação interrompida")
+        return
+    human = states[0]
+    path = draft_pick.DraftState.default_path(info["code"], args.mode, "simulado")
+    human.save(path)
+    summary = draft_sim.summarize(engine, states)
+    print("\nmesa: " + ", ".join(f"lugar {s['seat']} {s['pair'] or '?'}" for s in summary))
+    print(f"seu pool ({len(human.picked_names())}): " + ", ".join(human.picked_names()))
+    print(f"estado salvo em {path} — monte o deck com a seção C da skill draft")
+
+
+def cmd_arena_watch(args):
+    """Leitor de partidas: teste do log em um jogo comum, sem gastar fichas."""
+    log_path = Path(args.file) if args.file else arena_log.find_log(args.log)
+    arena_db = arena_log.find_arena_db(args.arena_dir)
+    for line in _preflight(args, log_path, arena_db):
+        print(line)
+    if log_path is None:
+        sys.exit("Sem log para ler.")
+    conn = db.connect(readonly=True)
+    arena = arena_log.ArenaCards(arena_db) if arena_db else None
+    session = arena_match.MatchSession(conn, arena, history_path=arena_history.PATH, collection_path=collection.PATH)
+    follower = arena_log.LogFollower(log_path, from_start=bool(args.file) or args.from_start,
+                                     classifier=arena_match.classify_match)
+    if args.file:
+        count = 0
+        for event in follower.finish():
+            count += 1
+            text = session.handle(event)
+            if text:
+                print(text)
+        print(f"\nreprodução: {count} eventos de partida reconhecidos")
+        if session.tracker is not None:
+            print("\n" + session.board())
+        return
+    print("acompanhando o log... (Ctrl+C para sair)")
+    lines = []
+
+    def poll():
+        changed = False
+        for event in follower.poll():
+            text = session.handle(event)
+            if text:
+                lines.append(datetime.now().strftime("%H:%M:%S ") + text)
+                changed = True
+        return "\n".join(lines[-40:]) if changed else None
+
+    if args.window:
+        overlay.run_window(poll, title="Arena — partida")
+        return
+    try:
+        while True:
+            text = poll()
+            if text:
+                print(lines[-1])
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        pass
+
+
+def cmd_arena_history(args):
+    """Partidas conhecidas (logs que ainda existem + o que o Oráculo acumulou), por deck."""
+    paths = [Path(p) for p in args.log] if args.log else arena_history.default_logs()
+    scanned = {"rows": [], "rank": None, "inventory": None, "decks": []}
+    if not args.no_scan and paths:
+        conn = db.connect(readonly=True)
+        arena_db = arena_log.find_arena_db(args.arena_dir)
+        arena = arena_log.ArenaCards(arena_db) if arena_db else None
+        scanned = arena_history.scan(paths, conn, arena)
+        added = sum(arena_history.append(row, arena_history.PATH) for row in scanned["rows"])
+        if added:
+            print(f"{added} partida(s) nova(s) guardada(s) em {arena_history.PATH}")
+    rows = arena_history.merge(arena_history.load(arena_history.PATH), scanned["rows"])
+    stats = arena_history.summary(rows, args.deck)
+    text = arena_history.format_history(rows, stats, scanned["rank"], scanned["inventory"], args.deck, args.limit)
+    if args.decks and scanned["decks"]:
+        text += "\n\ndecks na conta (nome · formato · última partida):\n" + "\n".join(
+            f"  {d['name']:<32} {d.get('format') or '?':<22} {(d.get('last_played') or '')[:10]}"
+            for d in sorted(scanned["decks"], key=lambda d: d.get("last_played") or "", reverse=True))
+    _emit(args, {"matches": rows, "summary": stats, "rank": scanned["rank"], "inventory": scanned["inventory"],
+                 "decks": scanned["decks"]}, [text])
+
+
+def cmd_arena_collection(args):
+    """Coleção aproximada: decks salvos (resposta de abertura do Arena) e, depois, boosters."""
+    conn = db.connect(readonly=True)
+    arena_db = arena_log.find_arena_db(args.arena_dir)
+    arena = arena_log.ArenaCards(arena_db) if arena_db else None
+    data = collection.load(collection.PATH)
+    if not args.no_scan:
+        paths = [Path(p) for p in args.log] if args.log else arena_history.default_logs()
+        found = 0
+        for path in paths:
+            follower = arena_log.LogFollower(path, from_start=True, classifier=arena_match.classify_match)
+            for event in follower.finish():
+                if event["type"] == "inventory" and event.get("deck_cards"):
+                    session = arena_match.MatchSession(conn, arena)
+                    collection.update(data, event["deck_cards"], "decks", session.resolve)
+                    found += 1
+        if found:
+            collection.save(data, collection.PATH)
+            print(f"decks salvos lidos em {found} abertura(s) do Arena; coleção gravada em {collection.PATH}")
+        else:
+            print("nenhuma resposta de abertura do Arena nos logs (abra o Arena uma vez e repita)")
+    if args.find:
+        for name in args.find:
+            print(f"{name}: {collection.owned(data, name)} cópia(s) na coleção aproximada")
+        return
+    _emit(args, collection.summary(data, args.set), [collection.format_summary(data, args.set)])
+
+
+def cmd_arena_advise(args):
+    """Conselheiro local sobre um registro de partida (teste fora do jogo, spec 012)."""
+    try:
+        record = json.loads(Path(args.record).read_text("utf-8"))
+    except (OSError, ValueError) as error:
+        sys.exit(f"Não consegui ler o registro: {error}")
+    conn = db.connect(readonly=True)
+    try:
+        context, turn, deck_file = advisor.context_from_record(record, args.turn, conn, deck_file=args.deck)
+    except RuntimeError as error:
+        sys.exit(str(error))
+    print(f"registro: {args.record} · turno {turn} · plano do deck: {deck_file or 'não encontrado em decks/'}")
+    if args.dry_run:
+        print("\n" + context)
+        return
+    try:
+        client = advisor.make_advisor(args.api, args.model, args.url)
+    except RuntimeError as error:
+        sys.exit(str(error))
+    if not client.available():
+        hint = ("Instale o Ollama (https://ollama.com) e rode `ollama pull <modelo>`" if args.api == "ollama"
+                else "Suba o LocalAI (ou outro servidor compatível com a API da OpenAI) e confira a porta")
+        sys.exit(f"Servidor não responde em {client.url}. {hint}; `--dry-run` mostra o contexto sem chamar o modelo.")
+    models = client.models()
+    if models and args.model not in models and not any(m.startswith(args.model) for m in models):
+        sys.exit(f"Modelo {args.model} não está disponível. No servidor: {', '.join(models)}.")
+    answer = client.ask(context)
+    _emit(args, answer, [advisor.format_answer(answer)])
+
+
+def cmd_arena_companion(args):
+    """Oráculo: espera o Arena abrir e mostra a janela com draft e partida."""
+    if args.uninstall:
+        removed = companion.uninstall()
+        print("tarefa removida" if removed else "não havia tarefa (processos soltos foram encerrados)")
+        return
+    if args.stop:
+        print(f"{companion.stop()} processo(s) encerrado(s)")
+        return
+    if args.install or args.start:
+        try:
+            if args.install:
+                companion.install()
+                print(f"tarefa agendada \"{companion.TASK}\" criada: dispara no login e roda fora do terminal; "
+                      f"registro em {companion.LOG_FILE}")
+            if not (args.install and args.no_start):
+                companion.stop()
+                companion.start()
+                print(f"{companion.NAME} iniciado; a janela aparece quando o Arena estiver aberto "
+                      "(fecha com o Arena e volta quando ele reabrir)")
+        except RuntimeError as error:
+            sys.exit(str(error))
+        return
+    if args.status:
+        state = companion.task_state()
+        print(f"tarefa agendada: {state or 'não instalada'} · instâncias do Oráculo: {companion.running_instances()}")
+        print(f"Arena: {'aberto' if companion.arena_running() else 'fechado'}")
+        if companion.LOG_FILE.exists():
+            tail = companion.LOG_FILE.read_text("utf-8", errors="replace").splitlines()[-8:]
+            print("últimas linhas do registro:\n  " + "\n  ".join(tail))
+        return
+
+    log = companion.configure_logging()
+    conn = db.connect(readonly=True)
+    arena_db = arena_log.find_arena_db(args.arena_dir)
+    arena = arena_log.ArenaCards(arena_db) if arena_db else None
+    if arena is None:
+        log.warning("base de cartas do Arena não encontrada; usando arena_id do Scryfall")
+
+    def make_sessions():
+        draft_session = _DraftSession(conn, arena, args.set, args.mode, None, offline=args.offline, log=log.info)
+        return draft_session, arena_match.MatchSession(conn, arena, history_path=arena_history.PATH,
+                                                       collection_path=collection.PATH)
+
+    companion.run(make_sessions, log, once=args.once)
+
+
 def main(argv=None):
-    sys.stdout.reconfigure(encoding="utf-8")
+    if sys.stdout is not None:              # sob pythonw (Oráculo pela tarefa agendada) não há console
+        sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(prog="mtg", description=__doc__)
     parser.add_argument("--json", action="store_true", help="saída em JSON")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -474,7 +997,15 @@ def main(argv=None):
     p.add_argument("--format", required=True, help=f"um de: {', '.join(sorted(formats.RULES))}")
     p.add_argument("--game", choices=["paper", "arena", "mtgo"],
                    help="exige que toda carta exista na plataforma")
+    p.add_argument("--set", help="conta as cartas não terreno desta coleção (pela impressão), ex.: fra")
+    p.add_argument("--min-set", type=int, help="mínimo exigido de cartas não terreno da coleção de --set; "
+                   "abaixo disso a lista é reprovada (tarefas do Arena)")
     p.set_defaults(func=cmd_deck_validate)
+
+    p = deck_sub.add_parser("setcount", help="quais cartas da lista têm impressão em uma coleção")
+    p.add_argument("file", help=file_help)
+    p.add_argument("--set", required=True, help="código da coleção, ex.: fra")
+    p.set_defaults(func=cmd_deck_setcount)
 
     p = deck_sub.add_parser("export", help="exporta para Arena, MTGO ou texto")
     p.add_argument("file", help=file_help)
@@ -547,6 +1078,104 @@ def main(argv=None):
     p.add_argument("--file", help="arquivo de lista com o pool")
     p = draft_parser("gaps", "cartas subestimadas e superestimadas (GIH WR vs. ALSA)", cmd_draft_gaps)
     p.add_argument("--min-games", type=int, default=draft.MIN_GAMES)
+
+    def sources_args(parser_):
+        parser_.add_argument("--snapshot", help="data do snapshot do 17Lands (AAAA-MM-DD); padrão: o mais recente")
+        parser_.add_argument("--offline", action="store_true", help="não tenta renovar o snapshot")
+
+    p = draft_parser("pick", "pontua as cartas de um pacote dado o que já foi escolhido", cmd_draft_pick)
+    p.add_argument("cards", nargs="*", help="cartas do pacote")
+    p.add_argument("--file", help="arquivo com as cartas do pacote")
+    p.add_argument("--pack", type=int, help="número do pacote (1 a 3)")
+    p.add_argument("--pick", type=int, help="número do pick (1 a 14)")
+    p.add_argument("--picked", nargs="*", default=[], help="cartas já escolhidas (sem --state)")
+    p.add_argument("--state", help="arquivo de estado do draft (lê, acumula e grava)")
+    sources_args(p)
+
+    p = draft_sub.add_parser("watch", help="acompanha um draft ao vivo pelo Player.log do Arena")
+    p.add_argument("--set", help="código da coleção (padrão: lido do nome do evento)")
+    p.add_argument("--mode", choices=tuple(draft.MODES), help="padrão: lido do nome do evento")
+    p.add_argument("--log", help="caminho do Player.log (padrão: o do Windows)")
+    p.add_argument("--file", help="reproduz um log gravado do começo ao fim, sem esperar")
+    p.add_argument("--from-start", action="store_true", help="lê o log desde o começo (draft já em andamento)")
+    p.add_argument("--arena-dir", help="pasta de instalação do Arena (base de cartas)")
+    p.add_argument("--state", help="arquivo de estado (padrão: data/drafts/<data>-<evento>.json)")
+    p.add_argument("--window", action="store_true", help="janela flutuante sempre no topo, em vez do terminal")
+    p.add_argument("--check", action="store_true", help="só confere log, base do Arena e dados, e sai")
+    sources_args(p)
+    p.set_defaults(func=cmd_draft_watch)
+
+    p = draft_parser("synergy", "arquétipos da coleção: cartas marcadas por par e o sinal nos dados", cmd_draft_synergy)
+    p.add_argument("--limit", type=int, default=8, help="cartas por arquétipo")
+    sources_args(p)
+
+    p = draft_sub.add_parser("pool", help="lista o pool de um estado de draft")
+    p.add_argument("state", help="arquivo de estado")
+    p.add_argument("--to", choices=["text", "arena"], default="text")
+    p.set_defaults(func=cmd_draft_pool)
+
+    p = draft_parser("sim", "simula um draft contra sete bots (treino sem gastar fichas)", cmd_draft_sim)
+    p.add_argument("--auto", type=int, help="N mesas só de bots, com resumo")
+    p.add_argument("--seed", type=int, help="semente do sorteio")
+    p.add_argument("--booster", help="perfil de colação (ex.: paper = Play Booster de papel); padrão: o do Arena")
+    p.add_argument("--arena-dir", help="pasta de instalação do Arena (lista de cartas draftáveis)")
+    sources_args(p)
+
+    arena_cmd = sub.add_parser("arena", help="leitura do cliente do Arena (log de partidas)")
+    arena_sub = arena_cmd.add_subparsers(dest="arena_command", required=True)
+    p = arena_sub.add_parser("watch", help="mostra deck enviado, oponente, turnos e resultado de uma partida")
+    p.add_argument("--log", help="caminho do Player.log")
+    p.add_argument("--file", help="reproduz um log gravado")
+    p.add_argument("--from-start", action="store_true")
+    p.add_argument("--arena-dir", help="pasta de instalação do Arena")
+    p.add_argument("--window", action="store_true", help="janela flutuante sempre no topo")
+    p.add_argument("--set", help=argparse.SUPPRESS)
+    p.add_argument("--mode", help=argparse.SUPPRESS)
+    p.add_argument("--snapshot", help=argparse.SUPPRESS)
+    p.add_argument("--offline", action="store_true", help=argparse.SUPPRESS)
+    p.set_defaults(func=cmd_arena_watch)
+
+    p = arena_sub.add_parser("history", help="partidas conhecidas por deck, rank da temporada e cofre")
+    p.add_argument("--deck", help="só este deck (nome no Arena)")
+    p.add_argument("--log", nargs="*", help="logs a varrer (padrão: Player-prev.log e Player.log)")
+    p.add_argument("--no-scan", action="store_true", help="só o que já está em data/matches.jsonl")
+    p.add_argument("--decks", action="store_true", help="lista os decks da conta com a última partida")
+    p.add_argument("--limit", type=int, default=30, help="partidas mostradas")
+    p.add_argument("--arena-dir", help="pasta de instalação do Arena")
+    p.set_defaults(func=cmd_arena_history)
+
+    p = arena_sub.add_parser("collection", help="coleção aproximada (decks salvos, boosters) em data/collection.json")
+    p.add_argument("--set", help="lista as cartas de uma coleção (código)")
+    p.add_argument("--find", nargs="*", help="quantas cópias destas cartas há na coleção aproximada")
+    p.add_argument("--log", nargs="*", help="logs a varrer (padrão: Player-prev.log e Player.log)")
+    p.add_argument("--no-scan", action="store_true", help="só o que já está em data/collection.json")
+    p.add_argument("--arena-dir", help="pasta de instalação do Arena")
+    p.set_defaults(func=cmd_arena_collection)
+
+    p = arena_sub.add_parser("advise", help="conselheiro local (Ollama) sobre um registro de partida gravado")
+    p.add_argument("record", help="arquivo .json em data/games/")
+    p.add_argument("--turn", type=int, help="turno seu a analisar (padrão: o último com instantâneo)")
+    p.add_argument("--api", choices=sorted(advisor.APIS), default="ollama",
+                   help="ollama (API nativa, porta 11434) ou openai (LocalAI na 8080, LM Studio, llama.cpp, Ollama em /v1)")
+    p.add_argument("--model", default=advisor.DEFAULT_MODEL, help=f"nome do modelo no servidor (padrão {advisor.DEFAULT_MODEL})")
+    p.add_argument("--url", help="servidor; padrão http://localhost:11434 (ollama) ou http://localhost:8080 (openai)")
+    p.add_argument("--deck", help="arquivo do deck em decks/ (padrão: o de maior coincidência com o deck enviado)")
+    p.add_argument("--dry-run", action="store_true", help="só mostra o contexto que o modelo receberia")
+    p.set_defaults(func=cmd_arena_advise)
+
+    p = arena_sub.add_parser("companion", help="Oráculo: abre a janela sozinho quando o Arena abre (draft e partida)")
+    p.add_argument("--install", action="store_true", help="cria a tarefa agendada (login) e inicia agora")
+    p.add_argument("--start", action="store_true", help="inicia a tarefa agora, fora do terminal")
+    p.add_argument("--stop", action="store_true", help="encerra o Oráculo")
+    p.add_argument("--no-start", action="store_true", help="com --install: só cria a tarefa")
+    p.add_argument("--uninstall", action="store_true", help="encerra e remove a tarefa")
+    p.add_argument("--status", action="store_true", help="tarefa, processos, Arena e últimas linhas do registro")
+    p.add_argument("--once", action="store_true", help="encerra quando a janela fechar (teste)")
+    p.add_argument("--set", help="código da coleção do draft (padrão: lido do evento)")
+    p.add_argument("--mode", choices=tuple(draft.MODES), help="padrão: lido do evento")
+    p.add_argument("--arena-dir", help="pasta de instalação do Arena")
+    p.add_argument("--offline", action="store_true", help="não renova o snapshot do 17Lands")
+    p.set_defaults(func=cmd_arena_companion)
 
     p = sub.add_parser("commander", help="confere se uma carta pode ser comandante no formato")
     p.add_argument("commander")
