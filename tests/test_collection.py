@@ -31,7 +31,8 @@ def test_update_from_decks_then_booster(conn, tmp_path):  # noqa: F811
     saved = collection.save(data, tmp_path / "collection.json")
     loaded = collection.load(saved)
     assert loaded["updated_at"] and loaded["sources"]["booster"]["cards"] == 2
-    assert collection.owned(loaded, "bear") == 5 and collection.owned(loaded, "Elk") == 0
+    assert collection.owned(loaded, "bear") == 5 and collection.owned(loaded, "Elk") == 20   # 102 é Elk na base falsa
+    assert collection.owned(loaded, "Drake") == 0
     text = collection.format_summary(loaded)
     assert "4 cartas distintas" in text and "decks (3 cartas" in text
     assert "  4 Bear (C)" not in text and "Bear" not in collection.format_summary(loaded, "zzz")

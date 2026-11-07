@@ -73,7 +73,8 @@ def update(data, quantities, source, resolve, mode=None):
         if source not in entry["sources"]:
             entry["sources"].append(source)
         changed += entry["qty"] != before
-    data.setdefault("sources", {})[source] = {"at": datetime.now().isoformat(timespec="seconds"), "cards": len(ids)}
+    data.setdefault("sources", {})[source] = {"at": datetime.now().isoformat(timespec="seconds"),
+                                              "cards": sum(1 for e in cards.values() if source in e["sources"])}
     return changed
 
 
