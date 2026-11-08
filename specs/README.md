@@ -21,12 +21,13 @@ Nenhuma funcionalidade é implementada sem uma spec aprovada.
 | 011 | [Registro de partida](011-registro-de-partida/spec.md)      | Mão, campo, cemitério, exílio, ataques e dano na janela; registro da partida; conselhos calculáveis | 🚧 Em andamento |
 | 012 | [Conselheiro local](012-conselheiro-local/spec.md)         | Opinião de jogada ao vivo por modelo local (Ollama), com contexto montado pelo rastreador | ⏸️ Adiada |
 | 013 | [Perfil em vários dispositivos](013-perfil-em-varios-dispositivos/spec.md) | Perfil do Arena (partidas, coleção, baú) consultável no celular; captura fica no PC | 📝 Especificada |
+| 014 | [Mapa de picks da coleção](014-mapa-de-picks/spec.md) | Peso de cada carta antes do draft: ordem por raridade, segundos picks, elos diretos, grafo de sinergias | 🚧 Em andamento |
 
 Status possíveis: 📝 Especificada → 📐 Planejada → 🚧 Em andamento → ✅ Concluída.
 
 Dependências: 003 e 004 dependem de 001; 006, 007 e 008 dependem de 002–004;
-006 depende de 005; 009 depende de 003–006; 010 depende de 001, 003 e 008. A ordem numérica é
-a ordem sugerida de execução.
+006 depende de 005; 009 depende de 003–006; 010 depende de 001, 003 e 008; 014 depende de
+008 e 010. A ordem numérica é a ordem sugerida de execução.
 
 ## Processo
 

@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from . import (advisor, analysis, archetypes, arena_history, arena_log, arena_match, collection, companion, db,
-               decklist, draft, draft_pick, draft_sim, edhrec, formats, meta, overlay, query, scryfall)
+               decklist, draft, draft_map, draft_pick, draft_sim, edhrec, formats, meta, overlay, query, scryfall)
 
 
 def _card_dict(row):
@@ -686,6 +686,35 @@ def cmd_draft_synergy(args):
     _emit(args, report, [archetypes.format_report(report)])
 
 
+def cmd_draft_map(args):
+    """Mapa de picks da coleção (spec 014): ordem geral por raridade, próximo pick dadas as
+    escolhas, pares com sinergia direta; `--write` grava drafts/<coleção>-mapa.md."""
+    conn = db.connect(readonly=True)
+    info = draft.find_set(conn, args.set)
+    ratings = _ratings(conn, info["code"], args.mode, allow_update=not args.offline, day=args.snapshot)
+    setmap = draft_map.SetMap(conn, info["code"], ratings, mode=args.mode)
+    if args.write:
+        path = draft_map.write_markdown(setmap, info["name"], ratings.describe())
+        print(f"mapa gravado em {path} ({len(setmap.cards)} cartas, {len(setmap.pairs())} pares com elo)")
+    if args.card:
+        result = setmap.follow_ups(args.card, args.pack, args.pick, top=args.top or 12)
+        title = f"{info['name']} · depois de {', '.join(result['picks'])} · "
+        lines = [draft_pick.format_ranking(result, title=title, sources=ratings.describe())]
+        if result["desconhecidas"]:
+            lines.append("não encontradas na coleção: " + ", ".join(result["desconhecidas"]))
+        _emit(args, result, lines)
+    elif args.pairs:
+        rows = setmap.pairs()[:args.top or 12]
+        _emit(args, rows, [draft_map.format_pairs(setmap, rows)])
+    elif args.graph:
+        _emit(args, {"centralidade": setmap.centrality(), "comunidades": setmap.communities()},
+              [draft_map.format_graph(setmap, top=args.top or 20)])
+    elif not args.write:
+        rows = setmap.pick_order(args.rarity, top=args.top)
+        _emit(args, {"cobertura": setmap.coverage(), "cartas": rows},
+              [draft_map.format_order(setmap, rows, info["name"], ratings.describe())])
+
+
 def cmd_draft_pool(args):
     state = draft_pick.DraftState.load(args.state)
     names = state.picked_names()
@@ -1115,6 +1144,19 @@ def main(argv=None):
 
     p = draft_parser("synergy", "arquétipos da coleção: cartas marcadas por par e o sinal nos dados", cmd_draft_synergy)
     p.add_argument("--limit", type=int, default=8, help="cartas por arquétipo")
+    sources_args(p)
+
+    p = draft_parser("map", "mapa de picks da coleção: ordem por raridade, próximo pick dadas as escolhas, sinergias diretas",
+                     cmd_draft_map)
+    p.add_argument("--rarity", choices=["common", "uncommon", "rare", "mythic"], help="só esta raridade")
+    p.add_argument("--card", action="append", default=[], metavar="CARTA",
+                   help="pick já feito (repita, na ordem): mostra o próximo pick sobre a coleção inteira")
+    p.add_argument("--pack", type=int, help="pacote do próximo pick (padrão: o seguinte aos picks dados)")
+    p.add_argument("--pick", type=int, help="número do próximo pick")
+    p.add_argument("--pairs", action="store_true", help="pares de cartas com mais sinergia direta")
+    p.add_argument("--graph", action="store_true", help="grafo de elos: centralidade das cartas e comunidades")
+    p.add_argument("--top", type=int, help="quantas linhas (padrão: todas na ordem; 12 em --card e --pairs; 20 em --graph)")
+    p.add_argument("--write", action="store_true", help="grava drafts/<coleção>-mapa.md completo")
     sources_args(p)
 
     p = draft_sub.add_parser("pool", help="lista o pool de um estado de draft")

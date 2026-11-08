@@ -1,7 +1,27 @@
 {
   "set": "fra",
   "source": "Tela do evento Premier Draft de Reality Fracture no Arena (capturas do usuário, 2026-11-06): nome e descrição oficial de cada par; padrões escritos sobre o texto de regras das cartas na base local (2026-11-07)",
-  "note": "payoffs valem 1,0 e enablers 0,5 no componente de sinergia; uma carta pode servir a vários pares. Padrões: re: (texto de regras em minúsculas), kw: (palavra-chave), type: (linha de tipo), stat: (power/toughness/cmc com >=, <= ou ==), creature; & combina condições.",
+  "note": "payoffs valem 1,0 e enablers 0,5 no componente de sinergia; uma carta pode servir a vários pares. Padrões: re: (texto de regras em minúsculas), kw: (palavra-chave), type: (linha de tipo), stat: (power/toughness/cmc com >=, <= ou ==), creature; & combina condições. Ganchos (hooks): elos diretos fora dos dez pares, com needs (quem pede) e provides (quem oferece), usados pelo componente parceiros e pelo mapa da coleção (spec 014).",
+  "hooks": {
+    "fichas": {
+      "note": "quem cria fichas de criatura alimenta quem quer muitas criaturas, equipamentos, auras e quem sacrifica criaturas",
+      "needs": ["re:creatures you control get|for each creature you control|each creature you control|number of creatures you control|whenever (a|another) creature (you control )?enters|whenever one or more creatures you control attack", "kw:Equip", "re:enchant creature", "re:sacrifice (a|another) creature"],
+      "provides": ["re:create (a|an|two|three|four|x|that many) .*creature tokens?"],
+      "weight": 1.0
+    },
+    "planeswalker": {
+      "note": "planeswalkers de verdade (não a ficha de Jace, que já é o elo UG) para quem pede um planeswalker em jogo",
+      "needs": ["re:planeswalkers? you control|if you control a planeswalker|loyalty abilit|loyalty counters?|sacrifice a planeswalker|planeswalker card"],
+      "provides": ["type:Planeswalker"],
+      "weight": 1.0
+    },
+    "descarte": {
+      "note": "quem descarta alimenta quem recompensa o descarte",
+      "needs": ["re:whenever you discard|if you discarded|discarded (a card )?this turn"],
+      "provides": ["re:discard (a card|two cards|your hand|that card)|you may discard"],
+      "weight": 0.75
+    }
+  },
   "archetypes": {
     "WU": {
       "name": "Agressivo com Vigiar de Futurforte",

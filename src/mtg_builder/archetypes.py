@@ -3,6 +3,14 @@ nome, plano e padrões que marcam, no texto de regras de cada carta, se ela é p
 ou enabler (0,5) do par. Os arquivos ficam em `archetypes/<coleção>.json` e citam a
 fonte (para FRA, a tela do evento no Arena). `report()` confronta a marcação com os
 dados do 17Lands: se as cartas marcadas rendem mais que as outras nas mesmas cores.
+
+Elos diretos entre cartas (spec 014, componente "parceiros" e mapa da coleção): cada
+arquétipo é um elo em que a payoff *pede* e a enabler *oferece*; o arquivo pode declarar
+`hooks` (ganchos) fora dos dez pares, com padrões `needs` e `provides` (fichas de criatura
+e quem as aproveita, planeswalkers e quem os pede...). `Tagger.synergy(a, b)` soma os
+elos em que uma carta pede o que a outra oferece; duas payoffs do mesmo arquétipo dividem
+o plano e valem metade; se as cores das duas juntas passam de duas, só com splash, e o
+elo vale um quarto.
 """
 
 import json
@@ -13,6 +21,9 @@ from . import analysis, decklist
 
 ARCHETYPES_DIR = Path(__file__).parent / "archetypes"
 PAYOFF, ENABLER = 1.0, 0.5
+SHARED_PAYOFF = 0.5       # duas payoffs do mesmo arquétipo: mesmo plano, sem alimentar uma à outra
+SPLASH_FACTOR = 0.25      # as duas cartas juntas exigem três cores ou mais
+GENERIC_ENABLER = 0.25    # enabler só por estatística (`stat:`: criatura barata, criatura grande): qualquer corpo serve
 COLOR_ORDER = "WUBRG"
 
 
@@ -68,13 +79,82 @@ class Tagger:
     def __init__(self, data):
         self.data = data or {"archetypes": {}}
         self.archetypes = self.data.get("archetypes", {})
+        self.hooks = self.data.get("hooks", {})      # {nome: {"needs": [...], "provides": [...], "weight": 1.0}}
         self._cache = {}
+        self._links = {}
 
     def __bool__(self):
         return bool(self.archetypes)
 
     def name(self, pair):
         return (self.archetypes.get(pair) or {}).get("name", "")
+
+    def links(self, card):
+        """{"needs": {elo: peso}, "provides": {elo: peso}}. Elos: os pares (payoff pede com
+        peso 1; enabler oferece com peso 1, ou `GENERIC_ENABLER` quando só um padrão `stat:`
+        a marca) e os ganchos do arquivo (`needs` com o peso do gancho, `provides` com 1)."""
+        if card is None:
+            return {"needs": {}, "provides": {}}
+        key = card["name"]
+        if key not in self._links:
+            needs, provides = {}, {}
+            for pair, spec in self.archetypes.items():
+                if any(matches(card, p) for p in spec.get("payoffs", [])):
+                    needs[pair] = 1.0
+                    continue
+                enablers = spec.get("enablers", [])
+                if any(matches(card, p) for p in enablers if not p.startswith("stat:")):
+                    provides[pair] = 1.0
+                elif any(matches(card, p) for p in enablers if p.startswith("stat:")):
+                    provides[pair] = GENERIC_ENABLER
+            for hook, spec in self.hooks.items():
+                if any(matches(card, p) for p in spec.get("needs", [])):
+                    needs[hook] = float(spec.get("weight", 1.0))
+                if any(matches(card, p) for p in spec.get("provides", [])):
+                    provides[hook] = 1.0
+            self._links[key] = {"needs": needs, "provides": provides}
+        return self._links[key]
+
+    def link_scores(self, a, b):
+        """{elo: valor} entre duas cartas, cada elo contado uma vez: peso de quem pede × peso
+        de quem oferece quando uma pede o que a outra oferece; `SHARED_PAYOFF` quando as duas
+        são payoff do mesmo arquétipo e nenhuma oferece."""
+        if a is None or b is None or a["name"] == b["name"]:
+            return {}
+        la, lb = self.links(a), self.links(b)
+        scores = {}
+        for first, second in ((la, lb), (lb, la)):
+            for link, weight in first["needs"].items():
+                if link in second["provides"]:
+                    scores[link] = max(scores.get(link, 0.0), weight * second["provides"][link])
+                elif link in second["needs"] and link in self.archetypes:
+                    scores[link] = max(scores.get(link, 0.0), weight * SHARED_PAYOFF)
+        return scores
+
+    def synergy(self, a, b):
+        """Elos diretos entre duas cartas, em unidades (1,0 = payoff com enabler pleno de um
+        elo), vezes `SPLASH_FACTOR` se as cores das duas juntas passam de duas."""
+        scores = self.link_scores(a, b)
+        if not scores:
+            return 0.0
+        total = sum(scores.values())
+        colors = set(a["colors"] or "") | set(b["colors"] or "")
+        return total * SPLASH_FACTOR if len(colors) > 2 else total
+
+    def links_between(self, a, b):
+        """Nomes dos elos que ligam as duas cartas, do mais forte para o mais fraco."""
+        scores = self.link_scores(a, b)
+        return sorted(scores, key=lambda link: (-scores[link], link))
+
+    @staticmethod
+    def label_links(links):
+        """`pede WR, fichas · oferece WB` para a tabela do mapa."""
+        parts = []
+        if links["needs"]:
+            parts.append("pede " + ", ".join(sorted(links["needs"])))
+        if links["provides"]:
+            parts.append("oferece " + ", ".join(sorted(links["provides"])))
+        return " · ".join(parts)
 
     def tags(self, card):
         """{par: 1.0 payoff | 0.5 enabler} para os pares que a carta serve."""

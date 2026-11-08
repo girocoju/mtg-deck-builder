@@ -13,6 +13,7 @@ final e a explicação continuam com o agente (`.claude/skills/draft/SKILL.md`).
 | sinal          | carta que costuma sair cedo chegando tarde; cores que já passaram     | §5 |
 | flexibilidade  | carta mono mantém o draft aberto no primeiro pacote                   | §3 |
 | sinergia       | payoff ou enabler do arquétipo do par escolhido (`archetypes/<col>.json`) | §4 |
+| parceiros      | elos diretos com as cartas já escolhidas: payoff pede, enabler oferece, mais os ganchos do arquivo (spec 014) | §4 |
 """
 
 import json
@@ -38,6 +39,8 @@ WEIGHTS = {
     "flex_mono": 0.3,
     "flex_ouro": -0.5,
     "sinergia": 1.5,          # × 1,0 payoff ou 0,5 enabler do arquétipo do par, com compromisso pleno
+    "parceiro": 0.6,          # × soma dos elos diretos (Tagger.synergy) com as cartas já escolhidas
+    "parceiros_max": 3.0,     # teto do componente: muitos parceiros não transformam carta fraca em bomba
     "compromisso_pleno_em": 20,   # índice (de 0) do pick em que o deck manda: P2P7
     "peso_minimo_cor": 0.5,   # quanto uma carta fraca ainda puxa para a sua cor
 }
@@ -259,6 +262,13 @@ class Engine:
         self.extra = {}      # nome → {"card", "rarity"} informado por quem chama (base do Arena)
         data = archetype_data if archetype_data is not None else (archetypes.load(set_code) if set_code else None)
         self.tagger = archetypes.Tagger(data)
+        self._functions = {}
+
+    def functions(self, name, card):
+        """`functions(card)` com cache por nome (o mapa da coleção pontua centenas de vezes)."""
+        if name not in self._functions:
+            self._functions[name] = functions(card)
+        return self._functions[name]
 
     def card(self, name):
         if name in self.extra and self.extra[name].get("card") is not None:
@@ -322,7 +332,7 @@ class Engine:
             colors = card_colors(card)
             if allowed is not None and colors and not set(colors) <= allowed:
                 continue
-            for function in functions(card):
+            for function in self.functions(name, card):
                 counts[function] += 1
         return counts
 
@@ -336,6 +346,7 @@ class Engine:
             else:
                 names.append(item)
         picked = state.picked_names()
+        picked_cards = [(other, self.card(other)) for other in picked]
         weight = commitment(pick_index(pack, pick))
         strength = self.color_strength(picked)
         top, pair = self.top_pair(strength)
@@ -356,7 +367,7 @@ class Engine:
                         (pair is None and top and set(colors) <= set(top))
             encaixe = weight * (fit * (WEIGHTS["cabe"] - WEIGHTS["nao_cabe"]) + WEIGHTS["nao_cabe"]) if colors else 0.0
             par = weight * WEIGHTS["par"] * pair_bonus if (colors and pair and set(colors) <= set(pair)) else 0.0
-            found = functions(card)
+            found = self.functions(name, card)
             fill = (sum(max(0.0, 1 - counts[f] / TARGETS[f]) for f in found) / len(found)) if found else 0.0
             necessidade = weight * WEIGHTS["necessidade"] * fill if fits_pair else 0.0
             sinal = 0.0
@@ -370,11 +381,16 @@ class Engine:
                 flex = (1 - weight) * (WEIGHTS["flex_mono"] if len(colors) == 1 else WEIGHTS["flex_ouro"])
             tags = self.tagger.tags(card)
             sinergia = weight * WEIGHTS["sinergia"] * tags.get(pair, 0.0) if pair else 0.0
-            total = power["points"] + encaixe + par + necessidade + sinal + flex + sinergia
+            elos = sorted(((other, round(self.tagger.synergy(card, other_card), 2))
+                           for other, other_card in picked_cards if other_card is not None), key=lambda t: -t[1])
+            elos = [(other, score) for other, score in elos if score > 0]
+            parceiros = min(WEIGHTS["parceiros_max"], WEIGHTS["parceiro"] * sum(score for _o, score in elos))
+            total = power["points"] + encaixe + par + necessidade + sinal + flex + sinergia + parceiros
             rows.append({
                 "name": name, "total": round(total, 2), "poder": round(power["points"], 2),
                 "encaixe": round(encaixe, 2), "par": round(par, 2), "necessidade": round(necessidade, 2),
                 "sinal": round(sinal, 2), "flexibilidade": round(flex, 2), "sinergia": round(sinergia, 2),
+                "parceiros": round(parceiros, 2), "elos": elos[:3],
                 "arquetipos": self.tagger.label(tags), "fonte": power["source"],
                 "teorica": power["theoretical"], "gih": power.get("gih"), "jogos": power.get("games", 0),
                 "alsa": alsa, "volta": wheel_probability(alsa, pick), "cor": colors or "-",
@@ -410,16 +426,17 @@ def format_ranking(result, title="", sources=""):
              f"cores: {colors}{pair}"]
     if sources:
         lines.append(f"dados: {sources}")
-    lines.append(" #   nota  poder   enc   par  need sinal  flex  sin fonte       GIH  ALSA volta cor  rar carta · arquétipos")
+    lines.append(" #   nota  poder   enc   par  need sinal  flex  sin parc fonte       GIH  ALSA volta cor  rar carta · arquétipos ↔ parceiros")
     for row in result["cartas"]:
         volta = f"{row['volta']:4.0%}" if row["volta"] is not None else "   —"
         alsa = f"{row['alsa']:5.1f}" if row["alsa"] else "    —"
         tags = f" · {row['arquetipos']}" if row.get("arquetipos") else ""
+        elos = " ↔ " + ", ".join(f"{other} {score:g}" for other, score in row["elos"][:2]) if row.get("elos") else ""
         lines.append(
             f"{row['posicao']:2d} {row['total']:+6.1f} {row['poder']:+6.1f} {row['encaixe']:+5.1f} "
             f"{row['par']:+5.1f} {row['necessidade']:+5.1f} {row['sinal']:+5.1f} {row['flexibilidade']:+5.1f} "
-            f"{row.get('sinergia', 0):+4.1f} {row['fonte']:<9} {_pct(row['gih'])} {alsa} {volta} {row['cor']:<4} "
-            f"{(row['raridade'] or '?')[:1].upper()}   {row['name']}{tags}")
+            f"{row.get('sinergia', 0):+4.1f} {row.get('parceiros', 0):+4.1f} {row['fonte']:<9} {_pct(row['gih'])} {alsa} {volta} {row['cor']:<4} "
+            f"{(row['raridade'] or '?')[:1].upper()}   {row['name']}{tags}{elos}")
     if any(r["teorica"] for r in result["cartas"]):
         lines.append("* nota teórica (sem amostra nos dados de partidas)")
     return "\n".join(lines)

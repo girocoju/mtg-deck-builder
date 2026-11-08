@@ -36,6 +36,9 @@ Salve em `drafts/<código>.md`. Use `drafts/fra.md` como modelo de estrutura.
    - `mtg draft cards <coleção> --color <W|U|B|R|G|multi|colorless> --rarity <common|uncommon>` — rankings;
    - `mtg draft cards <coleção> --limit 15` — bombas;
    - `mtg draft gaps <coleção>` — subestimadas e superestimadas;
+   - `mtg draft map <coleção> --write` — mapa de picks (spec 014): ordem por raridade,
+     segundos picks por rara, elos diretos, grafo; gera `drafts/<código>-mapa.md`, que o
+     guia deve linkar;
    - os mesmos comandos com `--mode` para os outros modos que tiverem dados.
 3. **Escreva o guia** com estas seções: cabeçalho (fonte, data, modo, jogos, média dos
    usuários, aviso de amostra); visão geral (mecânicas, velocidade, cores fortes e
@@ -66,10 +69,15 @@ Entrada: as cartas do pacote, as já escolhidas e o número do pacote e do pick.
    **sinal** (ALSA contra o pick, cores que já passaram), **flexibilidade**, **sinergia**
    (payoff ou enabler do arquétipo do par escolhido, pelos padrões de
    `archetypes/<coleção>.json`; a coluna "arquétipos" lista os pares que a carta serve,
-   com `+` para payoff) e a chance estimada de a carta dar a volta.
+   com `+` para payoff), **parceiros** (elos diretos com as cartas já escolhidas: a
+   linha termina com `↔ Carta 1.5`, o pick e o valor do elo; 0,6 ponto por unidade,
+   teto 3) e a chance estimada de a carta dar a volta.
    `mtg draft synergy <coleção>` mostra os dez arquétipos, as cartas marcadas e se a
    marcação carrega sinal nos dados (em FRA, quase nenhum: a sinergia desempata, não
-   decide).
+   decide). `mtg draft map <coleção> --card "X" --card "Y"` pontua a coleção inteira
+   como próximo pick depois dos picks dados (para "o que eu quero ver no próximo
+   pacote?"), e `drafts/<código>-mapa.md` traz a ordem de pick por raridade e os
+   segundos picks de cada rara, prontos antes do draft.
 2. A tabela é ponto de partida, não veredito: confira o texto das cartas com `mtg card`
    quando a diferença for pequena ou a nota for teórica, e pese o que o motor não vê
    (sinergias da coleção, splash, o que o guia `drafts/<código>.md` diz do par).
