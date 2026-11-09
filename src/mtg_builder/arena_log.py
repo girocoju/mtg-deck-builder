@@ -149,9 +149,14 @@ def classify(header, obj):
     if not isinstance(obj, dict):
         return None
     marker = _normalize(header)
+    # Numeração: no log real de 2026-11-09 (Premier Draft de FRA, tests/fixtures/
+    # player-log-premier-fra-2026-11-09.txt) `Draft.Notify` traz SelfPack 1..3 e SelfPick 1..14,
+    # e o pedido `EventPlayerDraftMakePick` traz Pack e Pick também a partir de 1: ficam como
+    # estão. `LogBusinessEvents`, `DraftStatus` e `BotDraft_DraftPick` continuam tratados
+    # como base 0 (+1), suposição ainda não conferida contra um log real.
     if obj.get("PackCards") is not None and any(k in obj for k in ("SelfPack", "SelfPick", "draftId", "DraftId")):
         return {"type": "pack", "source": "Draft.Notify", "draft_id": obj.get("draftId") or obj.get("DraftId"),
-                "pack": _number(obj, "SelfPack") + 1, "pick": _number(obj, "SelfPick") + 1,
+                "pack": _number(obj, "SelfPack"), "pick": _number(obj, "SelfPick"),
                 "cards": _ids(obj["PackCards"]), "event": obj.get("EventName") or obj.get("EventId")}
     if "CardsInPack" in obj and "PickGrpId" in obj:
         return {"type": "pack_and_pick", "source": "LogBusinessEvents", "draft_id": obj.get("DraftId"),
@@ -161,7 +166,7 @@ def classify(header, obj):
     if "GrpIds" in obj and ("Pack" in obj or "Pick" in obj):
         ids = _ids(obj["GrpIds"])
         return {"type": "pick", "source": "EventPlayerDraftMakePick", "draft_id": obj.get("DraftId"),
-                "pack": _number(obj, "Pack") + 1, "pick": _number(obj, "Pick") + 1,
+                "pack": _number(obj, "Pack"), "pick": _number(obj, "Pick"),
                 "card": ids[0] if ids else None, "cards": ids}
     if obj.get("DraftStatus") == "PickNext" and "DraftPack" in obj:
         return {"type": "pack", "source": "DraftStatus", "event": obj.get("EventName"),
@@ -180,8 +185,9 @@ def classify(header, obj):
             return {"type": "join", "source": "Course", "event": name}
     if "eventjoin" in marker and obj.get("EventName"):
         return {"type": "join", "source": "Event_Join", "event": obj["EventName"]}
-    if "completedraft" in marker and (obj.get("DraftId") or obj.get("draftId")):
-        return {"type": "complete", "source": "Draft_CompleteDraft", "draft_id": obj.get("DraftId") or obj.get("draftId")}
+    if "completedraft" in marker:          # no log real: DraftCompleteDraft com EventName e IsBotDraft, sem DraftId
+        return {"type": "complete", "source": "DraftCompleteDraft", "draft_id": obj.get("DraftId") or obj.get("draftId"),
+                "event": obj.get("EventName")}
     if "draft" in marker:
         return {"type": "unknown", "header": header.strip()[:120], "keys": sorted(obj)[:12]}
     return None

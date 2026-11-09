@@ -29,12 +29,48 @@
       resolvidas; dez turnos com vida; vitória registrada no instante; captura de tela do
       usuário. O usuário notou que só vida, turnos e resultado aparecem: fases, ataques,
       dano e cartas jogadas ficam para uma spec própria.)*
-- [ ] Primeiro draft real acompanhado pelo watch: guardar um trecho anonimizado do log em
-      `tests/fixtures/`, registrar aqui data, modo, se o P1P1 apareceu e quantos picks
-      foram reconhecidos
-- [ ] Deck de 40 montado a partir do pool capturado, validado (critério da spec)
+- [x] Primeiro draft real acompanhado pelo Oráculo (2026-11-09, Premier Draft de FRA, ver
+      "Verificação (2026-11-09)"): trecho anonimizado em
+      `tests/fixtures/player-log-premier-fra-2026-11-09.txt`, teste de 42 pacotes e 42 picks
+- [x] Deck de 40 montado a partir do pool capturado e validado
+      (`decks/limited/fra-draft-2026-11-09-ug-splash-r.md`, montado à mão durante a sessão;
+      a montagem automática do Oráculo reproduz o mesmo par e o mesmo splash)
+- [x] Correções do primeiro draft real: numeração de pacote e pick (base 1 em `Draft.Notify`
+      e `EventPlayerDraftMakePick`), evento de encerramento sem `DraftId`, linha de
+      recomendação `► PEGUE:` na janela, bônus de sobra para rara ou mítica que falta na
+      coleção (`col`), montagem automática do deck ao fim do draft (`draft_deck.py`,
+      `mtg draft build`)
 - [ ] Confrontar a distribuição de raridades dos pacotes capturados com a colação declarada
 - [ ] Verificar os critérios de aceite restantes e atualizar o status no roadmap
+
+## Verificação (2026-11-09): primeiro draft real
+
+- Premier Draft de FRA (`PremierDraft_FRA_20260929`), 19:29–19:50, com o Oráculo aberto e o
+  agente acompanhando o estado em `data/drafts/` por um monitor. **O P1P1 apareceu** no log
+  antes do pick (`Draft.Notify` com 14 cartas); 42 pacotes e 42 picks reconhecidos, 0 linhas
+  não decodificadas; o encerramento veio como `DraftCompleteDraft` com `EventName` e sem
+  `DraftId`.
+- **Numeração errada:** a janela mostrou o primeiro pacote como "P2 pick 2". O log real traz
+  `SelfPack`/`SelfPick` e `Pack`/`Pick` a partir de 1; o leitor somava 1 (suposição do
+  sintético). Efeito: o compromisso de cor começava em 75% e o ranking favorecia a cor do
+  primeiro pick; o agente recalculou cada pacote com `mtg draft pick --pack --pick` durante
+  o draft. Corrigido; o sintético foi rebaseado para base 1; `LogBusinessEvents`,
+  `DraftStatus` e `BotDraft_DraftPick` seguem como base 0, ainda sem log real para conferir.
+- **Pedidos do usuário durante o draft:** "O Oráculo só mostra métrica? Não fala a escolha
+  que tenho que fazer?" → linha `► PEGUE: carta (nota; por quê) · 2º · 3º`, com aviso de
+  empate técnico abaixo de 0,5 ponto. "Insira a montagem do deck no Oráculo também" →
+  `draft_deck.py` e `mtg draft build`; ao fim do draft a janela mostra a lista para o Arena
+  e grava `decks/limited/<coleção>-<evento>-<data>-<cores>.md`. "Não teve UMA pick de rara e
+  mítica" → do pick 9 em diante, rara (+1,5) ou mítica (+2,5) que falta na coleção ganha o
+  componente `col`; nas 42 picks reais, teria mudado só sobras (Identity Echo, Loot, Karn).
+- Reprodução do trecho real (`mtg draft watch --file ... --set fra --offline`): 42/42, deck
+  proposto UG com splash R (Clash of Elements e dois Fulminous Forte), 23 mágicas, 17
+  terrenos, o mesmo par e splash da montagem à mão; diferenças só nas últimas vagas
+  (a automática prefere Something Worth Saving ×3 a Icy Reception e Infinite Coursework,
+  por poder), por isso a proposta passa pela revisão da seção C da skill.
+- Dado novo: o snapshot do 17Lands colhido às 19:29 (895 mil jogos) mudou notas de comuns
+  em até 4 pontos em relação ao de 2026-11-08 (Hexhaven Battalion 56,7% → 61,3%): a fonte
+  pública está instável; a recomendação cita a data e a fonte em cada linha.
 
 ## Verificação (2026-11-07)
 

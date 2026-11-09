@@ -58,8 +58,8 @@ def test_event_name_gives_mode_and_set():
 
 
 def test_human_draft_events_in_order():
-    text = "\n".join(NOISE + [join("PremierDraft_TST_20261107"), notify(0, 0, [101, 102, 103]), make_pick(0, 0, 102),
-                              notify(0, 1, [104, 105]), business(0, 1, [104, 105], 105), complete()])
+    text = "\n".join(NOISE + [join("PremierDraft_TST_20261107"), notify(1, 1, [101, 102, 103]), make_pick(1, 1, 102),
+                              notify(1, 2, [104, 105]), business(0, 1, [104, 105], 105), complete()])
     events = arena_log.events_from_text(text)
     kinds = [(e["type"], e.get("pack"), e.get("pick")) for e in events]
     assert kinds == [("join", None, None), ("pack", 1, 1), ("pick", 1, 1), ("pack", 1, 2),
@@ -80,7 +80,7 @@ def test_bot_draft_events():
 def test_pack_cards_as_list_and_unknown_draft_lines():
     entry = f"{H}Draft.Notify\n" + json.dumps({"draftId": "d", "SelfPack": 2, "SelfPick": 13, "PackCards": [5, "6", "x"]})
     event = arena_log.events_from_text(entry)[0]
-    assert (event["pack"], event["pick"], event["cards"]) == (3, 14, [5, 6])
+    assert (event["pack"], event["pick"], event["cards"]) == (2, 13, [5, 6])
     unknown = arena_log.events_from_text(f"{H}==> DraftSomethingNew " + json.dumps({"id": 1, "Foo": 2}))
     assert unknown[0]["type"] == "unknown" and "Foo" in unknown[0]["keys"]
 
@@ -95,7 +95,7 @@ def test_follower_reads_incrementally_and_survives_rotation(tmp_path):
         handle.write(f"{H}Draft.Notify\n")
     assert follower.poll() == []
     with open(path, "a", encoding="utf-8") as handle:         # JSON pela metade
-        handle.write('{"draftId": "d-1", "SelfPack": 0, "SelfPick": 0, "Pack')
+        handle.write('{"draftId": "d-1", "SelfPack": 1, "SelfPick": 1, "Pack')
     assert follower.poll() == []
     with open(path, "a", encoding="utf-8") as handle:
         handle.write('Cards": "1,2,3"}\n')
@@ -104,7 +104,7 @@ def test_follower_reads_incrementally_and_survives_rotation(tmp_path):
     with open(path, "a", encoding="utf-8") as handle:         # a mesma entrada não sai duas vezes
         handle.write(make_pick(0, 0, 2) + "\n")
     assert [e["type"] for e in follower.poll()] == ["pick"]
-    path.write_text(f"{H}Draft.Notify\n" + json.dumps({"draftId": "d-2", "SelfPack": 0, "SelfPick": 0, "PackCards": "9"}) + "\n",
+    path.write_text(f"{H}Draft.Notify\n" + json.dumps({"draftId": "d-2", "SelfPack": 1, "SelfPick": 1, "PackCards": "9"}) + "\n",
                     encoding="utf-8")                           # arquivo recriado, menor
     events = follower.poll()
     assert len(events) == 1 and events[0]["cards"] == [9]
@@ -121,6 +121,26 @@ def test_synthetic_premier_fixture_has_42_packs_and_picks():
     assert [len(e["cards"]) for e in packs][:3] == [14, 13, 12] and packs[0]["type"] == "pack_and_pick"
     assert events[0]["type"] == "join" and events[-1]["type"] == "complete"
     assert all(pick["card"] in pack["cards"] for pack, pick in zip(packs, picks))
+
+
+def test_real_premier_fixture_2026_11_09():
+    """Trecho anonimizado do Player.log do primeiro draft real (Premier Draft de FRA, 2026-11-09):
+    o P1P1 apareceu antes do pick, SelfPack/SelfPick e Pack/Pick começam em 1, e o fim do
+    draft chega como DraftCompleteDraft sem DraftId."""
+    from pathlib import Path
+    text = (Path(__file__).parent / "fixtures" / "player-log-premier-fra-2026-11-09.txt").read_text("utf-8")
+    events = arena_log.events_from_text(text)
+    packs = [e for e in events if e["type"] == "pack"]
+    picks = [e for e in events if e["type"] == "pick"]
+    assert len(packs) == 42 and len(picks) == 42 and not [e for e in events if e["type"] == "pack_and_pick"]
+    assert [(e["pack"], e["pick"]) for e in packs] == [(p, k) for p in (1, 2, 3) for k in range(1, 15)]
+    assert [(e["pack"], e["pick"]) for e in picks] == [(e["pack"], e["pick"]) for e in packs]
+    assert [len(e["cards"]) for e in packs][:3] == [14, 13, 12] and len(packs[-1]["cards"]) == 1
+    assert packs[0]["source"] == "Draft.Notify" and picks[0]["card"] == 106314 and picks[0]["card"] in packs[0]["cards"]
+    assert all(pick["card"] in pack["cards"] for pack, pick in zip(packs, picks))
+    complete = [e for e in events if e["type"] == "complete"]
+    assert complete and complete[0]["event"] == "PremierDraft_FRA_20260929"
+    assert all(e["type"] != "unknown" for e in events)
 
 
 def fake_arena_db(path):

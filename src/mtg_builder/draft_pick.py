@@ -22,7 +22,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from . import analysis, archetypes, db, decklist, draft
+from . import analysis, archetypes, collection, db, decklist, draft
 
 PACK_SIZE = 14
 PACKS = 3
@@ -43,6 +43,10 @@ WEIGHTS = {
     "parceiros_max": 3.0,     # teto do componente: muitos parceiros não transformam carta fraca em bomba
     "compromisso_pleno_em": 20,   # índice (de 0) do pick em que o deck manda: P2P7
     "peso_minimo_cor": 0.5,   # quanto uma carta fraca ainda puxa para a sua cor
+    "sobra_a_partir": 9,      # do pick 9 de cada pacote em diante, rara ou mítica que falta na coleção ganha bônus
+    "sobra_rara": 1.5,        # (pedido do usuário em 2026-11-09: 42 picks sem uma rara; no Arena, rara é coringa)
+    "sobra_mitica": 2.5,
+    "colecao_playset": 4,     # com quatro cópias conhecidas, o bônus some
 }
 TARGETS = {"criaturas": 15, "cmc2": 4, "cmc3": 4, "cmc4": 3, "remocao": 3, "truques": 2}
 THEORY_BY_RARITY = {"mythic": 4.0, "rare": 2.5, "uncommon": 0.5, "common": -0.5}
@@ -276,9 +280,42 @@ class Engine:
         return self.index.get(decklist._key(name)) or self.index.get(decklist._key(name.split(" // ")[0]))
 
     def rarity(self, name):
+        """Raridade pela base do Arena quando veio do log; senão pela impressão na coleção do
+        motor (ou em qualquer coleção), como o mapa da coleção faz. Sem ela, a nota teórica
+        não tinha a base por raridade e o bônus de sobra não via raras."""
         if name in self.extra and self.extra[name].get("rarity"):
             return self.extra[name]["rarity"]
-        return None
+        cache = self.__dict__.setdefault("_rarities", {})
+        if name not in cache:
+            card = self.card(name)
+            found = None
+            if self.conn is not None and card is not None and "oracle_id" in card.keys():
+                if self.set_code:
+                    row = self.conn.execute("SELECT MIN(rarity) AS r FROM printings WHERE oracle_id = ? AND set_code = ?",
+                                            (card["oracle_id"], self.set_code)).fetchone()
+                    found = row["r"] if row else None
+                if not found:
+                    row = self.conn.execute("SELECT MIN(rarity) AS r FROM printings WHERE oracle_id = ?",
+                                            (card["oracle_id"],)).fetchone()
+                    found = row["r"] if row else None
+            cache[name] = found
+        return cache[name]
+
+    def collection_bonus(self, name, rarity, pick):
+        """Bônus de sobra: do pick `sobra_a_partir` de cada pacote em diante, rara ou mítica de
+        que a coleção conhecida (`data/collection.json`, aproximação por baixo) tem menos que
+        um playset. Só pesa quando o pacote já não tem jogável que valha mais: no Arena, uma
+        rara que ninguém jogaria ainda é progresso de coleção e de coringa."""
+        if pick < WEIGHTS["sobra_a_partir"] or rarity not in ("rare", "mythic"):
+            return 0.0
+        if getattr(self, "_collection", None) is None:
+            try:
+                self._collection = collection.by_name(collection.load(db.DATA_DIR / "collection.json"))
+            except (OSError, ValueError):
+                self._collection = {}
+        if self._collection.get(decklist._key(name.split(" // ")[0]), 0) >= WEIGHTS["colecao_playset"]:
+            return 0.0
+        return WEIGHTS["sobra_mitica"] if rarity == "mythic" else WEIGHTS["sobra_rara"]
 
     def power(self, name):
         return self.ratings.power(name, self.card(name), self.rarity(name))
@@ -385,16 +422,18 @@ class Engine:
                            for other, other_card in picked_cards if other_card is not None), key=lambda t: -t[1])
             elos = [(other, score) for other, score in elos if score > 0]
             parceiros = min(WEIGHTS["parceiros_max"], WEIGHTS["parceiro"] * sum(score for _o, score in elos))
-            total = power["points"] + encaixe + par + necessidade + sinal + flex + sinergia + parceiros
+            rarity = power.get("rarity") or self.rarity(name) or "?"
+            colecao = self.collection_bonus(name, rarity, pick)
+            total = power["points"] + encaixe + par + necessidade + sinal + flex + sinergia + parceiros + colecao
             rows.append({
                 "name": name, "total": round(total, 2), "poder": round(power["points"], 2),
                 "encaixe": round(encaixe, 2), "par": round(par, 2), "necessidade": round(necessidade, 2),
                 "sinal": round(sinal, 2), "flexibilidade": round(flex, 2), "sinergia": round(sinergia, 2),
-                "parceiros": round(parceiros, 2), "elos": elos[:3],
+                "parceiros": round(parceiros, 2), "elos": elos[:3], "colecao": round(colecao, 2),
                 "arquetipos": self.tagger.label(tags), "fonte": power["source"],
                 "teorica": power["theoretical"], "gih": power.get("gih"), "jogos": power.get("games", 0),
                 "alsa": alsa, "volta": wheel_probability(alsa, pick), "cor": colors or "-",
-                "raridade": power.get("rarity") or self.rarity(name) or "?",
+                "raridade": rarity,
                 "custo": (card["mana_cost"] if card else None) or "",
                 "funcoes": sorted(found),
             })
@@ -417,16 +456,45 @@ def _pct(value, width=6):
     return f"{value:{width}.1%}" if value is not None else " " * (width - 1) + "—"
 
 
+TIE_MARGIN = 0.5          # diferença de nota abaixo da qual a recomendação avisa que é empate técnico
+
+
+def headline(result):
+    """Uma linha de decisão para a janela: `► PEGUE: carta (nota; por quê) · 2º: ... · 3º: ...`.
+    Pedido do usuário no primeiro draft real (2026-11-09): a tabela só mostrava métricas."""
+    rows = result.get("cartas") or []
+    if not rows:
+        return ""
+    top = rows[0]
+    why = [f"{top['fonte'].rstrip('*')} {top['gih']:.1%}" if top.get("gih") else "nota teórica"]
+    if top.get("encaixe", 0) >= 0.5:
+        why.append("na sua cor")
+    if top.get("elos"):
+        why.append(f"elo com {top['elos'][0][0]}")
+    if top.get("sinergia", 0) >= 0.5:
+        why.append("sinergia do par")
+    if top.get("colecao", 0) > 0:
+        why.append(f"{'mítica' if top.get('raridade') == 'mythic' else 'rara'} que falta na coleção, pacote de sobras")
+    line = f"► PEGUE: {top['name']}  ({top['total']:+.1f}; {', '.join(why)})"
+    for position, row in enumerate(rows[1:3], 2):
+        line += f"   ·   {position}º: {row['name']} ({row['total']:+.1f})"
+    if len(rows) > 1 and top["total"] - rows[1]["total"] < TIE_MARGIN:
+        line += "   ·   empate técnico: decida pela curva e pelas cores"
+    return line
+
+
 def format_ranking(result, title="", sources=""):
-    """Tabela de texto do ranking, usada no terminal e na janela flutuante."""
+    """Tabela de texto do ranking, usada no terminal e na janela flutuante; a primeira linha
+    é a recomendação (`headline`)."""
     colors = " ".join(f"{c} {v:g}" for c, v in result["cores"].items()) or "nenhuma ainda"
     pair = f" · par {result['par']}" + (f" {result['par_win_rate']:.1%}" if result["par_win_rate"] else "") \
         + (f" ({result['arquetipo']})" if result.get("arquetipo") else "") if result["par"] else ""
-    lines = [f"{title}P{result['pack']} pick {result['pick']} · compromisso {result['compromisso']:.0%} · "
+    lines = [headline(result),
+             f"{title}P{result['pack']} pick {result['pick']} · compromisso {result['compromisso']:.0%} · "
              f"cores: {colors}{pair}"]
     if sources:
         lines.append(f"dados: {sources}")
-    lines.append(" #   nota  poder   enc   par  need sinal  flex  sin parc fonte       GIH  ALSA volta cor  rar carta · arquétipos ↔ parceiros")
+    lines.append(" #   nota  poder   enc   par  need sinal  flex  sin parc  col fonte       GIH  ALSA volta cor  rar carta · arquétipos ↔ parceiros")
     for row in result["cartas"]:
         volta = f"{row['volta']:4.0%}" if row["volta"] is not None else "   —"
         alsa = f"{row['alsa']:5.1f}" if row["alsa"] else "    —"
@@ -435,7 +503,8 @@ def format_ranking(result, title="", sources=""):
         lines.append(
             f"{row['posicao']:2d} {row['total']:+6.1f} {row['poder']:+6.1f} {row['encaixe']:+5.1f} "
             f"{row['par']:+5.1f} {row['necessidade']:+5.1f} {row['sinal']:+5.1f} {row['flexibilidade']:+5.1f} "
-            f"{row.get('sinergia', 0):+4.1f} {row.get('parceiros', 0):+4.1f} {row['fonte']:<9} {_pct(row['gih'])} {alsa} {volta} {row['cor']:<4} "
+            f"{row.get('sinergia', 0):+4.1f} {row.get('parceiros', 0):+4.1f} {row.get('colecao', 0):+4.1f} {row['fonte']:<9} "
+            f"{_pct(row['gih'])} {alsa} {volta} {row['cor']:<4} "
             f"{(row['raridade'] or '?')[:1].upper()}   {row['name']}{tags}{elos}")
     if any(r["teorica"] for r in result["cartas"]):
         lines.append("* nota teórica (sem amostra nos dados de partidas)")

@@ -87,7 +87,8 @@ Ambiente: `.venv` com o pacote instalado em modo editável (`pip install -e ".[d
 .venv\Scripts\mtg draft rate fra "Carta A" "Carta B" [--file pool.txt]
 .venv\Scripts\mtg draft pick fra "Carta A" "Carta B" --pack 1 --pick 1 [--picked ...] [--state f]  # nota por carta, componentes
 .venv\Scripts\mtg draft watch [--window] [--check] [--file log]   # draft ao vivo pelo Player.log do Arena (spec 010)
-.venv\Scripts\mtg draft pool <estado> --to arena                 # pool capturado → montagem do deck de 40
+.venv\Scripts\mtg draft pool <estado> --to arena                 # pool capturado em texto
+.venv\Scripts\mtg draft build <estado.json|pool.txt> [--set fra] [--write]   # deck de 40 a partir do pool (o Oráculo faz isso sozinho ao fim do draft)
 .venv\Scripts\mtg draft sim fra [--auto N] [--seed S] [--booster paper]   # draft contra 7 bots, sem gastar fichas
 .venv\Scripts\mtg draft synergy fra                              # arquétipos da coleção: cartas marcadas e sinal nos dados
 .venv\Scripts\mtg draft map fra [--rarity rare] [--card "A" --card "B"] [--pairs] [--graph] [--pdf]   # mapa de picks (spec 014): ordem, próximo pick, elos, grafo; --pdf monta drafts/fra/fra.pdf (documento da coleção)

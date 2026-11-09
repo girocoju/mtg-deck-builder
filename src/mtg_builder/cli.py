@@ -9,7 +9,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from . import (advisor, analysis, archetypes, arena_history, arena_log, arena_match, collection, companion, db,
-               decklist, draft, draft_map, draft_pick, draft_sim, edhrec, formats, meta, overlay, query, scryfall)
+               decklist, draft, draft_deck, draft_map, draft_pick, draft_sim, edhrec, formats, meta, overlay, query,
+               scryfall)
 
 
 def _card_dict(row):
@@ -512,6 +513,7 @@ class _DraftSession:
         self.text = "aguardando um draft no Arena... (entre no evento e abra o primeiro pacote)"
         self.seen = set()
         self.events = 0
+        self.deck_shown = False
 
     def resolve(self, ids):
         if self.arena is not None:
@@ -585,18 +587,39 @@ class _DraftSession:
             self.state.record_pick(event["pack"], event["pick"], name)
             self.save()
             self.text += f"\n✔ pick registrado: {name}  (pool: {len(self.state.picked_names())})"
+            if len(self.state.picked_names()) >= draft_pick.PACK_SIZE * draft_pick.PACKS and not self.deck_shown:
+                return self.finish()          # último pick: o deck sai antes mesmo do evento de encerramento
             return self.text
         if kind == "complete":
             if self.state is None:
                 return None
-            self.save()
-            pool = self.state.picked_names()
-            self.text = (f"draft encerrado: {len(pool)} cartas no pool · estado em {self.state_path}\n"
-                         f"próximo passo: mtg draft pool \"{self.state_path}\" e a seção C da skill draft")
-            return self.text
+            return self.finish()
         if kind == "unknown":
             self.log(f"[linha de draft não reconhecida] {event['header']} chaves={event['keys']}")
         return None
+
+    def finish(self):
+        """Fim do draft: grava o estado, monta o deck de 40 (`draft_deck`), grava o arquivo em
+        decks/limited/ e mostra a lista pronta para o Arena. Pedido do usuário em 2026-11-09:
+        'Insira a montagem do deck no Oráculo também. Assim fica tudo concentrado no mesmo.'"""
+        self.save()
+        pool = self.state.picked_names()
+        header = f"DRAFT ENCERRADO: {len(pool)} cartas no pool · estado em {self.state_path}"
+        if self.engine is None or not pool:
+            self.text = header
+            return self.text
+        try:
+            result = draft_deck.build(self.engine, pool)
+            info = draft.find_set(self.conn, self.state.set_code)
+            path = draft_deck.write(result, info["name"], info["code"], self.state.event, self.ratings.describe(),
+                                    pool_path=str(self.state_path))
+            self.deck_shown = True
+            self.text = "\n".join([header, ""] + draft_deck.summary_lines(result)
+                                  + ["", f"deck gravado em {path}", "confira: mtg deck analyze \"" + str(path) + "\""])
+        except Exception as error:          # a montagem nunca pode derrubar a janela
+            self.log(f"montagem do deck falhou: {error!r}")
+            self.text = header + f"\nmontagem automática falhou ({error}); use mtg draft build \"{self.state_path}\""
+        return self.text
 
 
 def _preflight(args, log_path, arena_db):
@@ -722,6 +745,32 @@ def cmd_draft_map(args):
         rows = setmap.pick_order(args.rarity, top=args.top)
         _emit(args, {"cobertura": setmap.coverage(), "cartas": rows},
               [draft_map.format_order(setmap, rows, info["name"], ratings.describe())])
+
+
+def cmd_draft_build(args):
+    """Deck de 40 a partir de um estado de draft (ou de um arquivo de pool), pelo mesmo
+    método que o Oráculo usa ao fim do draft; `--write` grava em decks/limited/."""
+    conn = db.connect(readonly=True)
+    path = Path(args.state)
+    if path.suffix == ".json":
+        state = draft_pick.DraftState.load(path)
+        pool, set_code, mode, event = state.picked_names(), state.set_code, state.mode, state.event
+    else:
+        pool = [e.name for e in _read_deck(path).entries() for _ in range(e.qty)]
+        set_code, mode, event = None, None, None
+    set_code = args.set or set_code
+    if not set_code:
+        sys.exit("Informe a coleção com --set (o arquivo não diz qual é).")
+    info = draft.find_set(conn, set_code)
+    mode = args.mode or mode or "premier"
+    ratings = _ratings(conn, info["code"], mode, allow_update=not args.offline, day=args.snapshot)
+    engine = draft_pick.Engine(conn, ratings, info["code"], mode)
+    result = draft_deck.build(engine, pool)
+    lines = [f"{info['name']} · {len(pool)} cartas no pool · dados: {ratings.describe()}", ""] + draft_deck.summary_lines(result)
+    if args.write:
+        out = draft_deck.write(result, info["name"], info["code"], event, ratings.describe(), pool_path=str(path))
+        lines += ["", f"deck gravado em {out}"]
+    _emit(args, result, lines)
 
 
 def cmd_draft_pool(args):
@@ -1175,6 +1224,14 @@ def main(argv=None):
     p.add_argument("state", help="arquivo de estado")
     p.add_argument("--to", choices=["text", "arena"], default="text")
     p.set_defaults(func=cmd_draft_pool)
+
+    p = draft_sub.add_parser("build", help="monta o deck de 40 a partir de um estado de draft ou de um arquivo de pool")
+    p.add_argument("state", help="arquivo de estado (.json) ou lista do pool (.txt/.md)")
+    p.add_argument("--set", help="coleção (obrigatória para arquivo de pool)")
+    p.add_argument("--mode", choices=tuple(draft.MODES), help="modo dos dados (padrão: o do estado, senão premier)")
+    p.add_argument("--write", action="store_true", help="grava decks/limited/<coleção>-<evento>-<data>-<cores>.md")
+    sources_args(p)
+    p.set_defaults(func=cmd_draft_build)
 
     p = draft_parser("sim", "simula um draft contra sete bots (treino sem gastar fichas)", cmd_draft_sim)
     p.add_argument("--auto", type=int, help="N mesas só de bots, com resumo")

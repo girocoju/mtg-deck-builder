@@ -32,7 +32,7 @@ def test_combined_classifier_routes_draft_and_match_events(conn, tmp_path, monke
     text = session.poll()
     assert "partida em Ladder" in text and session.poll() is None          # nada novo: None
     with open(path, "a", encoding="utf-8") as handle:
-        handle.write(notify(0, 0, [101, 102]) + "\n" + make_pick(0, 0, 101) + "\n")
+        handle.write(notify(1, 1, [101, 102]) + "\n" + make_pick(1, 1, 101) + "\n")
     text = session.poll()
     assert draft.seen == ["pack", "pick"] and "ranking P1" in text and "partida em" not in text
     monkeypatch.setattr(companion, "arena_running", lambda: False)

@@ -33,7 +33,12 @@
       (`--write` vai para `data/maps/`); `drafts/README.md`; referências em `CLAUDE.md`,
       skill `draft`, specs 008 e 010, `knowledge/fontes.md`
 - [ ] Depois do primeiro draft real: conferir os elos indicados contra o deck montado e
-      registrar aqui se algum peso (parceiros, enabler genérico, splash) precisa mudar
+      registrar aqui se algum peso (parceiros, enabler genérico, splash) precisa mudar.
+      *Primeira leitura (draft de 2026-11-09, UG com splash R): o componente `parceiros`
+      ficou entre +0,3 e +3,0 e só decidiu picks de sobra (Wrecking Gecko e Inspired
+      Tethermage pelo elo com Bestial Incursion e Yuriko); nos picks que importaram, o
+      poder mandou. Nenhum elo indicado contrariou o deck final. Pesos mantidos até o
+      segundo draft.*
 - [ ] Quando o 17Lands voltar a publicar GIH WR das raras e míticas: `mtg draft update fra` e
       `mtg draft map fra --write --pdf`; anotar o que mudou na ordem
 - [ ] Quando TRK tiver dados (e a tela do evento no Arena): nomes oficiais dos arquétipos em

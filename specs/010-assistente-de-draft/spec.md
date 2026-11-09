@@ -103,6 +103,17 @@ sobre a janela do jogo é uma fase posterior possível, listada em "Fora do esco
 10. **Janela flutuante** (`--window`): janela comum do Windows sempre no topo e
     semitransparente, visível com o Arena em modo janela ou tela cheia sem bordas; não
     desenha sobre o jogo.
+11. **Decisão explícita e deck no fim** (pedidos do usuário durante o primeiro draft real,
+    2026-11-09): cada pacote abre com a linha `► PEGUE: carta (nota; por quê) · 2º · 3º`,
+    com aviso de empate técnico quando a diferença é menor que meio ponto, porque "o
+    Oráculo só mostra métrica, não fala a escolha". Ao fim do draft (último pick ou evento
+    de encerramento) o Oráculo monta o deck de 40 pelo método da skill `draft` (par pelas
+    jogáveis, splash de até três cartas de um símbolo, doze corpos, quatro de interação,
+    dezessete terrenos), mostra a lista pronta para o Arena na janela e grava o arquivo em
+    `decks/limited/`; `mtg draft build` repete a montagem na linha de comando. Do pick 9 de
+    cada pacote em diante, rara ou mítica que falta na coleção conhecida ganha um bônus
+    pequeno, porque "não teve UMA pick de rara" num draft em que as raras dos pacotes eram
+    fracas: no Arena, rara em pick de sobra é coringa.
 
 ## Critérios de aceite
 
@@ -112,9 +123,13 @@ sobre a janela do jogo é uma fase posterior possível, listada em "Fora do esco
 - [x] Com um trecho de `Player.log`, `mtg draft watch --file` reproduz os 42 pacotes e
       picks, resolve todas as cartas pela base do Arena e grava o pool com as 42 cartas
       escolhidas. *(2026-11-07, log sintético com GrpIds reais de FRA:
-      `tests/fixtures/player-log-premier-fra-sintetico.txt`; falta repetir com um trecho real)*
-- [ ] Em um draft real no Arena, o ranking aparece no terminal antes de o usuário escolher,
-      em cada um dos 42 picks, sem captura de tela (registro em `tasks.md` com a data).
+      `tests/fixtures/player-log-premier-fra-sintetico.txt`; 2026-11-09, trecho real do
+      primeiro draft: `tests/fixtures/player-log-premier-fra-2026-11-09.txt`, 42/42, deck
+      montado no fim)*
+- [x] Em um draft real no Arena, o ranking aparece na janela antes de o usuário escolher,
+      em cada um dos 42 picks, sem captura de tela. *(2026-11-09, Premier Draft de FRA com o
+      Oráculo: o P1P1 apareceu, 42 pacotes e 42 picks; a numeração saiu errada e foi
+      corrigida; registro em `tasks.md`)*
 - [x] `mtg draft sim fra --auto 10` gera 80 pools de 42 cartas com distribuição de
       raridades compatível com a colação declarada. *(2026-11-07: 3,8 raras ou míticas
       por pool de 42, ou 1,26 por pacote, igual ao esperado da colação; teste de mesa
@@ -125,8 +140,10 @@ sobre a janela do jogo é uma fase posterior possível, listada em "Fora do esco
 - [x] O leitor de partidas reproduz um log real com deck, oponente, turnos, vida e
       resultado corretos. *(2026-11-07: quatro partidas de Brawl do log do usuário, deck
       de 99 cartas com todos os nomes resolvidos; falta o teste ao vivo em ranqueada)*
-- [ ] Um deck de 40 montado a partir de um pool capturado ao vivo passa no validador
-      (spec 008, seção C).
+- [x] Um deck de 40 montado a partir de um pool capturado ao vivo passa no validador
+      (spec 008, seção C). *(2026-11-09: `decks/limited/fra-draft-2026-11-09-ug-splash-r.md`,
+      `mtg deck validate --format limited` válido; a montagem automática do Oráculo sobre o
+      mesmo pool dá o mesmo par e splash)*
 
 ## Dependências
 

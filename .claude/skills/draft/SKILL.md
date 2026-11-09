@@ -113,9 +113,13 @@ encerra; o registro fica em `data/companion.log`. Os passos abaixo valem para ro
 3. Se o primeiro pick não aparecer antes da escolha (há relato de que o Arena não grava
    o evento do P1P1), a mensagem combinada registra o pacote e o pick depois; para
    pontuar antes, digite o pacote em `mtg draft pick`.
-4. No fim: `mtg draft pool <estado> --to arena` e siga a seção C. Registre no `tasks.md`
-   da spec 010 se o P1P1 apareceu e quantos picks foram reconhecidos; guarde um trecho
-   anonimizado do log em `tests/fixtures/`.
+4. No fim, o Oráculo monta sozinho o deck de 40 (`draft_deck.py`: par pelas jogáveis,
+   splash de até três cartas de um símbolo, 12 corpos, 4 de interação, 17 terrenos), mostra
+   a lista na janela e grava em `decks/limited/`. Revise a proposta pela seção C
+   (`mtg deck analyze`, curva, o que ficou de fora) antes de entregar; `mtg draft build
+   <estado>` refaz a montagem na linha de comando. A janela abre cada pacote com a linha
+   `► PEGUE: carta (nota; por quê) · 2º · 3º`; do pick 9 em diante, rara ou mítica que falta
+   na coleção ganha um bônus pequeno (componente `col`), só para as sobras.
 
 Testes sem ficha: `mtg draft watch --file tests/fixtures/player-log-premier-fra-sintetico.txt`
 reproduz um draft de 42 picks; `mtg arena watch --window` numa partida comum mostra deck
@@ -125,6 +129,10 @@ do Play Booster de papel; `--auto N` mede o que a mesa deixa aberto).
 
 ## C. Montar o deck de 40 a partir de um pool
 
+0. Se o pool veio de um draft acompanhado, comece pela proposta automática
+   (`mtg draft build <estado.json> --write`, a mesma que o Oráculo mostrou ao fim do draft)
+   e ajuste a partir dela; para um pool colado, salve em arquivo e use
+   `mtg draft build <pool.txt> --set <coleção>`.
 1. Salve o pool em arquivo e rode `mtg draft rate <coleção> --file <pool>`: a saída vem
    agrupada por cor.
 2. Escolha as duas cores com mais cartas acima da média e a melhor remoção; confira o par
