@@ -31,9 +31,29 @@
   (1 − d)/N. Escolhido no lugar de autovetor puro porque este zera tudo fora da componente
   densa.
 - **Comunidades:** propagação de rótulos assíncrona e determinística (ordem alfabética,
-  desempate a favor do rótulo atual e depois alfabético), só sobre arestas de peso ≥ 1
-  (elos plenos), até 30 iterações; grupos com 3 cartas ou mais, com cores, pares oficiais
-  e elos dominantes. Sobre todos os elos o grafo é denso demais e vira um grupo só.
+  desempate a favor do rótulo atual e depois alfabético), só sobre arestas com mais de um
+  elo, até 30 iterações; grupos com 3 cartas ou mais, com cores, pares oficiais e elos
+  dominantes. Sobre todos os elos o grafo é denso demais e vira um grupo só. O limiar é
+  escolhido por `communities_auto` entre 1,5, 2,0 e 2,5: fica o que dá mais grupos (empate:
+  o menor). Em FRA fica 1,5 (quatro grupos); em TRK, com oito ganchos, 1,5 dá um grupo de
+  135 cartas e 2,0 dá nove.
+- **Leitura da coleção** (`SetMap.overview`, `archetype_summary`, `hook_summary`,
+  `analysis_lines`): mesma leitura de `draft.set_overview`, mas sobre o conjunto do mapa;
+  frases em PT-BR com a seção da teoria citada; profundidade de arquétipo por payoffs em
+  comum e incomum (`DEPTH_DEEP` = 6, `DEPTH_SHALLOW` = 3); indício de velocidade pela
+  parcela das criaturas de comum e incomum até custo 3 (`CURVE_SPLIT` = 65% / 50%). Entra
+  como seção 0 do Markdown e como páginas 2 e 3 do PDF.
+- **PDF** (`draft_map_pdf.py`, matplotlib em modo Agg, dependência opcional `viz`): A4
+  paisagem, Segoe UI com DejaVu Sans de reserva, fontes TrueType incorporadas. Paleta
+  (skill dataviz, validador rodado): W `#eda100`, U `#2a78d6`, B `#7b3fa0`, R `#e34948`,
+  G `#008300`, incolor cinza neutro; multicolorida é barra ou nó dividido, sem "dourado"
+  (o dourado colide com amarelo e vermelho no validador). Pior par verde↔vermelho fica na
+  faixa que exige codificação secundária, por isso todo rótulo traz a letra da cor.
+  Raridade usa uma rampa ordinal de uma matiz; comunidades usam a paleta categórica de oito
+  cores. Grafo: Fruchterman-Reingold com pesos em numpy (atração cresce com o quadrado do
+  peso acima de 0,75, para que um elo só puxe pouco), só arestas de peso ≥ 1 desenhadas,
+  rótulos nas mais centrais sem sobreposição. Duas colunas de 20 barras por página na
+  ordem de pick; duas arquétipos por página; 19 a 20 páginas, 20 a 25 s.
 - **Documento** `drafts/<coleção>-mapa.md`: cabeçalho (geração, dados, cobertura por fonte,
   como ler, como o motor combina), 1 ordem por raridade, 2 segundos picks por rara e
   mítica (6 cada), 3 pares (40), 4 arquétipos (payoffs e enablers por poder), 5 grafo
@@ -46,10 +66,15 @@
 - `src/mtg_builder/archetypes/fra.json`: bloco `hooks`.
 - `src/mtg_builder/draft_pick.py`: pesos `parceiro` e `parceiros_max`, componente na
   `rank`, coluna `parc` na tabela, cache de `functions` por nome.
-- `src/mtg_builder/draft_map.py`: módulo novo.
-- `src/mtg_builder/cli.py`: `mtg draft map`.
-- `tests/test_draft_map.py`.
-- `drafts/fra-mapa.md` (gerado).
+- `src/mtg_builder/draft_map.py`: módulo novo; `overview`, `archetype_summary`,
+  `hook_summary`, `communities_auto`, `analysis_lines`.
+- `src/mtg_builder/draft_map_pdf.py`: PDF.
+- `src/mtg_builder/archetypes/trk.json`: dez pares e oito ganchos de Star Trek.
+- `src/mtg_builder/cli.py`: `mtg draft map` (`--pdf`).
+- `pyproject.toml`: extra `viz` (matplotlib).
+- `tests/test_draft_map.py`, `tests/test_archetypes.py` (arquivos reais compilam).
+- `drafts/fra-mapa.md`, `drafts/fra-mapa.pdf`, `drafts/trk-mapa.md`, `drafts/trk-mapa.pdf`
+  (gerados).
 
 ## Riscos
 

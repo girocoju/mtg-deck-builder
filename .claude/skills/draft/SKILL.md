@@ -36,9 +36,13 @@ Salve em `drafts/<código>.md`. Use `drafts/fra.md` como modelo de estrutura.
    - `mtg draft cards <coleção> --color <W|U|B|R|G|multi|colorless> --rarity <common|uncommon>` — rankings;
    - `mtg draft cards <coleção> --limit 15` — bombas;
    - `mtg draft gaps <coleção>` — subestimadas e superestimadas;
-   - `mtg draft map <coleção> --write` — mapa de picks (spec 014): ordem por raridade,
-     segundos picks por rara, elos diretos, grafo; gera `drafts/<código>-mapa.md`, que o
-     guia deve linkar;
+   - `mtg draft map <coleção> --write --pdf` — mapa de picks (spec 014): ordem por
+     raridade, segundos picks por rara, elos diretos, grafo; gera `drafts/<código>-mapa.md`
+     (todas as tabelas) e `drafts/<código>-mapa.pdf` (vista ilustrada: coleção em números,
+     leitura, arquétipos, grafo, comunidades), que o guia deve linkar. O mapa precisa de
+     `src/mtg_builder/archetypes/<código>.json`: para coleção nova, escreva os dez pares
+     (payoffs e enablers) e os ganchos a partir das incomuns douradas e do texto das
+     cartas, confira a marcação carta a carta e declare a fonte no arquivo;
    - os mesmos comandos com `--mode` para os outros modos que tiverem dados.
 3. **Escreva o guia** com estas seções: cabeçalho (fonte, data, modo, jogos, média dos
    usuários, aviso de amostra); visão geral (mecânicas, velocidade, cores fortes e

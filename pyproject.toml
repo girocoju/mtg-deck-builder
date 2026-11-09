@@ -12,6 +12,7 @@ dependencies = []
 [project.optional-dependencies]
 dev = ["pytest>=8"]
 knowledge = ["pypdf>=4"]
+viz = ["matplotlib>=3.8"]
 
 [project.scripts]
 mtg = "mtg_builder.cli:main"

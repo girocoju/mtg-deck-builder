@@ -23,7 +23,11 @@ pedidos como "crie um deck anti meta no Standard" ou "estratégia de draft para 
 - **Mapa da coleção antes do draft.** Pedidos de pick ou de "peso de cada carta" usam
   `mtg draft map` (ordem por raridade, próximo pick dado o que já foi escolhido, elos
   diretos, grafo) e o documento gerado `drafts/<código>-mapa.md`; a fonte do poder de cada
-  carta (17Lands, Untapped, Draftsim, teórica) vai junto com a nota.
+  carta (17Lands, Untapped, Draftsim, teórica) vai junto com a nota. Pedido de mapa
+  "visual" ou "ilustrado" é `--pdf` (`drafts/<código>-mapa.pdf`: análise da coleção e dos
+  arquétipos, ordem por raridade, grafo e comunidades). Coleção nova precisa de
+  `src/mtg_builder/archetypes/<código>.json` (dez pares e ganchos escritos sobre o texto
+  das cartas da base) antes do mapa.
 - **Meta é dado com data.** Ao usar `mtg meta show`, cite fonte, data e modo (BO1/BO3).
   Sem snapshot do modo pedido, diga isso e trate a análise como teórica; nunca use o
   meta BO3 como se fosse BO1.
@@ -85,7 +89,7 @@ Ambiente: `.venv` com o pacote instalado em modo editável (`pip install -e ".[d
 .venv\Scripts\mtg draft pool <estado> --to arena                 # pool capturado → montagem do deck de 40
 .venv\Scripts\mtg draft sim fra [--auto N] [--seed S] [--booster paper]   # draft contra 7 bots, sem gastar fichas
 .venv\Scripts\mtg draft synergy fra                              # arquétipos da coleção: cartas marcadas e sinal nos dados
-.venv\Scripts\mtg draft map fra [--rarity rare] [--card "A" --card "B"] [--pairs] [--graph] [--write]   # mapa de picks (spec 014): ordem, próximo pick, elos, grafo; --write gera drafts/fra-mapa.md
+.venv\Scripts\mtg draft map fra [--rarity rare] [--card "A" --card "B"] [--pairs] [--graph] [--write] [--pdf]   # mapa de picks (spec 014): ordem, próximo pick, elos, grafo; --write gera drafts/fra-mapa.md, --pdf o PDF ilustrado
 .venv\Scripts\mtg arena watch [--window] [--file log]            # partida: deck, oponente, mão, campos, lances, resultado
 .venv\Scripts\mtg arena companion --install|--start|--stop|--status|--uninstall   # Oráculo: tarefa agendada, janela com o Arena
 .venv\Scripts\mtg arena history [--deck "Nome"] [--decks]        # partidas conhecidas por deck, rank da temporada, cofre

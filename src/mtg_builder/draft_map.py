@@ -12,10 +12,14 @@ Draftsim → teórica), os arquétipos que serve e os elos que pede e oferece
    seguintes sob demanda, com `--card A --card B ...`);
 3. os **pares de cartas com mais sinergia direta** e, por carta, os parceiros.
 
-`markdown()` escreve tudo em `drafts/<coleção>-mapa.md`. Tudo é intrínseco à coleção e
-aos dados de partidas: só muda quando eles mudam, não com o draft em curso.
+`overview()` e `analysis_lines()` fazem a leitura da coleção (cores, curva, remoção,
+mecânicas, correção de mana, profundidade de cada arquétipo). `markdown()` escreve tudo em
+`drafts/<coleção>-mapa.md`; `draft_map_pdf.render()` desenha o mesmo mapa em PDF. Tudo é
+intrínseco à coleção e aos dados de partidas: só muda quando eles mudam, não com o draft
+em curso.
 """
 
+import json
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
@@ -26,9 +30,21 @@ from .draft_sim import EXTRA_LAYOUTS
 DRAFTS_DIR = Path(__file__).resolve().parents[2] / "drafts"
 RARITY_ORDER = ("mythic", "rare", "uncommon", "common")
 RARITY_PT = {"mythic": "míticas", "rare": "raras", "uncommon": "incomuns", "common": "comuns"}
+COLOR_GROUPS = ("W", "U", "B", "R", "G", "multi", "incolor")
+COLOR_PT = {"W": "branco", "U": "azul", "B": "preto", "R": "vermelho", "G": "verde",
+            "multi": "multicoloridas", "incolor": "incolores"}
+CURVE_SPLIT = (0.65, 0.5)    # parcela das criaturas C+U que custam até 3: curva baixa / média / alta
+DEPTH_DEEP, DEPTH_SHALLOW = 6, 3   # payoffs em comum e incomum: arquétipo profundo / raso (depende da rara)
+
+
+def color_group(colors):
+    """`W`..`G`, `multi` ou `incolor`, a partir da string de cores da base."""
+    colors = colors or ""
+    return colors if len(colors) == 1 else "multi" if colors else "incolor"
 DAMPING = 0.85            # centralidade: chance de o passeio seguir um elo em vez de recomeçar em carta aleatória
 POWER_SHIFT = 5.0         # poder deslocado para ficar positivo ao pesar parceiras (−5 pontos ≈ carta injogável)
 COMMUNITY_MIN_WEIGHT = 1.5   # comunidades só sobre pares ligados por mais de um elo; com 1,0 FRA vira um grupo só
+COMMUNITY_WEIGHTS = (1.5, 2.0, 2.5)   # limiares testados por `communities_auto`: fica o que dá mais grupos (empate: o menor)
 
 
 def draftable(conn, set_code, snapshot=None):
@@ -256,6 +272,17 @@ class SetMap:
         out.sort(key=lambda g: (-g["tamanho"], -g["poder"]))
         return out
 
+    def communities_auto(self, min_size=3):
+        """Comunidades com o limiar de peso, entre `COMMUNITY_WEIGHTS`, que dá mais grupos legíveis
+        (empate: o menor limiar). Em FRA fica 1,5 (quatro grupos); em TRK, com mais ganchos,
+        1,5 dá um grupo de 135 cartas e 2,0 dá seis grupos. Devolve (grupos, limiar)."""
+        best = None
+        for weight in COMMUNITY_WEIGHTS:
+            groups = self.communities(min_size=min_size, min_weight=weight)
+            if best is None or len(groups) > len(best[0]):
+                best = (groups, weight)
+        return best
+
     def archetype_tables(self, top=10):
         """Por par: payoffs e enablers marcados, em ordem de poder."""
         out = []
@@ -271,6 +298,87 @@ class SetMap:
             out.append({"pair": pair, "name": spec.get("name", ""), "plan": spec.get("plan", ""),
                         "win_rate": self.ratings.pairs.get(pair), "payoffs": payoffs[:top], "enablers": enablers[:top],
                         "total_payoffs": len(payoffs), "total_enablers": len(enablers)})
+        return out
+
+    # --- leitura da coleção --------------------------------------------------------------
+
+    def overview(self):
+        """Leitura da coleção sobre as cartas do mapa (mesmo modelo de `draft.set_overview`):
+        por grupo de cor, contagem por raridade, criaturas de comum e incomum com a curva e a
+        parcela até custo 3, remoção de comum e incomum (classificação automática de
+        `analysis.roles`, a conferir); palavras-chave com os grupos em que aparecem; correção
+        de mana; multicoloridas por par. Calculada uma vez."""
+        if getattr(self, "_overview", None) is not None:
+            return self._overview
+        groups = {g: {"total": 0, **{r: 0 for r in RARITY_ORDER}, "criaturas_cu": 0, "baratas_cu": 0,
+                      "curva_cu": {str(i): 0 for i in range(1, 7)}, "remocao_cu": []} for g in COLOR_GROUPS}
+        keywords, pairs = {}, {}
+        fixing = {"terrenos": [], "landcycling": [], "qualquer_cor": []}
+        for name, row in self.rows.items():
+            entry = self.cards[name]
+            group = color_group(row["colors"])
+            table = groups[group]
+            table["total"] += 1
+            if entry["raridade"] in table:
+                table[entry["raridade"]] += 1
+            words = json.loads(row["keywords"] or "[]")
+            for keyword in words:
+                keywords.setdefault(keyword, Counter())[group] += 1
+            text = archetypes.card_text(row)
+            if analysis.is_land(row):
+                fixing["terrenos"].append(name)
+            if any("landcycling" in word.lower() for word in words):
+                fixing["landcycling"].append(name)
+            if "mana of any color" in text or "mana of any one color" in text:
+                fixing["qualquer_cor"].append(name)
+            if group == "multi" and len(row["colors"]) == 2:
+                pairs.setdefault(row["colors"], []).append(name)
+            if entry["raridade"] in ("common", "uncommon"):
+                if "Creature" in analysis._front(row, "type_line"):
+                    table["criaturas_cu"] += 1
+                    cmc = int(row["cmc"] or 0)
+                    table["curva_cu"][str(min(max(cmc, 1), 6))] += 1
+                    if cmc <= 3:
+                        table["baratas_cu"] += 1
+                roles = analysis.roles(row)
+                if "remoção pontual" in roles or "remoção em massa" in roles:
+                    table["remocao_cu"].append(name)
+        ordered = sorted(keywords.items(), key=lambda kv: (-sum(kv[1].values()), kv[0]))
+        self._overview = {
+            "grupos": groups,
+            "palavras": [(word, sum(count.values()), count.most_common(3)) for word, count in ordered[:16]],
+            "correcao": fixing, "pares_multicor": pairs,
+            "raridades": {r: sum(1 for e in self.cards.values() if e["raridade"] == r) for r in RARITY_ORDER},
+        }
+        return self._overview
+
+    def archetype_summary(self):
+        """Por par: quantas payoffs e enablers (e quantas delas comuns ou incomuns), a payoff e o
+        enabler mais fortes, as multicoloridas do par (sinalizadoras) e a profundidade: profundo
+        com `DEPTH_DEEP` payoffs ou mais em comum e incomum, raso com `DEPTH_SHALLOW` ou menos
+        (depende de abrir a rara)."""
+        multi = self.overview()["pares_multicor"]
+        out = []
+        for table in self.archetype_tables(top=None):
+            def cu(rows):
+                return sum(1 for e in rows if e["raridade"] in ("common", "uncommon"))
+            payoffs_cu = cu(table["payoffs"])
+            depth = "profundo" if payoffs_cu >= DEPTH_DEEP else "raso" if payoffs_cu <= DEPTH_SHALLOW else "médio"
+            out.append({"pair": table["pair"], "name": table["name"], "plan": table["plan"], "win_rate": table["win_rate"],
+                        "payoffs": table["total_payoffs"], "enablers": table["total_enablers"],
+                        "payoffs_cu": payoffs_cu, "enablers_cu": cu(table["enablers"]),
+                        "top_payoff": table["payoffs"][0] if table["payoffs"] else None,
+                        "top_enabler": table["enablers"][0] if table["enablers"] else None,
+                        "sinalizadoras": multi.get(table["pair"], []), "profundidade": depth})
+        return out
+
+    def hook_summary(self):
+        """Por gancho: quantas cartas pedem e quantas oferecem."""
+        out = []
+        for hook in self.tagger.hooks:
+            needs = sum(1 for e in self.cards.values() if hook in e["pede"])
+            provides = sum(1 for e in self.cards.values() if hook in e["oferece"])
+            out.append({"hook": hook, "pedem": needs, "oferecem": provides})
         return out
 
 
@@ -321,6 +429,77 @@ def _community_lines(setmap, groups, members=8):
     return lines
 
 
+def analysis_lines(setmap):
+    """Leitura da coleção e dos arquétipos em frases, a partir de `overview()`,
+    `archetype_summary()` e do grafo; cada frase cita a seção da teoria
+    (`knowledge/limitado-e-draft.md`) que a sustenta. Usada no Markdown e no PDF."""
+    ov = setmap.overview()
+    groups, rarities = ov["grupos"], ov["raridades"]
+    lines = []
+    lines.append(f"**Composição.** {len(setmap.cards)} cartas draftáveis ("
+                 + ", ".join(f"{rarities[r]} {RARITY_PT[r]}" for r in RARITY_ORDER) + "). Por cor: "
+                 + ", ".join(f"{COLOR_PT[g]} {groups[g]['total']}" for g in COLOR_GROUPS if groups[g]["total"])
+                 + f". As {groups['multi']['uncommon']} multicoloridas incomuns são as sinalizadoras dos pares "
+                 "(teoria: `limitado-e-draft.md` §4, arquétipos).")
+    creatures = {c: groups[c]["criaturas_cu"] for c in "WUBRG"}
+    total_creatures = sum(groups[g]["criaturas_cu"] for g in COLOR_GROUPS)
+    cheap = sum(groups[g]["baratas_cu"] for g in COLOR_GROUPS)
+    share = cheap / total_creatures if total_creatures else 0.0
+    speed = ("curva baixa: o formato tende a ser rápido" if share >= CURVE_SPLIT[0]
+             else "curva média" if share >= CURVE_SPLIT[1]
+             else "curva alta: o formato tende a ser lento, com mais espaço para valor")
+    best, worst = max(creatures, key=creatures.get), min(creatures, key=creatures.get)
+    lines.append(f"**Criaturas de comum e incomum.** {total_creatures} no total; {COLOR_PT[best]} tem mais ({creatures[best]}) "
+                 f"e {COLOR_PT[worst]} menos ({creatures[worst]}). {share:.0%} custam até 3 ({speed}; §2 custo e curva, "
+                 "§8 parâmetros do formato). Curva por cor, custo 1 a 6+: "
+                 + "; ".join(f"{c} {' '.join(str(groups[c]['curva_cu'][str(i)]) for i in range(1, 7))}" for c in "WUBRG") + ".")
+    removal = {g: groups[g]["remocao_cu"] for g in COLOR_GROUPS if groups[g]["remocao_cu"]}
+    lines.append("**Remoção de comum e incomum** (classificação automática pelo texto; confira com `mtg card`): "
+                 + "; ".join(f"{COLOR_PT[g]} {len(names)}: {', '.join(names)}" for g, names in removal.items())
+                 + ". Remoção é a prioridade de pick depois das bombas (§2 removal, §3 prioridades); a cor com menos "
+                 "remoção depende da segunda cor.")
+    lines.append("**Mecânicas e palavras-chave** (ocorrências e grupos de cor): "
+                 + "; ".join(f"{word} {n} ({', '.join(f'{g} {m}' for g, m in top)})" for word, n, top in ov["palavras"][:10]) + ".")
+    fixing = ov["correcao"]
+    lines.append(f"**Correção de mana.** {len(fixing['terrenos'])} terrenos não básicos draftáveis, "
+                 f"{len(fixing['landcycling'])} cartas com landcycling e {len(fixing['qualquer_cor'])} fontes de mana de "
+                 "qualquer cor" + (": " + ", ".join(fixing["qualquer_cor"][:8]) if fixing["qualquer_cor"] else "")
+                 + ". Quanto mais correção, mais compensa o splash de uma bomba ou remoção (§2 card advantage e correção "
+                 "de mana; §7 construção).")
+    if setmap.ratings.pairs and setmap.ratings.baseline:
+        base = setmap.ratings.baseline
+        ranked = sorted(setmap.ratings.pairs.items(), key=lambda kv: -kv[1])
+        lines.append(f"**Pares nos dados** ({setmap.ratings.describe().split(' · ')[0]}; win rate do par e diferença para a "
+                     f"média {base:.1%}): " + ", ".join(f"{p} {wr:.1%} ({(wr - base) * 100:+.1f})" for p, wr in ranked)
+                     + f". Entre o melhor e o pior par há {(ranked[0][1] - ranked[-1][1]) * 100:.1f} pontos.")
+    else:
+        lines.append("**Pares nos dados.** Sem dados de partidas para esta coleção: a leitura dos pares é teórica, pela "
+                     "contagem de payoffs e enablers marcados no texto das cartas, e deve ser refeita com "
+                     f"`mtg draft update {setmap.set_code}` quando o 17Lands publicar.")
+    parts = []
+    for s in setmap.archetype_summary():
+        top = s["top_payoff"]
+        parts.append(f"{s['pair']} {s['name']}: {s['payoffs']} payoffs ({s['payoffs_cu']} C/U) e {s['enablers']} enablers "
+                     f"({s['enablers_cu']} C/U), {s['profundidade']}"
+                     + (f"; melhor payoff {top['name']} {top['poder']:+.1f}{_mark(top)}" if top else "")
+                     + (f"; sinalizadoras {', '.join(s['sinalizadoras'])}" if s["sinalizadoras"] else ""))
+    lines.append(f"**Arquétipos** (profundo = {DEPTH_DEEP} ou mais payoffs em comum e incomum; raso = {DEPTH_SHALLOW} ou menos, "
+                 "depende de abrir a rara; §4 arquétipos e deck perfeito): " + " · ".join(parts) + ".")
+    hooks = setmap.hook_summary()
+    if hooks:
+        lines.append("**Ganchos fora dos dez pares** (quem pede / quem oferece): "
+                     + ", ".join(f"{h['hook']} {h['pedem']}/{h['oferecem']}" for h in hooks) + ".")
+    central = sorted(setmap.centrality().items(), key=lambda kv: -kv[1])[:5]
+    communities, weight = setmap.communities_auto()
+    lines.append("**Grafo.** Cartas mais centrais (portas de entrada para a coleção): "
+                 + ", ".join(f"{n} {v:g}" for n, v in central)
+                 + f". {len(communities)} comunidades com 3 cartas ou mais (elos de peso ≥ {weight:g})"
+                 + (": " + "; ".join(f"{g['tamanho']} cartas ({''.join(c for c, _n in g['cores']) or '-'}; elos "
+                                     f"{', '.join(l for l, _n in g['elos'][:2])})" for g in communities[:4]) if communities else "")
+                 + ".")
+    return lines
+
+
 def format_graph(setmap, top=20):
     central = setmap.centrality()
     totals = setmap.partner_totals()
@@ -332,8 +511,8 @@ def format_graph(setmap, top=20):
         entry = setmap.cards[name]
         lines.append(f"{value:6.1f} {totals.get(name, 0.0):5.1f} {entry['poder']:+6.1f}{_mark(entry)} {entry['raridade'][:1].upper()}   "
                      f"{entry['cor']:<4} {name}" + (f" · {_links(entry)}" if _links(entry) else ""))
-    groups = setmap.communities()
-    lines += ["", f"comunidades (propagação de rótulos sobre pares com peso ≥ {COMMUNITY_MIN_WEIGHT:g}; {len(groups)} com 3 cartas ou mais):"]
+    groups, weight = setmap.communities_auto()
+    lines += ["", f"comunidades (propagação de rótulos sobre pares com peso ≥ {weight:g}; {len(groups)} com 3 cartas ou mais):"]
     lines += _community_lines(setmap, groups)
     return "\n".join(lines)
 
@@ -369,6 +548,12 @@ def markdown(setmap, set_name="", sources="", top_follow=6, top_pairs=40, top_ar
         "direto desempata cartas próximas e não vira uma carta fraca em bomba. Teoria:",
         "`knowledge/limitado-e-draft.md`, seções 3 (prioridades), 4 (arquétipos e deck perfeito) e 6",
         "(compromisso).",
+        "",
+        "## 0. Leitura da coleção e dos arquétipos",
+        "",
+    ]
+    lines += [f"- {line}" for line in analysis_lines(setmap)]
+    lines += [
         "",
         "## 1. Ordem de pick da coleção inteira",
         "",
@@ -427,9 +612,10 @@ def markdown(setmap, set_name="", sources="", top_follow=6, top_pairs=40, top_ar
         entry = setmap.cards[name]
         lines.append(f"| {position} | {value:g} | {totals.get(name, 0.0):g} | {entry['poder']:+.1f}{_mark(entry)} | "
                      f"{entry['raridade'][:1].upper()} | {entry['cor']} | {name} | {_links(entry)} |")
-    groups = setmap.communities()
-    lines += ["", f"**Comunidades** (propagação de rótulos sobre os pares ligados por mais de um elo, peso {COMMUNITY_MIN_WEIGHT:g} ou",
-              f"mais; {len(groups)} grupos com 3 cartas ou mais, do maior para o menor). Grupo que junta cartas de pares",
+    groups, weight = setmap.communities_auto()
+    lines += ["", f"**Comunidades** (propagação de rótulos sobre os pares ligados por mais de um elo, peso {weight:g} ou",
+              f"mais, limiar escolhido entre {', '.join(f'{w:g}' for w in COMMUNITY_WEIGHTS)} pelo que dá mais grupos;",
+              f"{len(groups)} grupos com 3 cartas ou mais, do maior para o menor). Grupo que junta cartas de pares",
               "diferentes é um tema transversal (por exemplo, planeswalkers e quem os pede), que vale como",
               "arquétipo extra ao ler os sinais da mesa. Sobre todos os elos a coleção vira um grupo só.", ""]
     lines += _community_lines(setmap, groups, members=10)

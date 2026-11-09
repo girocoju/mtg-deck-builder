@@ -1,11 +1,17 @@
 # Star Trek (TRK) — guia de draft preliminar e teórico
 
-- **Situação em 2026-10-05:** a coleção sai em 2026-11-13. **O 17Lands não tem dados**
-  (`mtg draft update trk` confirma), e a base local tem só as **86 cartas já reveladas**.
+- **Situação em 2026-11-09:** a coleção sai em 2026-11-13 e já está **completa na base**
+  (306 cartas draftáveis, sincronização de 2026-11-09). **O 17Lands continua sem dados**
+  (`mtg draft update trk --mode all` confirma). O mapa da coleção, com a leitura completa
+  (cores, curva, remoção, mecânicas), os dez arquétipos marcados em
+  `src/mtg_builder/archetypes/trk.json`, a ordem de pick teórica e o grafo de sinergias,
+  está em [`trk-mapa.md`](trk-mapa.md) e, ilustrado, em `trk-mapa.pdf`
+  (`mtg draft map trk --write --pdf`). As seções abaixo são a leitura de 2026-10-05, com
+  86 cartas, e ficam como registro até o guia ser refeito com dados.
 - **Este guia é teórico e parcial.** Nada aqui vem de partidas: é a leitura das cartas
   conhecidas pela base (`mtg draft set trk`) mais os princípios de
-  `knowledge/limitado-e-draft.md`. Deve ser refeito quando a coleção estiver completa e,
-  de novo, quando houver cerca de duas semanas de dados.
+  `knowledge/limitado-e-draft.md`. Deve ser refeito quando houver cerca de duas semanas
+  de dados.
 
 ## O que já dá para ver
 

@@ -48,3 +48,35 @@ def test_report_measures_signal(conn, site):  # noqa: F811
     assert bg["tagged_mean"] is not None and bg["tagged_n"] >= 2
     text = archetypes.format_report(data)
     assert "BG Enxame" in text and "marcadas:" in text and "Bear" in text and "diferença" in text
+
+
+def test_shipped_archetype_files_compile():
+    """Todo arquivo real em archetypes/ tem dez pares, padrões válidos (regex compilável, prefixo
+    conhecido) e ganchos com needs, provides e peso."""
+    import json
+    import re
+    from mtg_builder.archetypes import ARCHETYPES_DIR
+
+    def check(pattern):
+        for part in pattern.split("&"):
+            kind, _, value = part.partition(":")
+            assert kind in ("re", "kw", "type", "stat", "creature"), part
+            if kind == "re":
+                re.compile(value)
+            if kind == "stat":
+                assert re.match(r"(power|toughness|cmc)(>=|<=|==)\d+", value), part
+
+    files = sorted(ARCHETYPES_DIR.glob("*.json"))
+    assert {p.stem for p in files} >= {"fra", "trk"}
+    for path in files:
+        data = json.loads(path.read_text("utf-8"))
+        assert data["set"] == path.stem and data["source"]
+        assert len(data["archetypes"]) == 10 and set(data["archetypes"]) == {"WU", "UB", "BR", "RG", "WG", "WB", "UR", "BG", "WR", "UG"}
+        for pair, spec in data["archetypes"].items():
+            assert spec["name"] and spec["plan"] and spec["payoffs"] and spec["enablers"], pair
+            for pattern in spec["payoffs"] + spec["enablers"]:
+                check(pattern)
+        for hook, spec in data.get("hooks", {}).items():
+            assert spec["needs"] and spec["provides"] and 0 < float(spec.get("weight", 1.0)) <= 1.0, hook
+            for pattern in spec["needs"] + spec["provides"]:
+                check(pattern)

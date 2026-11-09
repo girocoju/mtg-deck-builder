@@ -21,7 +21,7 @@ Nenhuma funcionalidade é implementada sem uma spec aprovada.
 | 011 | [Registro de partida](011-registro-de-partida/spec.md)      | Mão, campo, cemitério, exílio, ataques e dano na janela; registro da partida; conselhos calculáveis | 🚧 Em andamento |
 | 012 | [Conselheiro local](012-conselheiro-local/spec.md)         | Opinião de jogada ao vivo por modelo local (Ollama), com contexto montado pelo rastreador | ⏸️ Adiada |
 | 013 | [Perfil em vários dispositivos](013-perfil-em-varios-dispositivos/spec.md) | Perfil do Arena (partidas, coleção, baú) consultável no celular; captura fica no PC | 📝 Especificada |
-| 014 | [Mapa de picks da coleção](014-mapa-de-picks/spec.md) | Peso de cada carta antes do draft: ordem por raridade, segundos picks, elos diretos, grafo de sinergias | 🚧 Em andamento |
+| 014 | [Mapa de picks da coleção](014-mapa-de-picks/spec.md) | Peso de cada carta antes do draft: ordem por raridade, segundos picks, elos diretos, grafo de sinergias; leitura da coleção e PDF ilustrado (FRA, TRK) | 🚧 Em andamento |
 
 Status possíveis: 📝 Especificada → 📐 Planejada → 🚧 Em andamento → ✅ Concluída.
 

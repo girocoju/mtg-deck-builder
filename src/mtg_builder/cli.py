@@ -696,6 +696,13 @@ def cmd_draft_map(args):
     if args.write:
         path = draft_map.write_markdown(setmap, info["name"], ratings.describe())
         print(f"mapa gravado em {path} ({len(setmap.cards)} cartas, {len(setmap.pairs())} pares com elo)")
+    if args.pdf:
+        from . import draft_map_pdf
+        try:
+            path, pages = draft_map_pdf.render(setmap, info["name"], ratings.describe())
+        except RuntimeError as error:
+            sys.exit(str(error))
+        print(f"PDF gravado em {path} ({pages} páginas)")
     if args.card:
         result = setmap.follow_ups(args.card, args.pack, args.pick, top=args.top or 12)
         title = f"{info['name']} · depois de {', '.join(result['picks'])} · "
@@ -709,7 +716,7 @@ def cmd_draft_map(args):
     elif args.graph:
         _emit(args, {"centralidade": setmap.centrality(), "comunidades": setmap.communities()},
               [draft_map.format_graph(setmap, top=args.top or 20)])
-    elif not args.write:
+    elif not (args.write or args.pdf):
         rows = setmap.pick_order(args.rarity, top=args.top)
         _emit(args, {"cobertura": setmap.coverage(), "cartas": rows},
               [draft_map.format_order(setmap, rows, info["name"], ratings.describe())])
@@ -1157,6 +1164,8 @@ def main(argv=None):
     p.add_argument("--graph", action="store_true", help="grafo de elos: centralidade das cartas e comunidades")
     p.add_argument("--top", type=int, help="quantas linhas (padrão: todas na ordem; 12 em --card e --pairs; 20 em --graph)")
     p.add_argument("--write", action="store_true", help="grava drafts/<coleção>-mapa.md completo")
+    p.add_argument("--pdf", action="store_true",
+                   help="desenha drafts/<coleção>-mapa.pdf: análise da coleção e dos arquétipos, ordem por raridade, grafo (matplotlib)")
     sources_args(p)
 
     p = draft_sub.add_parser("pool", help="lista o pool de um estado de draft")

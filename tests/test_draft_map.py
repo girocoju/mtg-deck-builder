@@ -1,3 +1,4 @@
+import pytest
 from mtg_builder import archetypes, draft_map, draft_pick
 from test_archetypes import DATA
 from test_decks import conn  # noqa: F401
@@ -97,3 +98,41 @@ def test_set_map_orders_pairs_and_follow_ups(conn, site, tmp_path):  # noqa: F81
     path = draft_map.write_markdown(setmap, "Test Set", path=tmp_path / "tst-mapa.md")
     assert path.exists() and path.read_text("utf-8") == text or "Test Set" in path.read_text("utf-8")
     assert "Elk" in draft_map.format_order(setmap, order, "Test Set") and "↔" in draft_map.format_pairs(setmap, pairs)
+
+
+def test_overview_analysis_summary_and_pdf(conn, site, tmp_path):  # noqa: F811
+    ratings = draft_pick.Ratings(snap(conn, site))
+    setmap = draft_map.SetMap(conn, "tst", ratings, tagger=archetypes.Tagger(HOOKS))
+    overview = setmap.overview()
+    groups = overview["grupos"]
+    assert sum(g["total"] for g in groups.values()) == len(setmap.cards) and overview["raridades"]["rare"] == 1
+    assert groups["G"]["criaturas_cu"] >= 1 and sum(groups["G"]["curva_cu"].values()) == groups["G"]["criaturas_cu"]
+    assert groups["B"]["total"] >= 1 and isinstance(overview["palavras"], list) and isinstance(overview["correcao"]["terrenos"], list)
+    assert setmap.overview() is overview                                                     # calculada uma vez
+
+    summary = setmap.archetype_summary()
+    bg = next(s for s in summary if s["pair"] == "BG")
+    assert bg["payoffs"] == 1 and bg["payoffs_cu"] == 1 and bg["profundidade"] == "raso" and bg["top_payoff"]["name"] == "Rat Swarm"
+    assert bg["enablers"] == 5 and bg["top_enabler"]["name"] == "Elk"
+    hooks = {h["hook"]: h for h in setmap.hook_summary()}
+    assert hooks["fichas"]["oferecem"] >= 1 and hooks["fichas"]["pedem"] == 0          # Seven Gnomes não está na lista do 17Lands
+
+    groups_auto, weight = setmap.communities_auto()
+    assert groups_auto == [] and weight == draft_map.COMMUNITY_WEIGHTS[0]                   # empate em zero: menor limiar
+
+    lines = draft_map.analysis_lines(setmap)
+    text = "\n".join(lines)
+    assert lines[0].startswith("**Composição.**") and f"{len(setmap.cards)} cartas draftáveis" in text
+    assert "**Pares nos dados" in text and "**Arquétipos**" in text and "BG Enxame" in text and "raso" in text
+    assert "**Grafo.**" in text and "Rat Swarm 100" in text
+    markdown = draft_map.markdown(setmap, "Test Set")
+    assert "## 0. Leitura da coleção e dos arquétipos" in markdown and "- **Composição.**" in markdown
+
+    pytest.importorskip("matplotlib")
+    from mtg_builder import draft_map_pdf
+    path, pages = draft_map_pdf.render(setmap, "Test Set", ratings.describe(), path=tmp_path / "tst-mapa.pdf")
+    assert path.exists() and path.stat().st_size > 10_000 and pages >= 12                   # capa, números, leitura, arquétipos, ordem, grafo…
+    assert draft_map_pdf._hex("WU") == [draft_map_pdf.COLOR_HEX["W"], draft_map_pdf.COLOR_HEX["U"]]
+    assert draft_map_pdf._hex("") == [draft_map_pdf.COLORLESS] and draft_map_pdf._label({"name": "Elk", "cor": "G", "raridade": "rare"}) == "Elk · G R"
+    pos = draft_map_pdf._layout(__import__("numpy"), ["a", "b", "c"], [("a", "b", 2.0)], seed=1)
+    assert set(pos) == {"a", "b", "c"} and all(-1.01 <= v <= 1.01 for xy in pos.values() for v in xy)

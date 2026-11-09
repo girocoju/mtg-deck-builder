@@ -1,6 +1,6 @@
 # 014 — Mapa de picks da coleção
 
-**Status:** 🚧 Em andamento — código, testes e mapa de FRA gerados em 2026-11-08; falta calibrar com o primeiro draft real
+**Status:** 🚧 Em andamento — código, testes e mapa de FRA gerados em 2026-11-08; leitura da coleção, PDF ilustrado e mapa de TRK em 2026-11-09; falta calibrar com o primeiro draft real
 
 ## Objetivo
 
@@ -60,9 +60,32 @@ correlação entre as cartas da coleção ficam mais acuradas?"
    melhora o peso de cada carta (quem está do outro lado do elo), não a certeza de cada elo,
    que viria só de dados de co-ocorrência em partidas, que o 17Lands não publica.
 6. **Documento e comando.** `mtg draft map <coleção>` com `--rarity`, `--card`, `--pairs`,
-   `--graph`, `--top`, `--write` e `--json`; `--write` grava `drafts/<coleção>-mapa.md`
-   completo (como ler, ordem por raridade, segundos picks, pares, arquétipos, grafo,
-   limites), regenerável quando os dados mudarem.
+   `--graph`, `--top`, `--write`, `--pdf` e `--json`; `--write` grava `drafts/<coleção>-mapa.md`
+   completo (como ler, leitura da coleção, ordem por raridade, segundos picks, pares,
+   arquétipos, grafo, limites), regenerável quando os dados mudarem.
+7. **Leitura da coleção e dos arquétipos.** O mapa diz o que os números da coleção mostram,
+   citando a seção da teoria que sustenta cada leitura: composição por cor e raridade,
+   criaturas de comum e incomum e sua curva (indício de velocidade), remoção por cor,
+   mecânicas e em que cores concentram, correção de mana, os dez pares nos dados (quando
+   há) e, por arquétipo, quantas payoffs e enablers existem e em que raridade (profundo:
+   6 ou mais payoffs em comum e incomum; raso: 3 ou menos, depende de abrir a rara), a
+   melhor payoff e as sinalizadoras douradas; os ganchos; as cartas centrais e as
+   comunidades. Pedido do usuário em 2026-11-09: "No PDF, faça também uma análise da
+   coleção e seus arquétipos. Isso para FRA e TRK."
+8. **Mapa visual.** `--pdf` desenha `drafts/<coleção>-mapa.pdf` (A4 paisagem, matplotlib,
+   dependência opcional `viz`): capa com números-chave e como ler; a coleção em números
+   (cores por raridade, curva por cor, remoção, palavras-chave) e a leitura; os pares nos
+   dados (barras divergentes contra a média); os dez arquétipos (visão geral e duas por
+   página, payoffs e enablers por poder); ordem de pick por raridade; grafo de elos (nó =
+   carta, cor = cor da carta, multicolorida dividida, tamanho = centralidade), comunidades
+   e centralidade; pares com mais sinergia; segundos picks; limites. Paleta validada para
+   visão de cores; toda barra e todo nó rotulado trazem a letra da cor. Pedido do usuário:
+   "gere, visualmente, esse mapa. Pode ser em PDF, bem ilustrado, para identificar as
+   sinergias."
+9. **Coleção nova.** Para uma coleção sem arquivo de arquétipos, o mapa exige escrever
+   `archetypes/<coleção>.json` a partir das incomuns douradas e do texto das cartas da
+   base, com a fonte declarada e a marcação conferida carta a carta; sem dados de partidas
+   o mapa é teórico e diz isso (TRK em 2026-11-09: 306 cartas, 17Lands sem a coleção).
 
 ## Critérios de aceite
 
@@ -72,8 +95,17 @@ correlação entre as cartas da coleção ficam mais acuradas?"
 - [x] `mtg draft map fra --write` gera o mapa com todas as cartas draftáveis e fonte por
       carta; o pacote de teste do usuário (P1P1 Ajani Unrelenting) mostra elos diretos com
       Compel Brutality, Warrior's Blades e Awaken the Inferno (registro em `tasks.md`).
+- [x] Leitura da coleção (`overview`, `analysis_lines`, `archetype_summary`) testada sem rede
+      e presente no Markdown (seção 0) e no PDF; `mtg draft map fra --write --pdf` e
+      `mtg draft map trk --write --pdf` geram os dois PDFs, páginas conferidas visualmente
+      (registro em `tasks.md`).
+- [x] `archetypes/trk.json` com dez pares e oito ganchos; marcação conferida carta a carta
+      (registro em `tasks.md`); arquivos de arquétipos validados por teste (dez pares,
+      padrões compiláveis, ganchos completos).
 - [ ] Depois do primeiro draft real: conferir se os elos indicados fizeram sentido no deck
       montado e ajustar pesos ou ganchos (registro em `tasks.md`).
+- [ ] Quando TRK tiver dados no 17Lands: regerar o mapa e comparar a ordem teórica com a
+      medida (registro em `tasks.md`).
 
 ## Dependências
 
@@ -96,3 +128,9 @@ Spec 010 (motor, arquétipos, fontes), 008 (dados do 17Lands), 001 (base).
 - **Calibração.** Os pesos de `parceiros` (0,6 por elo, teto 3,0), enabler genérico (0,25)
   e splash (0,25) são escolhas iniciais: decidir depois do primeiro draft real se um elo
   está pesando demais ou de menos.
+- **Nomes dos arquétipos de TRK.** São provisórios, escritos a partir das incomuns
+  douradas; trocar pelos nomes oficiais quando a tela do evento aparecer no Arena, como
+  foi feito em FRA.
+- **Ordem teórica de TRK.** Sem dados, a nota é raridade + remoção + custo: a ordem por
+  raridade de TRK distingue pouco (quase toda mítica vale +4,5) e o que separa as cartas é
+  Σ sinergia e centralidade. É o esperado até o 17Lands publicar.

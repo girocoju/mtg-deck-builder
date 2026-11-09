@@ -1,0 +1,117 @@
+{
+  "set": "trk",
+  "source": "Leitura das incomuns douradas (sinalizadoras) e do texto de regras das 306 cartas da base local (Scryfall, sincronizada em 2026-11-09; coleção completa, lançamento 2026-11-13). Nomes dos arquétipos provisórios até a tela do evento no Arena; sem dados de partidas (17Lands sem a coleção).",
+  "note": "payoffs valem 1,0 e enablers 0,5 no componente de sinergia; uma carta pode servir a vários pares. Padrões: re: (texto de regras em minúsculas, inclui o texto de lembrete), kw: (palavra-chave), type: (linha de tipo), stat: (power/toughness/cmc com >=, <= ou ==), creature; & combina condições. Ganchos (hooks): elos diretos fora dos dez pares, com needs (quem pede) e provides (quem oferece), usados pelo componente parceiros e pelo mapa da coleção (spec 014).",
+  "hooks": {
+    "fichas": {
+      "note": "quem cria fichas de criatura (Oficiais, Klingons, Borg, Romulanos, Ilusões) alimenta quem conta fichas, copia fichas, vira criaturas como custo ou equipa",
+      "needs": ["re:tokens? you control|tokens would be created|copy of target token|whenever (a|another) creature you control enters|tap (two|three|seven) untapped|officers you control|officer tokens? you control", "kw:Equip", "re:equipped creature"],
+      "provides": ["re:create [^.]*creature tokens?|create a token that's a copy|create porthos|create murf"],
+      "weight": 1.0
+    },
+    "virar": {
+      "note": "'sempre que X ficar virado' (Boimler, Sulu, Jett Reno, Hemmer, Mariner, Ortegas, Shuttle Ace, Nog) com quem vira criaturas como custo (Station, Collation Trimatrix, Worf) ou as desvira para virar de novo",
+      "needs": ["re:becomes tapped"],
+      "provides": ["kw:Station", "re:untap (target|another target) (creature|permanent)|untap it\\b|tap (two|three|seven) untapped"],
+      "weight": 1.0
+    },
+    "oficiais": {
+      "note": "quem conta Oficiais (Sisko, Picard, Academy Instructor) com criaturas e fichas do tipo Officer",
+      "needs": ["re:officers you control|officer tokens? you control|number of officers"],
+      "provides": ["type:Officer", "re:officer creature tokens?"],
+      "weight": 0.75
+    },
+    "vida": {
+      "note": "quem ganha vida (planetas, Food, lifelink) alimenta quem dispara ao ganhar vida",
+      "needs": ["re:whenever you gain life|you gaining life|life you gained|you gained life"],
+      "provides": ["re:gain \\d+ life|gain life equal|food token", "kw:Lifelink"],
+      "weight": 0.75
+    },
+    "tesouros": {
+      "note": "Ferengi: quem conta Tesouros com quem os cria",
+      "needs": ["re:for each treasure you control|treasure tokens? you control|can't sacrifice treasure"],
+      "provides": ["re:create a treasure token", "kw:Treasure"],
+      "weight": 0.5
+    },
+    "klingons": {
+      "note": "quem pede Klingons (Chang, Gowron, Test of Identity) com criaturas e fichas Klingon",
+      "needs": ["re:each klingon you control|target klingon|sacrificed a klingon|klingon you control"],
+      "provides": ["type:Klingon", "re:klingon warrior creature tokens?"],
+      "weight": 0.75
+    },
+    "equipamentos": {
+      "note": "quem pede Equipamento (Sulu, Federation Resupply, Gwyndala) com os Equipamentos da coleção",
+      "needs": ["re:equipment or spacecraft entered|an aura, equipment|target equipment you control"],
+      "provides": ["type:Equipment"],
+      "weight": 0.5
+    },
+    "teletransporte": {
+      "note": "beam me up e efeitos que devolvem ou piscam uma criatura sua pedem criaturas com gatilho de entrada para reaproveitar",
+      "needs": ["re:beam me up|return (up to one other |another |up to one )?target (creature|creature or artifact|permanent)[^.]*you control to its owner's hand|exile (up to one other |up to one )?target (nonland permanent|creature) you control\\. return"],
+      "provides": ["re:when (this creature|[a-z0-9' .,-]+) enters?,&creature"],
+      "weight": 0.75
+    }
+  },
+  "archetypes": {
+    "WU": {
+      "name": "Frota Estelar: espaçonaves",
+      "plan": "Lance espaçonaves e as coloque em operação (Station: vire outra criatura para pôr marcadores de carga). Cartas que compram, crescem ou protegem quando uma espaçonave é conjurada, entra ou recebe carga.",
+      "payoffs": ["re:spacecraft (spell|card|you control)|target spacecraft|charge counters on an artifact you control"],
+      "enablers": ["type:Spacecraft", "kw:Station", "stat:power>=4&creature"]
+    },
+    "UB": {
+      "name": "Dilemas",
+      "plan": "Mágicas e habilidades modais ('escolha um') fazem você enfrentar um dilema; as payoffs recompensam cada dilema com cartas, marcadores +1/+1, dreno de vida ou recursão.",
+      "payoffs": ["kw:Face a dilemma", "re:faced? a dilemma|dilemma you've faced"],
+      "enablers": ["re:choose (one|two)\\b"]
+    },
+    "BR": {
+      "name": "Klingons: morte com honra",
+      "plan": "Fichas de Klingon e criaturas baratas alimentam saídas de sacrifício e gatilhos de morte: dano, cartas, Tesouros e marcadores. Sarcophagus e Vengeance Mission contam cada morte.",
+      "payoffs": ["re:whenever (another|a) creature (you control )?dies|whenever this creature or another creature you control dies|if a creature died this turn|sacrifice (a|an|another) (creature|artifact|nonland permanent|creature or artifact|artifact or creature)"],
+      "enablers": ["re:create [^.]*creature tokens?|when [^.]{0,40} (dies|die),|sacrifice (it|that token|them) at the beginning of the next end step", "stat:cmc<=2&creature"]
+    },
+    "RG": {
+      "name": "Landfall: novos planetas",
+      "plan": "Faça um terreno entrar a cada turno (buscas, fichas de Planeta, terrenos extras, basic landcycling) para disparar landfall: criaturas crescem, Burnham causa dano, Booker cria Vermes e Dal R'El gera mana.",
+      "payoffs": ["kw:Landfall", "re:whenever a land (you control )?enters"],
+      "enablers": ["re:planet land token|(?<!controller may )search your library for (a |up to that many )?(basic )?(land|plains|island|swamp|mountain|forest) cards?|land cards? onto the battlefield|put a land card from your hand onto the battlefield|play an additional land|play lands from|basic landcycling|return a land card from your graveyard"]
+    },
+    "WG": {
+      "name": "Enfermaria: marcadores +1/+1",
+      "plan": "Coloque marcadores +1/+1 (médicos, Pure Energy, Support Mission, explore) e aproveite quem recompensa criaturas com marcadores: atropelar, hexproof, dobrar marcadores, comprar cartas ao causar dano.",
+      "payoffs": ["re:creatures? (you control )?with (a |one or more )?(\\+1/\\+1 )?counters? on (it|them)|permanent with a counter on it|if you would put one or more (\\+1/\\+1 )?counters|counters would be put on|remove (three|all|x) (\\+1/\\+1 )?counters|number of counters on"],
+      "enablers": ["re:put (a|an|two|three|x|one or more|an additional|that many|two additional) \\+1/\\+1 counters?|enters? with (an additional |two )?\\+1/\\+1 counters?|distribute (two|three) \\+1/\\+1 counters|explores?\\b"]
+    },
+    "WB": {
+      "name": "Coletivo Borg: criaturas artefato",
+      "plan": "Criaturas artefato em massa (drones Borg, fichas Borg e Ilusão) com lordes que dão +1/+1, vigilância, ameaçar, golpe duplo, compra de cartas e assimilação. Espaçonaves em operação também são criaturas artefato.",
+      "payoffs": ["re:artifact creatures? you control|artifact creatures? (have|get|gain)|number of artifact creatures|untapped artifact creatures|affinity for artifact|assimilate|artifact creature (card|spell)|artifact (card|spell)\\b|nontoken artifact you control enters"],
+      "enablers": ["type:Artifact Creature", "re:(borg|illusion) artifact creature tokens?", "type:Spacecraft"]
+    },
+    "UR": {
+      "name": "Laboratório: mágicas não criatura",
+      "plan": "Conjure mágicas que não sejam criatura (instantâneas, feitiços, auras, beam me up do cemitério) para disparar fichas de Oficial, marcadores +1/+1, cargas na Bird-of-Prey e cópias de criaturas.",
+      "payoffs": ["re:casts? a noncreature spell|noncreature spell this turn|noncreature spells? you cast|whenever you cast an? (instant|sorcery|enchantment)|instant,? or sorcery card|noncreature, nonland card|each card in your graveyard has beam me up"],
+      "enablers": ["type:Instant", "type:Sorcery", "type:Aura", "type:Equipment", "re:beam me up"]
+    },
+    "BG": {
+      "name": "Cemitério: vigiar e reciclar",
+      "plan": "Encha o cemitério com vigiar, moagem e descarte; quem tira cartas dele (beam me up, exílio do cemitério, retorno à mão ou ao campo) dispara Vash, Sela, Blastoneuron e Hologram Stalker.",
+      "payoffs": ["re:leaves? your graveyard|leave your graveyard|(?<!cast this card )from your graveyard|cards? in your graveyard", "kw:Threshold"],
+      "enablers": ["kw:Surveil", "kw:Mill", "re:\\bmills?\\b|discard (a card|two cards)|exile (target|a|this) card from (your|a) graveyard|cast this card from your graveyard|beam me up"]
+    },
+    "WR": {
+      "name": "Alerta vermelho: poder total 8",
+      "plan": "Vá largo com fichas de Oficial e Klingon e anthems (Picard, Sarcophagus, Red Alert!); atacar com poder total 8 ou mais destrava marcadores, cartas, primeiro golpe e bloqueios proibidos.",
+      "payoffs": ["re:total power 8 or greater|(other )?creatures you control (get|have) \\+|creatures you control get \\+\\d/\\+\\d"],
+      "enablers": ["re:create [^.]*creature tokens?|enters? tapped and attacking|creatures you control have haste", "stat:power>=4&creature"]
+    },
+    "UG": {
+      "name": "Novos mundos: terrenos de nomes diferentes",
+      "plan": "Terrenos de nomes diferentes (planetas, anomalias, buscas, basic landcycling, terrenos extras) escalam strange new worlds: The Traveler e Pike crescem, Deep Space Scan compra, Suus Mahna e Astute Terraformer ficam baratos.",
+      "payoffs": ["kw:Strange new worlds", "re:differently named lands"],
+      "enablers": ["type:Land", "re:planet land token|(?<!controller may )search your library for (a |up to that many )?(basic )?(land|plains|island|swamp|mountain|forest) cards?|land cards? onto the battlefield|play an additional land|play lands from|basic landcycling"]
+    }
+  }
+}
