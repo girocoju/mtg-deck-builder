@@ -25,7 +25,10 @@ Regras fixas: toda carta citada pertence à coleção e foi consultada; todo nú
 
 ## A. Guia da coleção
 
-Salve em `drafts/<código>.md`. Use `drafts/fra.md` como modelo de estrutura.
+O guia é a primeira parte do documento da coleção, `drafts/<código>/<código>.pdf`. Escreva
+a fonte em `drafts/<código>/guia.md` (Markdown: títulos `##` viram páginas, `###`, listas,
+tabelas, negrito; modelo: `drafts/fra/guia.md`) e, ao terminar, regenere o PDF com
+`mtg draft map <código> --pdf`; é o PDF que o usuário lê (`drafts/README.md`).
 
 1. **Leitura da coleção:** `mtg draft set <coleção>` (cartas por cor e raridade, curva de
    criaturas e remoção nas comuns e incomuns, palavras-chave). Leia com `mtg card` o
@@ -36,13 +39,14 @@ Salve em `drafts/<código>.md`. Use `drafts/fra.md` como modelo de estrutura.
    - `mtg draft cards <coleção> --color <W|U|B|R|G|multi|colorless> --rarity <common|uncommon>` — rankings;
    - `mtg draft cards <coleção> --limit 15` — bombas;
    - `mtg draft gaps <coleção>` — subestimadas e superestimadas;
-   - `mtg draft map <coleção> --write --pdf` — mapa de picks (spec 014): ordem por
-     raridade, segundos picks por rara, elos diretos, grafo; gera `drafts/<código>-mapa.md`
-     (todas as tabelas) e `drafts/<código>-mapa.pdf` (vista ilustrada: coleção em números,
-     leitura, arquétipos, grafo, comunidades), que o guia deve linkar. O mapa precisa de
+   - `mtg draft map <coleção> --pdf` — mapa de picks (spec 014) dentro do documento da
+     coleção: leitura em números, arquétipos, ordem por raridade com tabela completa, elos
+     diretos, grafo, comunidades e segundos picks de todas as raras. O mapa precisa de
      `src/mtg_builder/archetypes/<código>.json`: para coleção nova, escreva os dez pares
      (payoffs e enablers) e os ganchos a partir das incomuns douradas e do texto das
-     cartas, confira a marcação carta a carta e declare a fonte no arquivo;
+     cartas, confira a marcação carta a carta e declare a fonte no arquivo. Na linha de
+     comando, `mtg draft map <coleção>` (ordem), `--rarity`, `--pairs`, `--graph` e
+     `--card` mostram as mesmas tabelas;
    - os mesmos comandos com `--mode` para os outros modos que tiverem dados.
 3. **Escreva o guia** com estas seções: cabeçalho (fonte, data, modo, jogos, média dos
    usuários, aviso de amostra); visão geral (mecânicas, velocidade, cores fortes e
@@ -51,14 +55,14 @@ Salve em `drafts/<código>.md`. Use `drafts/fra.md` como modelo de estrutura.
    deck; outros modos; limites do guia. Se o usuário indicar artigos ou guias externos,
    ingira-os pelo processo de `knowledge/COMO-ADICIONAR.md` e acrescente a seção "O que
    dizem os guias externos", confrontando cada afirmação com os dados (modelo em
-   `drafts/fra.md`); o Untapped.gg serve de segunda fonte de dados (como obter em
+   `drafts/fra/guia.md`); o Untapped.gg serve de segunda fonte de dados (como obter em
    `knowledge/fontes.md`, seção 6).
 4. **Interprete, não só transcreva:** compare cada número com a média dos usuários do
    snapshot; ranqueie dentro da cor; desconte o viés de cartas caras; trate como incerto
    o que tiver poucos jogos e diga quantos são.
 5. **Modo teórico:** mesmas seções, preenchidas pela leitura das cartas e pelos
    princípios do livro; as que dependem de dados dizem explicitamente que não podem ser
-   preenchidas. Modelo: `drafts/trk.md`.
+   preenchidas. Modelo: `drafts/trk/guia.md`.
 
 ## B. Recomendar um pick
 
@@ -80,11 +84,12 @@ Entrada: as cartas do pacote, as já escolhidas e o número do pacote e do pick.
    marcação carrega sinal nos dados (em FRA, quase nenhum: a sinergia desempata, não
    decide). `mtg draft map <coleção> --card "X" --card "Y"` pontua a coleção inteira
    como próximo pick depois dos picks dados (para "o que eu quero ver no próximo
-   pacote?"), e `drafts/<código>-mapa.md` traz a ordem de pick por raridade e os
-   segundos picks de cada rara, prontos antes do draft.
+   pacote?"); `mtg draft map <coleção> --rarity <raridade>` dá a ordem de pick e o
+   documento `drafts/<código>/<código>.pdf` traz os segundos picks de cada rara, prontos
+   antes do draft.
 2. A tabela é ponto de partida, não veredito: confira o texto das cartas com `mtg card`
    quando a diferença for pequena ou a nota for teórica, e pese o que o motor não vê
-   (sinergias da coleção, splash, o que o guia `drafts/<código>.md` diz do par).
+   (sinergias da coleção, splash, o que o guia `drafts/<código>/guia.md` diz do par).
 3. Responda com **um pick**, a justificativa em duas ou três frases citando os
    componentes, a segunda opção e o que o pacote sinaliza. Diga a fonte e a data dos dados.
 

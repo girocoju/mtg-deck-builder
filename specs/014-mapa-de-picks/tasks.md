@@ -12,8 +12,8 @@
 - [x] `mtg draft map` (`--rarity`, `--card`, `--pack/--pick`, `--pairs`, `--graph`, `--top`,
       `--write`, `--json`)
 - [x] Testes (`tests/test_draft_map.py`): elos, sinergia, componente, mapa, grafo, documento
-- [x] `drafts/fra-mapa.md` gerado; `CLAUDE.md` (regra e comando), skill `draft` (seções A e B),
-      roadmap
+- [x] Mapa de FRA gerado (Markdown em 2026-11-08, depois incorporado ao PDF); `CLAUDE.md`
+      (regra e comando), skill `draft` (seções A e B), roadmap
 - [x] Leitura da coleção em `draft_map.py` (`overview`, `archetype_summary`, `hook_summary`,
       `analysis_lines`, seção 0 do Markdown) e `communities_auto` (limiar 1,5 / 2,0 / 2,5)
 - [x] `draft_map_pdf.py` (matplotlib, extra `viz`) e `mtg draft map --pdf`: capa, coleção em
@@ -24,8 +24,14 @@
       BG cemitério e vigiar, WR poder total 8, UG terrenos de nomes diferentes) e oito ganchos
       (fichas, virar, oficiais, vida, tesouros, klingons, equipamentos, teletransporte)
 - [x] Testes: leitura, resumo, comunidades automáticas, PDF (pula sem matplotlib), arquivos
-      reais de arquétipos compilam; `drafts/trk-mapa.md`, `trk-mapa.pdf`, `fra-mapa.pdf`
-      gerados; `CLAUDE.md`, skill `draft`, `drafts/trk.md`, roadmap
+      reais de arquétipos compilam; mapas de TRK e FRA gerados; `CLAUDE.md`, skill `draft`,
+      guia de TRK, roadmap
+- [x] Documento único por coleção: `pdf_flow.py` (Markdown → páginas, tabelas com quebra,
+      sumário paginado), guia incorporado ao PDF, tabelas completas (ordem por raridade,
+      listas de arquétipos, 40 pares, segundos picks de todas as raras); pastas
+      `drafts/<coleção>/` com `guia.md` e `<coleção>.pdf`; `*-mapa.md` fora do repositório
+      (`--write` vai para `data/maps/`); `drafts/README.md`; referências em `CLAUDE.md`,
+      skill `draft`, specs 008 e 010, `knowledge/fontes.md`
 - [ ] Depois do primeiro draft real: conferir os elos indicados contra o deck montado e
       registrar aqui se algum peso (parceiros, enabler genérico, splash) precisa mudar
 - [ ] Quando o 17Lands voltar a publicar GIH WR das raras e míticas: `mtg draft update fra` e

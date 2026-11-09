@@ -2,12 +2,12 @@
 
 - **Situação em 2026-11-09:** a coleção sai em 2026-11-13 e já está **completa na base**
   (306 cartas draftáveis, sincronização de 2026-11-09). **O 17Lands continua sem dados**
-  (`mtg draft update trk --mode all` confirma). O mapa da coleção, com a leitura completa
-  (cores, curva, remoção, mecânicas), os dez arquétipos marcados em
-  `src/mtg_builder/archetypes/trk.json`, a ordem de pick teórica e o grafo de sinergias,
-  está em [`trk-mapa.md`](trk-mapa.md) e, ilustrado, em `trk-mapa.pdf`
-  (`mtg draft map trk --write --pdf`). As seções abaixo são a leitura de 2026-10-05, com
-  86 cartas, e ficam como registro até o guia ser refeito com dados.
+  (`mtg draft update trk --mode all` confirma). A leitura completa da coleção (cores,
+  curva, remoção, mecânicas), os dez arquétipos marcados em
+  `src/mtg_builder/archetypes/trk.json`, a ordem de pick teórica, o grafo de sinergias e
+  os segundos picks estão nas partes seguintes deste documento, calculadas a cada geração
+  (`mtg draft map trk --pdf`). As seções abaixo são a leitura de 2026-10-05, com 86
+  cartas, e ficam como registro até o guia ser refeito com dados.
 - **Este guia é teórico e parcial.** Nada aqui vem de partidas: é a leitura das cartas
   conhecidas pela base (`mtg draft set trk`) mais os princípios de
   `knowledge/limitado-e-draft.md`. Deve ser refeito quando houver cerca de duas semanas

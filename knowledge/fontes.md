@@ -154,7 +154,7 @@ Observações da ingestão:
   `untapped-setguide/premier-card-stats.tsv` (decodificado da API pública, ver abaixo).
 - **Ingerido em:** 2026-10-12.
 - **Papel na base:** leitura qualitativa do formato FRA (arquétipos, splash, comuns,
-  dicas de jogo) na seção "O que dizem os guias externos" de `drafts/fra.md`; lições
+  dicas de jogo) na seção "O que dizem os guias externos" de `drafts/fra/guia.md` (primeira parte de `drafts/fra/fra.pdf`); lições
   gerais de limitado em [limitado-e-draft.md](limitado-e-draft.md). Nenhuma delas é
   fonte oficial; a hierarquia adotada é dados de partidas (17Lands, Untapped) > relato de
   jogador com dados (Draftsim) > leitura das cartas (LimitedMTG) > pré-lançamento (PreconForge).

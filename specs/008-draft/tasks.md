@@ -6,12 +6,12 @@
 - [x] CLI `mtg draft update | set | cards | colors | rate | gaps`
 - [x] Skill `draft` (guia, pick, pool)
 - [x] Testes sem rede (7 testes em `tests/test_draft.py`)
-- [x] Guia com dados: `drafts/fra.md`
-- [x] Guia teórico: `drafts/trk.md`
+- [x] Guia com dados: `drafts/fra/guia.md`
+- [x] Guia teórico: `drafts/trk/guia.md`
 - [x] Deck de 40 a partir de um pool de 45: `decks/limited/fra-pool-exemplo.md`
 - [ ] Teste da skill em sessão nova, acionada só pelo pedido em linguagem natural
 - [ ] Recomendação de pick exercitada com um pacote real informado pelo usuário
-- [ ] Regenerar `drafts/fra.md` com cerca de duas semanas de dados
+- [ ] Regenerar `drafts/fra/guia.md` com cerca de duas semanas de dados
 
 ## Verificação (2026-10-05)
 
@@ -20,11 +20,11 @@ Suíte completa: 64 testes passando.
 - **Coleta real de Reality Fracture:** Premier Draft (220.847 jogos), Traditional Draft
   (23.030), Sealed (44.089) e Pick Two (30.417) têm dados; Quick Draft e Traditional
   Sealed não. Cada modo ficou em arquivo próprio.
-- **Guia com dados:** `drafts/fra.md` traz os dez pares com win rate, rankings de comuns
+- **Guia com dados:** `drafts/fra/guia.md` traz os dez pares com win rate, rankings de comuns
   e incomuns por cor, bombas, prioridades, armadilhas e a comparação entre modos, com
   data, modo e aviso de amostra.
 - **Sem dados:** `mtg draft cards fra --mode quick` e `mtg draft update trk` respondem
-  que não há dados e mandam usar o modo teórico; `drafts/trk.md` se declara teórico e
+  que não há dados e mandam usar o modo teórico; `drafts/trk/guia.md` se declara teórico e
   parcial (86 cartas reveladas).
 - **Cartas da coleção:** as cartas do deck de exemplo foram conferidas contra a lista do
   17Lands (nenhuma fora). No guia, os nomes vêm das saídas dos comandos.

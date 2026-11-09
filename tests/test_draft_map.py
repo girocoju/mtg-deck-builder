@@ -136,3 +136,22 @@ def test_overview_analysis_summary_and_pdf(conn, site, tmp_path):  # noqa: F811
     assert draft_map_pdf._hex("") == [draft_map_pdf.COLORLESS] and draft_map_pdf._label({"name": "Elk", "cor": "G", "raridade": "rare"}) == "Elk · G R"
     pos = draft_map_pdf._layout(__import__("numpy"), ["a", "b", "c"], [("a", "b", 2.0)], seed=1)
     assert set(pos) == {"a", "b", "c"} and all(-1.01 <= v <= 1.01 for xy in pos.values() for v in xy)
+
+
+def test_pdf_with_guide_and_toc(conn, site, tmp_path):  # noqa: F811
+    pytest.importorskip("matplotlib")
+    from mtg_builder import draft_map_pdf
+    ratings = draft_pick.Ratings(snap(conn, site))
+    setmap = draft_map.SetMap(conn, "tst", ratings, tagger=archetypes.Tagger(HOOKS))
+    guide = tmp_path / "guia.md"
+    guide.write_text("# Guia TST\n\n- **Dados:** teste.\n\n## Visão geral\n\nTexto.\n\n## Construção\n\n- 17 terrenos.\n", encoding="utf-8")
+    without, pages_without = draft_map_pdf.render(setmap, "Test Set", path=tmp_path / "sem.pdf")
+    with_guide, pages_with = draft_map_pdf.render(setmap, "Test Set", path=tmp_path / "com.pdf", guide=guide)
+    assert pages_with == pages_without + 1 and with_guide.exists()                        # guia curto: três seções numa página
+    pypdf = pytest.importorskip("pypdf")
+    reader = pypdf.PdfReader(str(with_guide))
+    text = reader.pages[0].extract_text()
+    assert "Sumário" in text and "Guia de draft" in text and "Visão geral" in text and "Limites e fontes" in text
+    guide_page = reader.pages[2].extract_text()
+    assert "Visão geral" in guide_page and "Construção" in guide_page and "17 terrenos" in guide_page
+    assert draft_map_pdf.guide_path("fra").name == "guia.md" and draft_map_pdf.guide_path("fra").parent.name == "fra"

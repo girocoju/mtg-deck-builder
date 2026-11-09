@@ -40,7 +40,8 @@ existirem, dados reais de desempenho.
    - recomendações de construção: terrenos, curva, número de criaturas.
 6. **Assistente de pick e de montagem:** dado um pacote e as cartas já escolhidas,
    recomenda o pick com justificativa; dado um pool, monta o deck de 40 e valida (spec 003).
-7. Guias salvos em `drafts/<código-da-coleção>.md`, regeneráveis quando os dados mudam.
+7. Guias salvos em `drafts/<código>/guia.md` (fonte) e lidos no documento da coleção
+   `drafts/<código>/<código>.pdf` (spec 014), regeneráveis quando os dados mudam.
 
 ## Critérios de aceite
 

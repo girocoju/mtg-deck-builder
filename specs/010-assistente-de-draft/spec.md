@@ -87,7 +87,7 @@ sobre a janela do jogo é uma fase posterior possível, listada em "Fora do esco
    arquivo por coleção, modo e data, nunca sobrescrito; toda saída diz a data e o tamanho
    da amostra. Motivação: em 2026-11-06 a coleta do 17Lands para FRA veio com 73 das 290
    cartas com win rate e nenhuma rara, sobrescrevendo o snapshot de 2026-10-12 que
-   sustenta `drafts/fra.md`.
+   sustenta `drafts/fra/guia.md`.
 7. **Skill `draft` atualizada:** a seção B passa a usar o motor; nova seção "Acompanhar
    um draft ao vivo" com o passo a passo (ligar a opção no Arena, abrir o watch, ler o
    ranking, montar o deck no final).

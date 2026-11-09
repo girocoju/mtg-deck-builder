@@ -21,7 +21,8 @@
 - **Subestimadas e superestimadas** pela diferença entre a posição no ranking de GIH WR
   e a posição no ranking de ALSA, só para comuns e incomuns.
 - **O guia é escrito pelo agente**, a partir das saídas dos comandos; não há gerador
-  automático de texto. `drafts/fra.md` serve de modelo.
+  automático de texto. `drafts/fra/guia.md` serve de modelo; o guia é a primeira parte do
+  documento da coleção em PDF (spec 014).
 
 ## Estrutura
 
@@ -30,7 +31,7 @@ src/mtg_builder/draft.py   update, ranking, color_pairs, rate, over_under, set_o
 src/mtg_builder/cli.py     mtg draft update | set | cards | colors | rate | gaps
 tests/test_draft.py        sem rede (respostas simuladas)
 .claude/skills/draft/SKILL.md
-drafts/<código>.md         guias
+drafts/<código>/guia.md    fonte do guia (o documento lido é drafts/<código>/<código>.pdf, spec 014)
 ```
 
 ## Limitações conhecidas

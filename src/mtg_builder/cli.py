@@ -688,7 +688,9 @@ def cmd_draft_synergy(args):
 
 def cmd_draft_map(args):
     """Mapa de picks da coleção (spec 014): ordem geral por raridade, próximo pick dadas as
-    escolhas, pares com sinergia direta; `--write` grava drafts/<coleção>-mapa.md."""
+    escolhas, pares com sinergia direta; `--pdf` monta o documento da coleção
+    (drafts/<coleção>/<coleção>.pdf: guia + leitura + mapa completo); `--write` grava o
+    Markdown de uso interno em data/maps/."""
     conn = db.connect(readonly=True)
     info = draft.find_set(conn, args.set)
     ratings = _ratings(conn, info["code"], args.mode, allow_update=not args.offline, day=args.snapshot)
@@ -1163,9 +1165,10 @@ def main(argv=None):
     p.add_argument("--pairs", action="store_true", help="pares de cartas com mais sinergia direta")
     p.add_argument("--graph", action="store_true", help="grafo de elos: centralidade das cartas e comunidades")
     p.add_argument("--top", type=int, help="quantas linhas (padrão: todas na ordem; 12 em --card e --pairs; 20 em --graph)")
-    p.add_argument("--write", action="store_true", help="grava drafts/<coleção>-mapa.md completo")
+    p.add_argument("--write", action="store_true", help="grava o Markdown do mapa em data/maps/<coleção>-mapa.md (uso interno)")
     p.add_argument("--pdf", action="store_true",
-                   help="desenha drafts/<coleção>-mapa.pdf: análise da coleção e dos arquétipos, ordem por raridade, grafo (matplotlib)")
+                   help="monta drafts/<coleção>/<coleção>.pdf, o documento da coleção: guia (drafts/<coleção>/guia.md), leitura, "
+                        "arquétipos, ordem por raridade com tabela completa, grafo, segundos picks (matplotlib)")
     sources_args(p)
 
     p = draft_sub.add_parser("pool", help="lista o pool de um estado de draft")

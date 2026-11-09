@@ -54,10 +54,24 @@
   peso acima de 0,75, para que um elo só puxe pouco), só arestas de peso ≥ 1 desenhadas,
   rótulos nas mais centrais sem sobreposição. Duas colunas de 20 barras por página na
   ordem de pick; duas arquétipos por página; 19 a 20 páginas, 20 a 25 s.
-- **Documento** `drafts/<coleção>-mapa.md`: cabeçalho (geração, dados, cobertura por fonte,
-  como ler, como o motor combina), 1 ordem por raridade, 2 segundos picks por rara e
-  mítica (6 cada), 3 pares (40), 4 arquétipos (payoffs e enablers por poder), 5 grafo
-  (25 mais centrais e comunidades), limites. ~1.200 linhas; o agente lê por seção.
+- **Documento único por coleção** (pedido do usuário em 2026-11-09: "os arquivos em .md
+  ficaram horríveis para leitura. Incorpore nos mapas em .pdf de cada coleção [...]
+  centralizar tudo num mesmo doc de coleção [...] organizar por pastas"): a pasta
+  `drafts/<coleção>/` tem `guia.md` (fonte do guia, Markdown escrito pelo agente) e
+  `<coleção>.pdf` (o que se lê). O Markdown do mapa (`markdown()`) passa a uso interno em
+  `data/maps/`, fora do git, e os `*-mapa.md` saíram do repositório.
+- **Conversor de Markdown** (`pdf_flow.py`): títulos (`##` vira página, `###` em linha),
+  parágrafos, listas, tabelas que quebram entre páginas repetindo o cabeçalho, blocos de
+  código, negrito e código em linha com medida real do texto (renderizador do matplotlib,
+  com cache) para a quebra de linha; as páginas são planejadas antes de desenhar, por isso a
+  capa traz o sumário com números de página. Colunas de tabela recebem largura proporcional
+  ao conteúdo, entre 5,5% e 42% da página. Testes com uma medida aproximada por caracteres.
+- **Estrutura do PDF:** capa (números-chave e sumário em duas colunas), como ler, guia (uma
+  seção por página), coleção em números, leitura, pares nos dados, arquétipos (visão geral,
+  barras duas a duas, listas completas), ordem de pick (barras das 40 melhores e tabela
+  completa por raridade), grafo, comunidades, centralidade, 40 pares, segundos picks de
+  todas as raras e míticas, limites. FRA: 63 páginas, 108 s (a medida de texto do guia é a
+  parte lenta).
 
 ## Arquivos
 
@@ -73,8 +87,10 @@
 - `src/mtg_builder/cli.py`: `mtg draft map` (`--pdf`).
 - `pyproject.toml`: extra `viz` (matplotlib).
 - `tests/test_draft_map.py`, `tests/test_archetypes.py` (arquivos reais compilam).
-- `drafts/fra-mapa.md`, `drafts/fra-mapa.pdf`, `drafts/trk-mapa.md`, `drafts/trk-mapa.pdf`
-  (gerados).
+- `src/mtg_builder/pdf_flow.py`: Markdown → páginas (texto corrido e tabelas).
+- `drafts/README.md`; `drafts/fra/guia.md` e `drafts/fra/fra.pdf`; `drafts/trk/guia.md` e
+  `drafts/trk/trk.pdf` (PDFs gerados; `.gitignore` libera `drafts/*/*.pdf`).
+- `tests/test_pdf_flow.py`.
 
 ## Riscos
 

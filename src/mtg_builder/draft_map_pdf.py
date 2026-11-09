@@ -1,17 +1,19 @@
-"""Mapa visual da coleção (spec 014): o mapa de `draft_map` desenhado em PDF, A4 paisagem.
+"""Documento da coleção em PDF (spec 014): guia de draft + leitura da coleção + mapa completo.
 
-Páginas: capa com os números-chave e como ler; a coleção em números (cores por raridade,
-curva de criaturas, remoção, mecânicas) e a leitura em texto; os pares nos dados (quando
-há); os dez arquétipos (visão geral e duas por página, com payoffs e enablers por poder);
-a ordem de pick por raridade; o grafo de elos (nós = cartas, cor = cor da carta, tamanho =
-centralidade), as comunidades, a centralidade, os pares com mais sinergia, os segundos
-picks e os limites. Cores: W amarelo, U azul, B roxo, R vermelho, G verde, incolor cinza;
-multicolorida = barra ou nó dividido. Paleta validada para visão de cores (skill dataviz:
-pior par verde↔vermelho ΔE 7,2 sob protanopia, dentro da faixa que exige rótulos; por
-isso toda barra e todo nó rotulado trazem a letra da cor).
+`render()` monta `drafts/<coleção>/<coleção>.pdf`, A4 paisagem, a partir de um `SetMap` e do
+guia escrito pelo agente em `drafts/<coleção>/guia.md` (Markdown, convertido por
+`pdf_flow`). Partes: capa com números-chave e sumário; como ler; o guia (uma seção por
+página, com continuação); a coleção em números e a leitura; os pares nos dados (quando
+há); os dez arquétipos (visão geral, payoffs e enablers em barras, listas completas);
+ordem de pick por raridade (barras com as 40 melhores e tabela completa); grafo de elos
+(nó = carta, cor = cor da carta, tamanho = centralidade), comunidades e centralidade;
+pares com mais sinergia; segundos picks de todas as raras e míticas; limites. As páginas
+são planejadas antes de desenhar, por isso o sumário traz os números de página.
 
-Precisa de matplotlib (`pip install -e ".[viz]"`); o Markdown continua sendo o mapa de
-referência (todas as tabelas), o PDF é a vista ilustrada.
+Cores: W amarelo, U azul, B roxo, R vermelho, G verde, incolor cinza; multicolorida =
+barra ou nó dividido. Paleta validada para visão de cores (skill dataviz: pior par
+verde↔vermelho ΔE 7,2 sob protanopia, faixa que exige rótulos; toda barra e todo nó
+rotulado trazem a letra da cor). Precisa de matplotlib (`pip install -e ".[viz]"`).
 """
 
 import math
@@ -19,6 +21,7 @@ import textwrap
 from datetime import datetime
 from pathlib import Path
 
+from . import pdf_flow
 from .draft_map import COLOR_GROUPS, COLOR_PT, DRAFTS_DIR, RARITY_ORDER, RARITY_PT, _links, _mark, analysis_lines
 
 PAGE = (11.69, 8.27)                      # A4 paisagem, polegadas
@@ -32,8 +35,8 @@ SOURCE_PT = {"17lands": "17Lands", "untapped": "Untapped", "draftsim*": "Draftsi
 EDGE_MIN = 1.0            # arestas desenhadas no grafo (o enabler genérico, 0,25, e um elo fraco, 0,5, ficam de fora)
 STRONG_EDGE = 1.5         # arestas com mais de um elo: mais escuras e com mais peso no posicionamento
 GRAPH_LABELS = 30         # cartas rotuladas no grafo (as mais centrais, sem rótulos sobrepostos)
-TOP_ORDER = 40            # cartas por página na ordem de pick
-TOP_FIRSTS = 12           # raras e míticas na página de segundos picks
+TOP_ORDER = 40            # cartas por página de barras na ordem de pick (a tabela completa vem depois)
+TOP_PAIRS = 40            # pares na tabela de sinergia direta
 
 
 def _setup():
@@ -75,6 +78,10 @@ def _label(entry, width=34):
     return _cut(entry["name"], width) + tail
 
 
+def _cost(entry):
+    return (entry.get("custo") or "").replace("{", "").replace("}", "")
+
+
 def _rect(fig, x, y, color, w=0.009, h=0.009):
     from matplotlib.patches import Rectangle
     return Rectangle((x, y), w, h * PAGE[0] / PAGE[1], transform=fig.transFigure, facecolor=color, edgecolor="none")
@@ -97,7 +104,7 @@ class Doc:
 
     def close(self, fig, note=""):
         self.n += 1
-        fig.text(0.04, 0.025, f"{self.set_name} ({self.code}) · mapa da coleção · {self.today}"
+        fig.text(0.04, 0.025, f"{self.set_name} ({self.code}) · documento da coleção · {self.today}"
                  + (f" · {note}" if note else ""), fontsize=7, color=MUTED)
         fig.text(0.96, 0.025, str(self.n), fontsize=7, color=MUTED, ha="right")
         self.pdf.savefig(fig)
@@ -125,7 +132,7 @@ class Doc:
 
     @staticmethod
     def table(fig, x, y, columns, rows, size=7.5, head=True):
-        """Tabela por texto: `columns` = [(título, deslocamento x em fração)]."""
+        """Tabela curta por texto: `columns` = [(título, deslocamento x em fração)]."""
         row_h = size * 1.65 / 72 / PAGE[1]
         if head:
             for title, dx in columns:
@@ -276,12 +283,13 @@ def _draw_graph(ax, names, pairs, pos, sizes, colors_of, labels, alpha_of=None):
     ax.axis("off")
 
 
-# --- páginas ---------------------------------------------------------------------------------
+# --- páginas de capa e leitura -------------------------------------------------------------
 
-def _cover(doc, setmap, sources, ctx):
+def _cover(doc, setmap, sources, ctx, toc):
     code = setmap.set_code
-    fig = doc.page(f"{doc.set_name} ({code.upper()}) — mapa da coleção e sinergias",
-                   f"Gerado em {doc.today} por mtg draft map {code} --pdf · {sources or 'sem dados: avaliação teórica'}")
+    fig = doc.page(f"{doc.set_name} ({code.upper()}) — documento da coleção",
+                   f"Guia de draft, leitura da coleção e mapa de picks · gerado em {doc.today} por mtg draft map {code} --pdf · "
+                   f"{sources or 'sem dados: avaliação teórica'}")
     pairs = setmap.pairs()
     coverage = setmap.coverage()
     main_source = next(iter(coverage)) if coverage else "-"
@@ -297,30 +305,56 @@ def _cover(doc, setmap, sources, ctx):
     ]
     x = 0.04
     for label, value, note in tiles:
-        fig.text(x, 0.845, label, fontsize=8, color=INK2, va="top")
-        fig.text(x, 0.815, value, fontsize=26, fontweight="semibold", color=INK, va="top")
+        fig.text(x, 0.855, label, fontsize=8, color=INK2, va="top")
+        fig.text(x, 0.825, value, fontsize=26, fontweight="semibold", color=INK, va="top")
         for i, part in enumerate(textwrap.wrap(note, 30)[:3]):
-            fig.text(x, 0.745 - i * 0.02, part, fontsize=7, color=MUTED, va="top")
+            fig.text(x, 0.755 - i * 0.02, part, fontsize=7, color=MUTED, va="top")
         x += 0.185
+    fig.text(0.04, 0.675, "Sumário", fontsize=11, fontweight="semibold", color=INK, va="top")
+    lines = []
+    for part, entries in toc:
+        lines.append((part, entries[0][1], True))
+        lines += [(f"    {title}", page, False) for title, page in entries[1:]] if len(entries) > 1 else []
+    half = math.ceil(len(lines) / 2)
+    line_h = 0.0195
+    for column, chunk in enumerate((lines[:half], lines[half:])):
+        x0 = 0.04 + column * 0.47
+        y = 0.645
+        for text, page, bold in chunk:
+            fig.text(x0, y, _cut(text, 78), fontsize=7.8, color=INK if bold else INK2, va="top",
+                     fontweight="semibold" if bold else "normal")
+            fig.text(x0 + 0.43, y, str(page), fontsize=7.8, color=MUTED, va="top", ha="right")
+            y -= line_h
+    doc.close(fig)
+
+
+def _how_to_read(doc, setmap):
+    code = setmap.set_code
+    fig = doc.page("Como ler este documento", "Convenções usadas em todas as partes: nota, fonte, elos, grafo e cores.")
     how = [
+        "**Partes.** O guia de draft (escrito pelo agente a partir dos dados e da teoria, fonte em drafts/" + code
+        + "/guia.md) vem primeiro; depois a leitura da coleção em números, os dez arquétipos, a ordem de pick por "
+        "raridade com a tabela completa, o grafo de elos com comunidades e centralidade, os pares com mais sinergia, os "
+        "segundos picks de todas as raras e míticas e os limites. Tudo é regenerado por mtg draft map " + code + " --pdf.",
         "**Como ler a nota.** Pontos percentuais de win rate acima da média da fonte da carta (17Lands: GIH WR menos a média "
         "dos usuários; Untapped: idem com a média dele). Asterisco e barra mais clara: nota teórica (Draftsim ou a regra "
         "raridade, remoção e custo), sem amostra de partidas. Raridade não entra na conta: raras e míticas aparecem no alto "
-        "porque costumam ter mais poder, e cada pacote traz uma rara ou mítica, cerca de três incomuns e dez comuns.",
+        "porque costumam ter mais poder, e cada pacote traz uma rara ou mítica, cerca de três incomuns e dez comuns. No P1P1 "
+        "compare a rara do pacote com a melhor incomum e a melhor comum; do P1P2 em diante a escolha é quase sempre entre "
+        "incomuns e comuns.",
         "**Elos e sinergia.** Cada arquétipo e cada gancho é um elo: a payoff pede, o enabler oferece. Duas cartas têm "
         "sinergia direta quando uma pede o que a outra oferece (1 por elo; 0,25 se o enabler é só uma estatística, como "
         "'criatura de custo 2'; 0,5 entre duas payoffs do mesmo par; um quarto se as duas juntas pedem três cores). "
         "Σ é a soma das sinergias de uma carta com toda a coleção. No motor de picks (mtg draft pick), cada unidade "
-        "de elo com uma carta já escolhida vale 0,6 ponto, até 3.",
+        "de elo com uma carta já escolhida vale 0,6 ponto, até 3: um elo desempata cartas próximas, não vira carta fraca em bomba.",
         "**Grafo.** Nós são cartas, arestas são elos (só os de peso 1 ou mais). Tamanho do nó = centralidade (passeio "
         "aleatório que prefere parceiras fortes): a carta central é porta de entrada para a coleção. Comunidades são "
         "grupos ligados por mais de um elo e mostram temas que cruzam os dez pares.",
-        "**Páginas.** Capa · a coleção em números e a leitura · pares nos dados (quando há) · arquétipos (visão geral e "
-        "duas por página) · ordem de pick por raridade · grafo, comunidades e centralidade · pares com mais sinergia · "
-        "segundos picks · limites. O Markdown drafts/" + code + "-mapa.md traz todas as tabelas completas.",
+        "**Cores.** Barra e nó levam a cor da carta (multicolorida dividida; incolor cinza) e o rótulo repete a letra da cor "
+        "e a raridade (M, R, U, C). Nas tabelas, a coluna 'elos' diz o que a carta pede e oferece.",
     ]
-    doc.paragraphs(fig, 0.04, 0.70, 0.92, how, size=8.5)
-    doc.color_legend(fig, 0.04, 0.07, theoretical=True)
+    doc.paragraphs(fig, 0.04, 0.86, 0.92, how, size=9)
+    doc.color_legend(fig, 0.04, 0.09, theoretical=True)
     doc.close(fig)
 
 
@@ -397,8 +431,6 @@ def _reading(doc, setmap, ctx):
 
 def _pairs_data(doc, setmap, ctx):
     ratings = setmap.ratings
-    if not (ratings.pairs and ratings.baseline):
-        return
     base = ratings.baseline
     ranked = sorted(ratings.pairs.items(), key=lambda kv: -kv[1])
     games = {c["short"]: c.get("games") for c in (ratings.snapshot or {}).get("colors", [])}
@@ -432,6 +464,8 @@ def _pairs_data(doc, setmap, ctx):
         "precisa que a mesa deixe o tema aberto.", 30)), fontsize=7.5, color=INK2, va="top")
     doc.close(fig)
 
+
+# --- arquétipos ----------------------------------------------------------------------------
 
 def _pips(fig, x, y, pair, size=0.012):
     for i, c in enumerate(pair):
@@ -477,82 +511,111 @@ def _archetypes_overview(doc, setmap, ctx):
     doc.close(fig)
 
 
-def _archetype_pages(doc, setmap, ctx):
-    tables = setmap.archetype_tables(top=8)
+def _archetype_page(doc, setmap, ctx, pair_tables):
     by_pair = {s["pair"]: s for s in ctx["summary"]}
-    for i in range(0, len(tables), 2):
-        pair_tables = tables[i:i + 2]
-        title = " · ".join(f"{t['pair']} {t['name']}" for t in pair_tables)
-        fig = doc.page(_cut(title, 95), "Payoffs (pedem o elo) e enablers (oferecem) em ordem de poder; cor da barra = cor da "
-                       "carta; * nota teórica. Enabler genérico (só por estatística) conta um quarto no elo.")
-        for j, table in enumerate(pair_tables):
-            s = by_pair[table["pair"]]
-            x0 = 0.04 + j * 0.48
-            _pips(fig, x0, 0.855, table["pair"])
-            wr = f" · par {table['win_rate']:.1%} nos dados" if table["win_rate"] else ""
-            fig.text(x0 + 0.04, 0.868, f"{table['pair']} · {table['name']}{wr}", fontsize=10.5, fontweight="semibold",
-                     color=INK, va="top")
-            y = 0.835
-            for part in textwrap.wrap(_clean(table["plan"]), 100)[:3]:
-                fig.text(x0, y, part, fontsize=7.5, color=INK2, va="top")
-                y -= 0.017
-            counts = (f"{s['profundidade']} · {table['total_payoffs']} payoffs ({s['payoffs_cu']} C/U) · "
-                      f"{table['total_enablers']} enablers ({s['enablers_cu']} C/U)"
-                      + (f" · sinalizadoras: {', '.join(s['sinalizadoras'])}" if s["sinalizadoras"] else ""))
-            y -= 0.004
-            for part in textwrap.wrap(counts, 108)[:2]:
-                fig.text(x0, y, part, fontsize=7, color=MUTED, va="top")
-                y -= 0.015
-            ax = fig.add_axes([x0 + 0.17, 0.42, 0.26, 0.29])
-            if table["payoffs"]:
-                _hbars(ax, table["payoffs"], label=lambda e: _label(e, 26), faded=lambda e: e["teorica"])
-            ax.set_title(f"Payoffs ({table['total_payoffs']})", fontsize=8.5, color=INK, loc="left")
-            ax = fig.add_axes([x0 + 0.17, 0.08, 0.26, 0.29])
-            if table["enablers"]:
-                _hbars(ax, table["enablers"], label=lambda e: _label(e, 26), faded=lambda e: e["teorica"])
-            ax.set_title(f"Enablers ({table['total_enablers']})", fontsize=8.5, color=INK, loc="left")
-        doc.close(fig)
+    title = " · ".join(f"{t['pair']} {t['name']}" for t in pair_tables)
+    fig = doc.page(_cut(title, 95), "Payoffs (pedem o elo) e enablers (oferecem) em ordem de poder, os oito melhores de cada; "
+                   "cor da barra = cor da carta; * nota teórica. Listas completas no fim desta parte.")
+    for j, table in enumerate(pair_tables):
+        s = by_pair[table["pair"]]
+        x0 = 0.04 + j * 0.48
+        _pips(fig, x0, 0.855, table["pair"])
+        wr = f" · par {table['win_rate']:.1%} nos dados" if table["win_rate"] else ""
+        fig.text(x0 + 0.04, 0.868, f"{table['pair']} · {table['name']}{wr}", fontsize=10.5, fontweight="semibold",
+                 color=INK, va="top")
+        y = 0.835
+        for part in textwrap.wrap(_clean(table["plan"]), 100)[:3]:
+            fig.text(x0, y, part, fontsize=7.5, color=INK2, va="top")
+            y -= 0.017
+        counts = (f"{s['profundidade']} · {table['total_payoffs']} payoffs ({s['payoffs_cu']} C/U) · "
+                  f"{table['total_enablers']} enablers ({s['enablers_cu']} C/U)"
+                  + (f" · sinalizadoras: {', '.join(s['sinalizadoras'])}" if s["sinalizadoras"] else ""))
+        y -= 0.004
+        for part in textwrap.wrap(counts, 108)[:2]:
+            fig.text(x0, y, part, fontsize=7, color=MUTED, va="top")
+            y -= 0.015
+        ax = fig.add_axes([x0 + 0.17, 0.42, 0.26, 0.29])
+        if table["payoffs"]:
+            _hbars(ax, table["payoffs"], label=lambda e: _label(e, 26), faded=lambda e: e["teorica"])
+        ax.set_title(f"Payoffs ({table['total_payoffs']})", fontsize=8.5, color=INK, loc="left")
+        ax = fig.add_axes([x0 + 0.17, 0.08, 0.26, 0.29])
+        if table["enablers"]:
+            _hbars(ax, table["enablers"], label=lambda e: _label(e, 26), faded=lambda e: e["teorica"])
+        ax.set_title(f"Enablers ({table['total_enablers']})", fontsize=8.5, color=INK, loc="left")
+    doc.close(fig)
 
 
-def _pick_order_pages(doc, setmap, top=TOP_ORDER):
+def _archetype_lists_flow(ts, setmap):
+    """Listas completas de payoffs e enablers por par, em texto corrido."""
+    flow = pdf_flow.Flow(ts, title="Arquétipos: listas completas",
+                         subtitle="Toda carta marcada em cada par, em ordem de poder (nota e * teórica); C/U = comuns e incomuns.")
+    flow.heading("Arquétipos: listas completas", 2)
+    for table in setmap.archetype_tables(top=None):
+        wr = f" · par {table['win_rate']:.1%} nos dados" if table["win_rate"] else ""
+        flow.heading(f"{table['pair']} · {table['name']}{wr}", 3)
+        flow.paragraph(table["plan"])
+
+        def names(entries):
+            return ", ".join(f"{e['name']} {e['poder']:+.1f}{_mark(e)} ({e['cor']} {RARITY_LETTER.get(e['raridade'], '')})"
+                             for e in entries) or "nenhuma"
+        flow.paragraph(f"**Payoffs ({table['total_payoffs']}):** {names(table['payoffs'])}")
+        flow.paragraph(f"**Enablers ({table['total_enablers']}):** {names(table['enablers'])}")
+    return flow
+
+
+# --- ordem de pick --------------------------------------------------------------------------
+
+def _pick_order_page(doc, setmap, rarity, top=TOP_ORDER):
+    rows = setmap.pick_order(rarity)
+    shown = rows[:top]
+    fig = doc.page(f"Ordem de pick: {RARITY_PT[rarity]} ({len(shown)} de {len(rows)})",
+                   "Nota em pontos de win rate acima da média da fonte; cor da barra = cor da carta (dividida nas "
+                   "multicoloridas); * e barra clara = nota teórica. Rótulo: posição, carta · cor · raridade; Σ = soma "
+                   "das sinergias na coleção. Tabela completa nas páginas seguintes.")
+    half = (len(shown) + 1) // 2
+    for j, chunk in enumerate((shown[:half], shown[half:])):
+        if not chunk:
+            continue
+        ax = fig.add_axes([0.20 + j * 0.49, 0.10, 0.26, 0.76])
+        _hbars(ax, chunk, label=lambda e: f"{e['posicao']:>2}. {_label(e, 30)}" + (f"  Σ{e['elos']:g}" if e["elos"] else ""),
+               faded=lambda e: e["teorica"], size=7)
+    doc.color_legend(fig, 0.20, 0.06, theoretical=True)
+    doc.close(fig)
+
+
+def _order_tables_flow(ts, setmap):
+    """Tabela completa da ordem de pick, uma seção por raridade."""
+    flow = pdf_flow.Flow(ts, title="Ordem de pick: tabela completa",
+                         subtitle="Nota (fonte), cor, custo, arquétipos (+ = payoff), elos (pede · oferece) e Σ sinergia; * nota teórica.")
     for rarity in RARITY_ORDER:
         rows = setmap.pick_order(rarity)
         if not rows:
             continue
-        shown = rows[:top]
-        fig = doc.page(f"Ordem de pick: {RARITY_PT[rarity]} ({len(shown)} de {len(rows)})",
-                       "Nota em pontos de win rate acima da média da fonte; cor da barra = cor da carta (dividida nas "
-                       "multicoloridas); * e barra clara = nota teórica. Rótulo: posição, carta · cor · raridade; Σ = soma "
-                       "das sinergias na coleção. Tabela completa no Markdown.")
-        half = (len(shown) + 1) // 2
-        for j, chunk in enumerate((shown[:half], shown[half:])):
-            if not chunk:
-                continue
-            ax = fig.add_axes([0.20 + j * 0.49, 0.10, 0.26, 0.76])
-            _hbars(ax, chunk, label=lambda e: f"{e['posicao']:>2}. {_label(e, 30)}" + (f"  Σ{e['elos']:g}" if e["elos"] else ""),
-                   faded=lambda e: e["teorica"], size=7)
-        doc.color_legend(fig, 0.20, 0.06, theoretical=True)
-        doc.close(fig)
+        flow.heading(f"Tabela completa: {RARITY_PT[rarity]} ({len(rows)})", 2)
+        flow.table(["#", "nota", "fonte", "cor", "custo", "carta", "arquétipos", "elos", "Σ"],
+                   [[r["posicao"], f"{r['poder']:+.1f}{_mark(r)}", _source(r["fonte"]).rstrip("*"), r["cor"], _cost(r),
+                     r["name"], r["arquetipos"], _links(r), f"{r['elos']:g}" if r["elos"] else ""] for r in rows])
+    return flow
 
 
-def _graph_pages(doc, setmap, ctx):
-    names, pairs, pos, central = ctx["graph"]
-    if not names:
-        return
-    sizes = {n: 0.010 + 0.036 * math.sqrt(central.get(n, 0) / 100.0) for n in names}
-    ranked_names = [n for n, _v in sorted(central.items(), key=lambda kv: -kv[1]) if n in pos]
-    labels = _place_labels(ranked_names, pos, sizes, GRAPH_LABELS)
+# --- grafo ----------------------------------------------------------------------------------
+
+def _graph_page(doc, setmap, ctx):
+    names, pairs, pos, central, sizes, labels, ranked_names = ctx["graph"]
     fig = doc.page("Grafo de elos", f"{len(names)} cartas com pelo menos um elo de peso ≥ {EDGE_MIN:g} e {len(pairs)} arestas "
                    f"(escuras: mais de um elo, peso ≥ {STRONG_EDGE:g}). Tamanho do nó = centralidade; cor = cor da carta; "
                    f"rótulos nas mais centrais sem sobreposição. Sem elo desenhado: {len(setmap.cards) - len(names)} cartas.")
     ax = fig.add_axes([0.02, 0.05, 0.74, 0.84])
     _draw_graph(ax, names, pairs, pos, sizes, lambda n: _hex(setmap.cards[n]["cor"]), labels)
     ranked = [(n, central.get(n, 0)) for n in ranked_names[:18]]
-    columns = [("centr.", 0.0), ("carta", 0.05)]
     rows = [(f"{v:g}", _label(setmap.cards[n], 28)) for n, v in ranked]
-    doc.table(fig, 0.78, 0.86, columns, rows, size=7)
+    doc.table(fig, 0.78, 0.86, [("centr.", 0.0), ("carta", 0.05)], rows, size=7)
     doc.color_legend(fig, 0.04, 0.06)
     doc.close(fig)
+
+
+def _communities_page(doc, setmap, ctx):
+    names, pairs, pos, _central, sizes, _labels, ranked_names = ctx["graph"]
     groups, weight = ctx["communities"], ctx["community_weight"]
     member = {}
     for i, g in enumerate(groups):
@@ -587,6 +650,10 @@ def _graph_pages(doc, setmap, ctx):
     if len(groups) > len(CATEGORICAL):
         fig.text(0.715, y, f"+ {len(groups) - len(CATEGORICAL)} grupos menores em cinza", fontsize=7, color=MUTED, va="top")
     doc.close(fig)
+
+
+def _centrality_page(doc, setmap, ctx):
+    central = ctx["graph"][3]
     totals = setmap.partner_totals()
     fig = doc.page("Centralidade e soma das sinergias", "À esquerda, as 25 cartas mais centrais (0 a 100; PageRank com pesos: "
                    "liga parceiras fortes que ligam outras). À direita, as 25 com maior Σ (soma das sinergias diretas na coleção).")
@@ -602,43 +669,42 @@ def _graph_pages(doc, setmap, ctx):
     doc.close(fig)
 
 
-def _pairs_page(doc, setmap, top=32):
-    pairs = setmap.pairs()[:top]
-    fig = doc.page("Pares de cartas com mais sinergia direta",
-                   f"{len(setmap.pairs())} pares com elo na coleção; os {len(pairs)} primeiros (sinergia em unidades de elo; "
-                   "empate pela soma de poder). Elo entre cartas que juntas pedem três cores vale um quarto.")
-    columns = [("sin", 0.0), ("poder", 0.04), ("carta A", 0.09), ("carta B", 0.40), ("elos", 0.71)]
-    rows = [(f"{p['sinergia']:g}", f"{p['poder']:+.1f}", _label(setmap.cards[p["a"]], 36), _label(setmap.cards[p["b"]], 36),
-             _cut(", ".join(p["elos"]), 36)) for p in pairs]
-    doc.table(fig, 0.04, 0.87, columns, rows, size=7.3)
-    doc.close(fig)
+# --- pares e segundos picks -----------------------------------------------------------------
+
+def _pairs_flow(ts, setmap, top=TOP_PAIRS):
+    pairs = setmap.pairs()
+    flow = pdf_flow.Flow(ts, title="Pares de cartas com mais sinergia direta",
+                         subtitle=f"{len(pairs)} pares com elo na coleção; os {min(top, len(pairs))} primeiros (sinergia em "
+                         "unidades de elo; empate pela soma de poder). Elo entre cartas que juntas pedem três cores vale um quarto.")
+    flow.heading("Pares de cartas com mais sinergia direta", 2)
+    flow.table(["sinergia", "poder", "carta A", "carta B", "elos"],
+               [[f"{p['sinergia']:g}", f"{p['poder']:+.1f}", _label(setmap.cards[p["a"]], 60), _label(setmap.cards[p["b"]], 60),
+                 ", ".join(p["elos"])] for p in pairs[:top]])
+    return flow
 
 
-def _follow_ups_page(doc, setmap, top_firsts=TOP_FIRSTS, top=5):
-    firsts = [e["name"] for e in setmap.pick_order() if e["raridade"] in ("rare", "mythic")][:top_firsts]
-    tree = setmap.tree(firsts, top=top)
-    fig = doc.page("Depois da primeira escolha: os melhores segundos picks",
-                   f"Para as {len(tree)} raras e míticas mais fortes, as cartas da coleção que o motor mais quer no P1P2 "
-                   "(nota = poder + parceiros + o pouco de encaixe que o pick 2 pesa); ↔ = elo com a primeira. Do terceiro "
-                   f"pick em diante: mtg draft map {setmap.set_code} --card \"A\" --card \"B\". Todas as raras no Markdown.")
-    y = 0.85
-    row_h = 0.0205
+def _follow_ups_flow(ts, setmap, top=6):
+    tree = setmap.tree(top=top)
+    flow = pdf_flow.Flow(ts, title="Segundos picks de todas as raras e míticas",
+                         subtitle="Para cada rara ou mítica, em ordem de poder, as cartas da coleção que o motor mais quer no P1P2 "
+                         "(nota = poder + parceiros + o pouco de encaixe do pick 2); ↔ = elo com a primeira.")
+    flow.heading("Segundos picks de todas as raras e míticas", 2)
+    flow.paragraph(f"Do terceiro pick em diante: `mtg draft map {setmap.set_code} --card \"Primeira\" --card \"Segunda\"`, "
+                   "ou o motor ao vivo (`mtg draft watch`, Oráculo).")
+    rows = []
     for entry in tree:
         first = entry["primeiro"]
         links = _links(first)
-        fig.text(0.04, y, f"{_label(first, 40)} · {first['poder']:+.1f}{_mark(first)} {_source(first['fonte']).rstrip('*')}"
-                 + (f" · {first['arquetipos']}" if first["arquetipos"] else "") + (f" · {links}" if links else ""),
-                 fontsize=8, fontweight="semibold", color=INK, va="top")
-        y -= row_h
+        head = (f"**{first['name']}** · {first['cor']} {RARITY_LETTER.get(first['raridade'], '')} · "
+                f"{first['poder']:+.1f}{_mark(first)} {_source(first['fonte']).rstrip('*')}"
+                + (f" · {first['arquetipos']}" if first["arquetipos"] else "") + (f" · {links}" if links else ""))
         parts = []
         for row in entry["seguintes"]:
             elo = f" ↔{row['elos'][0][1]:g}" if row.get("elos") else ""
-            parts.append(f"{row['total']:+.1f} {_cut(row['name'], 30)} ({row['cor']}{elo})")
-        fig.text(0.06, y, "   ".join(parts), fontsize=7.3, color=INK2, va="top")
-        y -= row_h * 1.35
-        if y < 0.08:
-            break
-    doc.close(fig)
+            parts.append(f"{row['total']:+.1f} {row['name']} ({row['cor']}{elo})")
+        rows.append([head, " · ".join(parts)])
+    flow.table(["primeira escolha", "melhores segundos picks (nota · carta · cor · elo)"], rows)
+    return flow
 
 
 def _limits_page(doc, setmap, sources):
@@ -655,9 +721,10 @@ def _limits_page(doc, setmap, sources):
         "**Remoção e curva.** A classificação de remoção é automática pelo texto e inclui algumas criaturas com efeito de "
         "remoção; confira com mtg card. A leitura de velocidade pela curva é indício, não medida: prevalece o que as "
         "partidas mostrarem.",
-        f"**Regerar.** mtg draft update {code} e mtg draft map {code} --write --pdf. O Markdown drafts/{code}-mapa.md tem "
-        "todas as tabelas (ordem completa por raridade, segundos picks de todas as raras, 40 pares, 25 centrais); este PDF é a "
-        "vista ilustrada dele.",
+        "**Guia.** A primeira parte é o guia escrito pelo agente (drafts/" + code + "/guia.md) na data que ele declara; as partes "
+        "seguintes são calculadas a cada geração e podem ter dados mais novos que o guia. Em divergência, vale a data mais recente.",
+        f"**Regerar.** mtg draft update {code} e mtg draft map {code} --pdf. Depois de editar o guia, gere de novo: o PDF é o "
+        "documento da coleção; o guia em Markdown é só a fonte.",
         "**Teoria.** knowledge/limitado-e-draft.md: §2 avaliação de cartas, §3 prioridades de pick, §4 arquétipos e deck "
         "perfeito, §6 compromisso com cores, §7 construção do deck de 40, §8 parâmetros do formato.",
     ]
@@ -666,38 +733,100 @@ def _limits_page(doc, setmap, sources):
     doc.close(fig)
 
 
-# --- documento --------------------------------------------------------------------------------
+# --- documento -----------------------------------------------------------------------------
 
-def render(setmap, set_name="", sources="", path=None, seed=7):
-    """Desenha o PDF do mapa; devolve (caminho, páginas). Calcula uma vez grafo, centralidade
-    e comunidades."""
+def _flow_entries(part, flow):
+    """Uma entrada do plano por página planejada; vão ao sumário as seções que começam na página."""
+    entries = []
+    for page in flow.plan():
+        def draw(doc, page=page, subtitle=flow.subtitle):
+            fig = doc.page(page["title"], subtitle)
+            pdf_flow.draw_page(fig, page)
+            doc.close(fig)
+        entries.append({"part": part, "titles": list(page["sections"]), "draw": draw})
+    return entries
+
+
+def _entry(part, title, draw):
+    return {"part": part, "titles": [title], "draw": draw}
+
+
+def guide_path(set_code):
+    return DRAFTS_DIR / set_code.lower() / "guia.md"
+
+
+def render(setmap, set_name="", sources="", path=None, guide=None, seed=7):
+    """Monta o documento da coleção; devolve (caminho, páginas). `guide` é o Markdown do guia
+    (padrão: drafts/<coleção>/guia.md, se existir)."""
     plt, np = _setup()
     from matplotlib.backends.backend_pdf import PdfPages
     code = setmap.set_code
-    path = Path(path or DRAFTS_DIR / f"{code}-mapa.pdf")
+    path = Path(path or DRAFTS_DIR / code / f"{code}.pdf")
     path.parent.mkdir(parents=True, exist_ok=True)
+    guide_file = Path(guide) if guide else guide_path(code)
+    guide_text = guide_file.read_text("utf-8") if guide_file.exists() else ""
     central = setmap.centrality()
     pairs = [p for p in setmap.pairs() if p["sinergia"] >= EDGE_MIN]
     names = sorted({p["a"] for p in pairs} | {p["b"] for p in pairs})
     pos = _layout(np, names, [(p["a"], p["b"], p["sinergia"]) for p in pairs], seed=seed)
+    sizes = {n: 0.010 + 0.036 * math.sqrt(central.get(n, 0) / 100.0) for n in names}
+    ranked_names = [n for n, _v in sorted(central.items(), key=lambda kv: -kv[1]) if n in pos]
+    labels = _place_labels(ranked_names, pos, sizes, GRAPH_LABELS)
     groups, weight = setmap.communities_auto()
     ctx = {"overview": setmap.overview(), "summary": setmap.archetype_summary(), "communities": groups,
-           "community_weight": weight, "analysis": analysis_lines(setmap), "graph": (names, pairs, pos, central)}
+           "community_weight": weight, "analysis": analysis_lines(setmap),
+           "graph": (names, pairs, pos, central, sizes, labels, ranked_names)}
+    scratch = plt.figure(figsize=PAGE)
+    ts = pdf_flow.Typesetter(pdf_flow.matplotlib_measurer(scratch))
+
+    plan = [_entry("Como ler este documento", "Como ler este documento", lambda doc: _how_to_read(doc, setmap))]
+    if guide_text:
+        guide = pdf_flow.Flow(ts, title="Guia de draft", subtitle=f"Parte 1 · guia escrito pelo agente (fonte: drafts/{code}/guia.md)")
+        guide.add_markdown(guide_text)
+        plan += _flow_entries("Guia de draft", guide)
+    part = "A coleção em números"
+    plan.append(_entry(part, "A coleção em números", lambda doc: _numbers(doc, setmap, ctx)))
+    plan.append(_entry(part, "Leitura da coleção", lambda doc: _reading(doc, setmap, ctx)))
+    if setmap.ratings.pairs and setmap.ratings.baseline:
+        plan.append(_entry(part, "Os dez pares nos dados", lambda doc: _pairs_data(doc, setmap, ctx)))
+    part = "Os dez arquétipos"
+    plan.append(_entry(part, "Visão geral", lambda doc: _archetypes_overview(doc, setmap, ctx)))
+    tables = setmap.archetype_tables(top=8)
+    for i in range(0, len(tables), 2):
+        pair_tables = tables[i:i + 2]
+        plan.append(_entry(part, " · ".join(t["pair"] for t in pair_tables),
+                           lambda doc, pt=pair_tables: _archetype_page(doc, setmap, ctx, pt)))
+    plan += _flow_entries(part, _archetype_lists_flow(ts, setmap))
+    part = "Ordem de pick"
+    for rarity in RARITY_ORDER:
+        if setmap.pick_order(rarity):
+            plan.append(_entry(part, f"Barras: {RARITY_PT[rarity]}", lambda doc, r=rarity: _pick_order_page(doc, setmap, r)))
+    plan += _flow_entries(part, _order_tables_flow(ts, setmap))
+    if names:
+        part = "Grafo de elos"
+        plan.append(_entry(part, "Grafo de elos", lambda doc: _graph_page(doc, setmap, ctx)))
+        plan.append(_entry(part, "Comunidades", lambda doc: _communities_page(doc, setmap, ctx)))
+        plan.append(_entry(part, "Centralidade e Σ sinergia", lambda doc: _centrality_page(doc, setmap, ctx)))
+    part = "Pares e segundos picks"
+    plan += _flow_entries(part, _pairs_flow(ts, setmap))
+    plan += _flow_entries(part, _follow_ups_flow(ts, setmap))
+    plan.append(_entry("Limites e fontes", "Limites e fontes", lambda doc: _limits_page(doc, setmap, sources)))
+    plt.close(scratch)
+
+    toc = []
+    for i, entry in enumerate(plan, start=2):
+        for title in entry["titles"]:
+            if toc and toc[-1][0] == entry["part"]:
+                toc[-1][1].append((title, i))
+            else:
+                toc.append((entry["part"], [(title, i)]))
     with PdfPages(path) as pdf:
         doc = Doc(plt, pdf, code, set_name or code.upper())
-        _cover(doc, setmap, sources, ctx)
-        _numbers(doc, setmap, ctx)
-        _reading(doc, setmap, ctx)
-        _pairs_data(doc, setmap, ctx)
-        _archetypes_overview(doc, setmap, ctx)
-        _archetype_pages(doc, setmap, ctx)
-        _pick_order_pages(doc, setmap)
-        _graph_pages(doc, setmap, ctx)
-        _pairs_page(doc, setmap)
-        _follow_ups_page(doc, setmap)
-        _limits_page(doc, setmap, sources)
+        _cover(doc, setmap, sources, ctx, toc)
+        for entry in plan:
+            entry["draw"](doc)
         info = pdf.infodict()
-        info["Title"] = f"{doc.set_name} ({code.upper()}) — mapa da coleção e sinergias"
+        info["Title"] = f"{doc.set_name} ({code.upper()}) — documento da coleção"
         info["Subject"] = "MTG Deck Builder · spec 014 · mtg draft map --pdf"
         pages = doc.n
     return path, pages

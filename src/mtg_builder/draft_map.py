@@ -13,10 +13,10 @@ Draftsim → teórica), os arquétipos que serve e os elos que pede e oferece
 3. os **pares de cartas com mais sinergia direta** e, por carta, os parceiros.
 
 `overview()` e `analysis_lines()` fazem a leitura da coleção (cores, curva, remoção,
-mecânicas, correção de mana, profundidade de cada arquétipo). `markdown()` escreve tudo em
-`drafts/<coleção>-mapa.md`; `draft_map_pdf.render()` desenha o mesmo mapa em PDF. Tudo é
-intrínseco à coleção e aos dados de partidas: só muda quando eles mudam, não com o draft
-em curso.
+mecânicas, correção de mana, profundidade de cada arquétipo). `draft_map_pdf.render()`
+desenha tudo, com o guia da coleção, no documento único `drafts/<coleção>/<coleção>.pdf`;
+`markdown()` é a versão em texto para uso interno (`data/maps/`). Tudo é intrínseco à
+coleção e aos dados de partidas: só muda quando eles mudam, não com o draft em curso.
 """
 
 import json
@@ -24,10 +24,11 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
-from . import analysis, archetypes, decklist, draft_pick
+from . import analysis, archetypes, db, decklist, draft_pick
 from .draft_sim import EXTRA_LAYOUTS
 
-DRAFTS_DIR = Path(__file__).resolve().parents[2] / "drafts"
+DRAFTS_DIR = Path(__file__).resolve().parents[2] / "drafts"   # um diretório por coleção: guia.md e <código>.pdf
+MAPS_DIR = db.DATA_DIR / "maps"                                 # Markdown do mapa, uso interno (fora do git)
 RARITY_ORDER = ("mythic", "rare", "uncommon", "common")
 RARITY_PT = {"mythic": "míticas", "rare": "raras", "uncommon": "incomuns", "common": "comuns"}
 COLOR_GROUPS = ("W", "U", "B", "R", "G", "multi", "incolor")
@@ -518,7 +519,8 @@ def format_graph(setmap, top=20):
 
 
 def markdown(setmap, set_name="", sources="", top_follow=6, top_pairs=40, top_archetype=10):
-    """Documento completo do mapa, para `drafts/<coleção>-mapa.md`."""
+    """Mapa completo em Markdown (uso interno, `data/maps/<coleção>-mapa.md`; o documento da
+    coleção para leitura é o PDF)."""
     code = setmap.set_code.upper()
     today = datetime.now().strftime("%Y-%m-%d")
     coverage = ", ".join(f"{k} {v}" for k, v in setmap.coverage().items())
@@ -630,7 +632,9 @@ def markdown(setmap, set_name="", sources="", top_follow=6, top_pairs=40, top_ar
 
 
 def write_markdown(setmap, set_name="", sources="", path=None, **kw):
-    path = Path(path or DRAFTS_DIR / f"{setmap.set_code}-mapa.md")
+    """Grava o Markdown do mapa em `data/maps/<coleção>-mapa.md` (uso interno: o documento
+    da coleção para leitura é o PDF em `drafts/<coleção>/`)."""
+    path = Path(path or MAPS_DIR / f"{setmap.set_code}-mapa.md")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(markdown(setmap, set_name, sources, **kw), encoding="utf-8")
     return path

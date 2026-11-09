@@ -60,9 +60,8 @@ correlação entre as cartas da coleção ficam mais acuradas?"
    melhora o peso de cada carta (quem está do outro lado do elo), não a certeza de cada elo,
    que viria só de dados de co-ocorrência em partidas, que o 17Lands não publica.
 6. **Documento e comando.** `mtg draft map <coleção>` com `--rarity`, `--card`, `--pairs`,
-   `--graph`, `--top`, `--write`, `--pdf` e `--json`; `--write` grava `drafts/<coleção>-mapa.md`
-   completo (como ler, leitura da coleção, ordem por raridade, segundos picks, pares,
-   arquétipos, grafo, limites), regenerável quando os dados mudarem.
+   `--graph`, `--top`, `--write`, `--pdf` e `--json`; `--pdf` monta o documento da coleção
+   (requisito 8); `--write` grava o Markdown do mapa em `data/maps/`, só para uso interno.
 7. **Leitura da coleção e dos arquétipos.** O mapa diz o que os números da coleção mostram,
    citando a seção da teoria que sustenta cada leitura: composição por cor e raridade,
    criaturas de comum e incomum e sua curva (indício de velocidade), remoção por cor,
@@ -72,16 +71,22 @@ correlação entre as cartas da coleção ficam mais acuradas?"
    melhor payoff e as sinalizadoras douradas; os ganchos; as cartas centrais e as
    comunidades. Pedido do usuário em 2026-11-09: "No PDF, faça também uma análise da
    coleção e seus arquétipos. Isso para FRA e TRK."
-8. **Mapa visual.** `--pdf` desenha `drafts/<coleção>-mapa.pdf` (A4 paisagem, matplotlib,
-   dependência opcional `viz`): capa com números-chave e como ler; a coleção em números
-   (cores por raridade, curva por cor, remoção, palavras-chave) e a leitura; os pares nos
-   dados (barras divergentes contra a média); os dez arquétipos (visão geral e duas por
-   página, payoffs e enablers por poder); ordem de pick por raridade; grafo de elos (nó =
-   carta, cor = cor da carta, multicolorida dividida, tamanho = centralidade), comunidades
-   e centralidade; pares com mais sinergia; segundos picks; limites. Paleta validada para
-   visão de cores; toda barra e todo nó rotulado trazem a letra da cor. Pedido do usuário:
+8. **Documento único da coleção.** `--pdf` monta `drafts/<coleção>/<coleção>.pdf` (A4
+   paisagem, matplotlib, dependência opcional `viz`), o único documento a ler sobre a
+   coleção: capa com números-chave e sumário paginado; como ler; o guia de draft (fonte
+   `drafts/<coleção>/guia.md`, Markdown escrito pelo agente); a coleção em números (cores
+   por raridade, curva por cor, remoção, palavras-chave) e a leitura; os pares nos dados
+   (barras divergentes contra a média); os dez arquétipos (visão geral, duas por página
+   com payoffs e enablers por poder, listas completas); ordem de pick por raridade (barras
+   das 40 melhores e tabela completa); grafo de elos (nó = carta, cor = cor da carta,
+   multicolorida dividida, tamanho = centralidade), comunidades e centralidade; pares com
+   mais sinergia; segundos picks de todas as raras e míticas; limites. Paleta validada para
+   visão de cores; toda barra e todo nó rotulado trazem a letra da cor. Pedidos do usuário:
    "gere, visualmente, esse mapa. Pode ser em PDF, bem ilustrado, para identificar as
-   sinergias."
+   sinergias" e, depois, "os arquivos em .md ficaram horríveis para leitura. Incorpore nos
+   mapas em .pdf de cada coleção. Procure centralizar tudo num mesmo doc de coleção. Pode
+   organizar por pastas também no projeto." Nenhum Markdown gerado fica no repositório; o
+   guia em Markdown é só fonte.
 9. **Coleção nova.** Para uma coleção sem arquivo de arquétipos, o mapa exige escrever
    `archetypes/<coleção>.json` a partir das incomuns douradas e do texto das cartas da
    base, com a fonte declarada e a marcação conferida carta a carta; sem dados de partidas

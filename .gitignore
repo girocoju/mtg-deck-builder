@@ -10,5 +10,5 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 
-# Mapas de colecao gerados pelo projeto (mtg draft map --pdf): nao sao material protegido
-!drafts/*-mapa.pdf
+# Documentos de colecao gerados pelo projeto (mtg draft map --pdf): nao sao material protegido
+!drafts/*/*.pdf
