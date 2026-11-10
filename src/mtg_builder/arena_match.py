@@ -141,6 +141,17 @@ class MatchSession:
                 return player["name"] or "oponente"
         return "oponente"
 
+    def match_deck(self):
+        """O deck enviado para o evento desta partida. None quando o último deck visto foi de
+        outro evento: o Oráculo fica aberto entre a Ladder e o draft, e o registro não pode
+        herdar o deck anterior (aconteceu em 2026-11-09: quatro partidas de Premier Draft
+        gravadas com o deck de Ladder)."""
+        if not self.deck:
+            return None
+        if self.event_name and self.deck.get("event") and self.deck["event"] != self.event_name:
+            return None
+        return self.deck
+
     # --- eventos ----------------------------------------------------------------------------
     def handle(self, event):
         kind = event["type"]
@@ -191,7 +202,9 @@ class MatchSession:
                 self.match_id, self.started_at = event.get("match_id"), event.get("at")
                 others = [p for p in self.players if p["seat"] != self.my_seat]
                 versus = " × ".join(f"{p['name']} (lugar {p['seat']}, {p.get('platform') or '?'})" for p in others)
-                return f"partida em {self.event_name or '?'}: você (lugar {self.my_seat}) × {versus}"
+                deck = self.match_deck()
+                tail = f' · deck "{deck["name"]}"' if deck and deck.get("name") else                     (" · deck deste evento não visto no log" if self.deck else "")
+                return f"partida em {self.event_name or '?'}: você (lugar {self.my_seat}) × {versus}{tail}"
             if event["state"] == "MatchCompleted":
                 mine = next((p for p in self.players if p["seat"] == self.my_seat), None)
                 my_team = mine["team"] if mine else None
@@ -231,7 +244,7 @@ class MatchSession:
         """Linha do histórico (`data/matches.jsonl`)."""
         tracker = self.tracker
         return {"match_id": self.match_id or (event or {}).get("match_id"), "at": self.started_at or (event or {}).get("at"),
-                "event": self.event_name, "deck": (self.deck or {}).get("name"), "opponent": self.opponent_name(),
+                "event": self.event_name, "deck": (self.match_deck() or {}).get("name"), "opponent": self.opponent_name(),
                 "result": result, "turns": tracker.turn["number"] if tracker else None,
                 "own_turns": tracker.own_turns.get(self.my_seat) if tracker else None,
                 "life": {str(seat): total for seat, total in tracker.life.items()} if tracker else None}
@@ -250,11 +263,12 @@ class MatchSession:
         opponent = re.sub(r"[^A-Za-z0-9_-]+", "", self.opponent_name()) or "oponente"
         stamp = datetime.now().strftime("%Y-%m-%d-%H%M")
         base = folder / f"{stamp}-{self.event_name or 'partida'}-{opponent}-g{self.tracker.game or 1}"
-        record = {"event": self.event_name, "opponent": self.opponent_name(), "deck": self.deck,
+        deck = self.match_deck()
+        record = {"event": self.event_name, "opponent": self.opponent_name(), "deck": deck,
                   "recorded_at": datetime.now().isoformat(timespec="seconds"), **self.tracker.record()}
         base.with_suffix(".json").write_text(json.dumps(record, ensure_ascii=False, indent=1), encoding="utf-8")
         title = f"{self.event_name or 'Partida'} contra {self.opponent_name()}" + \
-                (f" com \"{self.deck['name']}\"" if self.deck and self.deck.get("name") else "")
+                (f" com \"{deck['name']}\"" if deck and deck.get("name") else "")
         base.with_suffix(".md").write_text(self.tracker.markdown(title), encoding="utf-8")
         self.saved.append(self.tracker)
         return base.with_suffix(".md")

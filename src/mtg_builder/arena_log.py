@@ -369,7 +369,10 @@ class ArenaCards:
 
     def resolve(self, conn, grp_ids):
         """Cartas da base do projeto para os GrpIds: pelo nome em inglês e, se o nome não
-        existir na base, pela impressão (coleção e número de colecionador)."""
+        existir na base, pela impressão (coleção e número de colecionador). Fichas ficam só
+        com o nome: na base do Arena elas trazem a coleção da carta que as cria e números
+        1, 2, 3..., que colidem com cartas reais (em FRA, o Beast 4/4 é FRA #8, mesmo número
+        de Generous Revival; o Jace é #5, de Enlightened Confidant)."""
         if self._index is None:
             self._index = decklist._name_index(conn) if conn is not None else {}
         out = []
@@ -377,14 +380,14 @@ class ArenaCards:
             info = self.cards.get(int(grp))
             if info is None:
                 out.append({"grp": int(grp), "name": f"#{grp}", "rarity": None, "card": None,
-                            "set": None, "number": None, "name_pt": ""})
+                            "set": None, "number": None, "name_pt": "", "token": False})
                 continue
             card = self._index.get(decklist._key(info["name_en"])) if info["name_en"] else None
-            if card is None and conn is not None and info["set"] and info["number"]:
+            if card is None and conn is not None and info["set"] and info["number"] and not info["token"]:
                 card = _by_printing(conn, info["set"], info["number"])
             out.append({"grp": info["grp"], "name": card["name"] if card else info["name_en"] or f"#{grp}",
                         "rarity": info["rarity"], "card": card, "set": info["set"],
-                        "number": info["number"], "name_pt": info["name_pt"]})
+                        "number": info["number"], "name_pt": info["name_pt"], "token": info["token"]})
         return out
 
 

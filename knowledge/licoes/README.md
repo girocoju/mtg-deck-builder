@@ -8,6 +8,7 @@ lições do formato ou tema envolvido. Processo em [COMO-ADICIONAR.md](../COMO-A
 
 | Data | Lição | Formato / tema | Situação |
 | --- | --- | --- | --- |
+| 2026-11-09 | [Primeiro Premier Draft de FRA (UG splash R): 1–3; a criatura grande atacou quando devia bloquear](2026-11-09-draft-fra-ug-primeiro-draft-1-3.md) | Limitado, Premier Draft FRA, BO1, Arena | ativa (hipótese, 4 partidas) |
 | 2026-10-14 | [Sphinx's Approach v7: 1 vitória, 1 derrota; Deadly Cover-Up é o contra absoluto](2026-10-14-sphinxs-approach-bo1-v7-cover-up.md) | Standard, BO1, Arena | ativa (combo puro 4–1) |
 | 2026-10-14 | [Sphinx's Approach v6: fichas de Black Mage venceram na primeira partida](2026-10-14-sphinxs-approach-bo1-vitoria-black-mages.md) | Standard, BO1, Arena | ativa (3 vitórias seguidas) |
 | 2026-10-14 | [Sphinx's Approach: a vitória pelo Fblthp ignora o total de vida do oponente](2026-10-14-sphinxs-approach-bo1-vitoria-fblthp.md) | Standard, BO1, Arena | ativa (2 vitórias seguidas) |

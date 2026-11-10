@@ -1,3 +1,4 @@
+import json
 import logging
 from pathlib import Path
 
@@ -39,6 +40,18 @@ def test_combined_classifier_routes_draft_and_match_events(conn, tmp_path, monke
     session.check_every = 1
     with pytest.raises(overlay.CloseWindow):
         session.poll()
+
+
+def test_combined_classifier_lets_limited_deck_reach_the_match_side():
+    """O lado do draft chama de "unknown" qualquer linha que cite um evento de draft; o
+    `EventSetDeckV3` do deck de Limitado tem de chegar ao lado da partida mesmo assim."""
+    deck_request = json.dumps({"EventName": "PremierDraft_FRA_20260929", "Summary": {"Name": "Deck Draft"},
+                               "Deck": {"MainDeck": [{"cardId": 101, "quantity": 1}]}})
+    text = f"{H}==> EventSetDeckV3 " + json.dumps({"id": "d", "request": deck_request})
+    events = arena_log.events_from_text(text, companion.classify_all)
+    assert [e["type"] for e in events] == ["deck"] and events[0]["event"] == "PremierDraft_FRA_20260929"
+    other = f"{H}==> Draft.Whatever " + json.dumps({"id": "x", "request": json.dumps({"Foo": 1})})
+    assert [e["type"] for e in arena_log.events_from_text(other, companion.classify_all)] == ["unknown"]
 
 
 def test_task_and_command_shapes(tmp_path, monkeypatch):

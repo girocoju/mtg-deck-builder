@@ -35,8 +35,14 @@ def arena_running():
 
 
 def classify_all(header, obj):
-    """Eventos de draft e de partida no mesmo leitor."""
-    return arena_log.classify(header, obj) or arena_match.classify_match(header, obj)
+    """Eventos de draft e de partida no mesmo leitor. O lado do draft devolve "unknown" para
+    qualquer linha que cite um evento de draft, inclusive o `EventSetDeckV3` do deck de
+    Limitado (visto em 2026-11-09: o registro das partidas ficou com o deck de Ladder
+    anterior); essa linha ainda passa pelo classificador de partida."""
+    draft = arena_log.classify(header, obj)
+    if draft and draft["type"] != "unknown":
+        return draft
+    return arena_match.classify_match(header, obj) or draft
 
 
 def compose(state, running=True):

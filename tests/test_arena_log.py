@@ -168,7 +168,9 @@ def test_arena_cards_resolve_by_name_then_printing(conn, tmp_path):  # noqa: F81
     assert out[0]["name"] == "Bear" and out[0]["card"]["name"] == "Bear" and out[0]["name_pt"] == "Urso"
     assert out[0]["rarity"] == "common"
     assert out[1]["name"] == "Nameless Wonder" and out[1]["card"] is None and out[1]["rarity"] == "uncommon"
-    assert out[2]["name"] == "#999" and out[2]["card"] is None
+    assert out[2]["name"] == "#999" and out[2]["card"] is None and out[2]["token"] is False
+    token = arena.resolve(conn, [104])[0]        # ficha TST #1: mesmo número da carta real, fica com o nome dela
+    assert token["name"] == "Bear Token" and token["card"] is None and token["token"] is True
 
 
 def test_find_arena_db_picks_newest(tmp_path):
@@ -223,7 +225,7 @@ def test_match_session_from_log(conn, tmp_path):  # noqa: F811
     lines = [session.handle(e) for e in events]
     assert lines[0] == "conta: Eu#123"
     assert lines[1].startswith('deck enviado para Ladder: "Ursos" — 5 cartas · todas resolvidas') and "4 Bear" in lines[1]
-    assert lines[2] == "partida em Ladder: você (lugar 1) × Rival (lugar 2, iOS)"
+    assert lines[2] == 'partida em Ladder: você (lugar 1) × Rival (lugar 2, iOS) · deck "Ursos"'
     assert lines[3] is None                                   # vida sem turno: ainda nos mulligans
     assert lines[4] == "jogo 1 · turno 1 (1º de Rival) · ativo: Rival · vida: você 20 × Rival 20"
     assert lines[5] is None                                   # repetição não sai de novo
@@ -232,3 +234,27 @@ def test_match_session_from_log(conn, tmp_path):  # noqa: F811
     assert session.board().startswith("jogo 1 · turno 2") and "sua mão (0)" in session.board()
     saved = list((tmp_path / "games").glob("*-Ladder-Rival-g1.*"))
     assert sorted(p.suffix for p in saved) == [".json", ".md"]
+
+
+def test_match_record_ignores_deck_of_another_event(conn, tmp_path):  # noqa: F811
+    """2026-11-09: o Oráculo ficou aberto da Ladder ao draft e gravou as partidas do Premier
+    Draft com o deck de Ladder. O deck só vale para o evento em que foi enviado."""
+    path = tmp_path / "Raw_CardDatabase_abc.mtga"
+    fake_arena_db(path)
+    deck_request = json.dumps({"EventName": "PremierDraft_FRA_20260929", "Summary": {"Name": "Deck Draft"},
+                               "Deck": {"MainDeck": [{"cardId": 101, "quantity": 23}]}})
+    text = "\n".join([
+        f"{H}x\n<== Auth\n" + json.dumps({"authenticateResponse": {"clientId": "ME", "screenName": "Eu#123"}}),
+        f"{H}==> EventSetDeckV3 " + json.dumps({"id": "d", "request": deck_request}),
+        room("Playing"), gre(life={1: 20, 2: 20}), gre(turn=1, active=2),
+        room("MatchCompleted", [("Game", 1), ("Match", 1)]),
+    ])
+    events = arena_log.events_from_text(text, arena_match.classify_match)
+    session = arena_match.MatchSession(conn, arena_log.ArenaCards(path), records_dir=tmp_path / "games")
+    lines = [session.handle(e) for e in events]
+    assert lines[1].startswith('deck enviado para PremierDraft_FRA_20260929: "Deck Draft"')
+    assert lines[2].endswith(" · deck deste evento não visto no log")
+    assert session.match_deck() is None and session.rows[-1]["deck"] is None
+    record = json.loads(next((tmp_path / "games").glob("*.json")).read_text(encoding="utf-8"))
+    assert record["deck"] is None
+    assert next((tmp_path / "games").glob("*.md")).read_text(encoding="utf-8").startswith("# Ladder contra Rival\n")
